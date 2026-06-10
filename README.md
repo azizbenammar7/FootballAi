@@ -15,18 +15,25 @@ display in a Streamlit dashboard built for coaches and physios.
 > hang. On macOS: `python3.13 -m venv .venv && source .venv/bin/activate`.
 
 ```bash
-# 1. Install dependencies (Python 3.11–3.13)
+# 1. Create and activate a virtual environment (Python 3.11–3.13)
+python3.13 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+
+# 2. Install dependencies
 pip install -r requirements.txt
 
-# 2a. Run on a real match video
-python pipeline/01_track.py --video data/raw/match.mp4   # ~30–45 min on M4
+# 3a. Run on a real match video
+#     - you must supply your own video at data/raw/match.mp4 (gitignored)
+#     - the first run auto-downloads the YOLOv8m weights (~50 MB)
+python pipeline/01_track.py --video data/raw/match.mp4   # ~90–110 min on M4 (yolov8m @ 1280)
 python pipeline/02_stats.py
 python pipeline/03_fatigue.py
 
-# 2b. OR generate synthetic demo data instantly (no video needed)
+# 3b. OR generate synthetic demo data instantly (no video / no GPU needed)
+#     This is the quickest way to verify the dashboard end-to-end locally.
 python scripts/gen_dummy_data.py
 
-# 3. Launch dashboard
+# 4. Launch dashboard
 streamlit run dashboard/app.py
 ```
 
@@ -36,9 +43,10 @@ streamlit run dashboard/app.py
 
 ```
 ├── pipeline/
-│   ├── 01_track.py        # YOLOv8n + ByteTrack → raw_tracks.parquet
+│   ├── 01_track.py        # YOLOv8m + ByteTrack → raw_tracks.parquet
 │   ├── 02_stats.py        # tracking data → player stats + heatmaps
-│   └── 03_fatigue.py      # fatigue indicators + injury-risk scores
+│   ├── 03_fatigue.py      # fatigue indicators + injury-risk scores
+│   └── bytetrack_custom.yaml  # tracker config (longer buffer = fewer ID switches)
 ├── dashboard/
 │   └── app.py             # Streamlit dashboard (reads precomputed files)
 ├── scripts/
@@ -57,7 +65,7 @@ streamlit run dashboard/app.py
 ```
 match.mp4
    │
-   ▼  01_track.py  (YOLOv8n, vid_stride=5, device=mps)
+   ▼  01_track.py  (YOLOv8m, ~5 effective FPS, device=mps)
 raw_tracks.parquet   [frame, time_sec, track_id, cx, cy, w, h, conf]
    │
    ▼  02_stats.py  (pandas + NumPy)
@@ -70,8 +78,16 @@ risk_scores.json     [risk_score 0–100, risk_flag LOW/MEDIUM/HIGH, breakdown]
    ▼  dashboard/app.py  (Streamlit + Plotly + Matplotlib)
 ```
 
-The dashboard **never runs any ML**. It reads the three precomputed files,
-which are typically < 5 MB total for a 90-minute match.
+**Why the steps are separated.** Each stage has a single, distinct
+responsibility, so each can be re-run, tested, or replaced independently:
+
+- **`01_track.py`** — the only *expensive* step (GPU computer vision). Run once
+  per video; everything downstream reads its cached `raw_tracks.parquet`.
+- **`02_stats.py`** — pure, deterministic movement/statistics (smoothing,
+  speed/distance, sprints, heatmaps). No ML, no randomness.
+- **`03_fatigue.py`** — small, readable heuristic scoring (≈5-minute read).
+- **`dashboard/app.py`** — presentation only; it **never runs any ML** and
+  reads the three precomputed files (< 5 MB total for a 90-minute match).
 
 ---
 
@@ -79,27 +95,28 @@ which are typically < 5 MB total for a 90-minute match.
 
 ### 1. How did you get a full 90-minute match to process in reasonable time?
 
-**Downsampling to 5 FPS** via `vid_stride=5` in Ultralytics.
-A typical broadcast match at 25 FPS → 135 000 frames. At 5 FPS → 27 000 frames.
-Combined with `yolov8n` (the smallest/fastest YOLO variant) on Apple MPS
-(`device="mps"`), this reaches ~50–70 it/s on M4, giving a **~25–45 minute
-wall-clock time** for the full pipeline.
+**Downsampling to ~5 effective FPS.** `01_track.py` derives the stride
+automatically from the source FPS (`stride = round(src_fps / 5)`). This match
+is 30 FPS / 169 264 frames → stride 6 → ~28 200 frames processed instead of the
+full ~169 000. On Apple MPS (`device="mps"`) with `yolov8m` at `imgsz=1280`,
+this runs at ~4–5 it/s on the M4, giving a **~90–110 minute wall-clock time**
+for tracking (the stats and fatigue steps then take seconds).
 
 Trade-offs:
-- 5 FPS misses very short events (< 0.2 s). Fast turns look slightly slower.
-- `yolov8n` has lower recall than `yolov8l`; occasional missed detections
-  are acceptable given the test's stated tolerance for tracking imperfection.
+- ~5 FPS misses very short events (< 0.2 s). Fast turns look slightly slower.
+- `yolov8m` (medium) is chosen over `yolov8n` for noticeably better recall on
+  small/distant players in broadcast footage; the cost is slower inference.
 - No multi-processing: a single Python process keeps implementation simple
   and avoids VRAM contention on shared MPS memory.
 
 ### 2. Pixel → real-world distance/speed conversion
 
-A standard pitch is 105 m × 68 m. We measure (or estimate) the pitch width
-in pixels from the video (`PITCH_PIXEL_WIDTH = 1820` for 1920-wide video)
-and derive a single scale factor:
+A standard pitch is 105 m × 68 m. We estimate the pitch length in pixels from
+the video (`PITCH_PIXEL_WIDTH = 1216`, ~95 % of this 1280-wide video) and
+derive a single scale factor:
 
 ```
-M_PER_PX = 105 / PITCH_PIXEL_WIDTH  ≈ 0.0577 m/px
+M_PER_PX = 105 / PITCH_PIXEL_WIDTH  ≈ 0.086 m/px
 ```
 
 Speed = Euclidean pixel displacement between consecutive frames × M_PER_PX ÷ Δt.
@@ -119,11 +136,17 @@ Speed = Euclidean pixel displacement between consecutive frames × M_PER_PX ÷ �
 - **Consistent distance** — distance is reconstructed from the *capped* speed, so
   speed and distance never disagree. (An earlier version capped speed but summed raw
   displacement, which inflated totals to 20–40 km/player.)
-- **Gap handling** — if a track is lost for > 2 s (occlusion / re-acquisition), the
-  re-appearance jump contributes zero distance instead of a teleport.
+- **Gap handling** — if a track is lost for > 3 s (`MAX_GAP_S`, occlusion /
+  re-acquisition), the re-appearance jump contributes zero distance instead of
+  a teleport.
 
-Typical resulting error: ±15–25% on total distance. Sufficient for relative
-comparison across players within the same match.
+**Honest note on absolute values.** A single global scale plus a moving,
+zooming broadcast camera, plus sparse/fragmented tracking, means **absolute
+distances are under-estimates** — on this real match the median tracked
+distance is well below the 6–12 km a player actually runs, because most track
+IDs only cover a fraction of the match. The numbers are reliable for *relative*
+comparison and for demonstrating the pipeline, **not** as GPS-grade
+measurements. See "What works / What doesn't" below.
 
 ### 3. Fatigue model
 
@@ -157,9 +180,19 @@ match yields many short-lived track IDs, not 22 clean players. The half-vs-half
 indicators (sprint drop, distance drop) would otherwise flag every substituted
 player or ID fragment as HIGH risk just because they only appear in one half.
 We therefore only score fatigue for tracks present in **both halves** with
-≥ 40 % match coverage; everything else is surfaced as **INSUFFICIENT** rather
-than as a false positive. The dashboard defaults to hiding these partial tracks
-but lets you toggle them back on.
+≥ 5 % match coverage (`MIN_COVERAGE_FRAC = 0.05` in `03_fatigue.py`);
+everything else is surfaced as **INSUFFICIENT** rather than as a false positive.
+The threshold is deliberately low because broadcast tracks are heavily
+fragmented — a stricter gate would mark almost every track INSUFFICIENT. The
+dashboard defaults to hiding these partial tracks but lets you toggle them on.
+
+**5-minute read path (for evaluators).** All fatigue logic lives in
+[`pipeline/03_fatigue.py`](pipeline/03_fatigue.py):
+- Scoring functions: `speed_decay_score`, `sprint_drop_score`,
+  `dist_drop_score`, `hsr_load_score` (each returns 0–25 pts).
+- Gating rule: only tracks present in **both halves** (with ≥ 5 % coverage)
+  are scored; the rest become `INSUFFICIENT`.
+- Output: `data/processed/risk_scores.json` (score 0–100 + decomposed breakdown).
 
 ### 5. Approximate time per part
 
@@ -175,8 +208,10 @@ but lets you toggle them back on.
 ### 6. Where AI tools were used
 
 - **Claude (Cursor)**: architecture planning, boilerplate code, this README.
-- **Self-written**: fatigue heuristic design, sprint/speed logic, calibration
-  constants, debugging tracking edge cases.
+- **Self-written / self-directed**: fatigue heuristic design, sprint/speed
+  logic, calibration choices, and debugging tracking edge cases — including
+  catching and fixing a calibration bug where the pixel→metre scale and speed
+  cap had been mis-set, which had inflated speeds to physically impossible values.
 - All generated code was reviewed, tested, and adjusted before committing.
 
 ### 7. With two more weeks I would build
@@ -199,17 +234,59 @@ but lets you toggle them back on.
   A crash (or Ctrl-C) at minute 85 keeps everything processed so far instead of
   losing the whole run.
 
-## Known limitations
+## What works / What doesn't
 
-- Scale factor is approximate; absolute distance/speed values carry ±15–25% error.
-- Track IDs are not persistent across the whole match (ByteTrack ID switches).
-  Specifically, the 15-minute halftime break guarantees a complete ID wipe.
-  **Solution:** The pipeline performs a "naive halftime stitch" by pairing the
-  top 22 most active tracks from the 1st half with the top 22 from the 2nd half.
-  Other short-lived fragments (< 1 min) are filtered out to keep the dashboard
-  clean, while surviving partial tracks are scored as INSUFFICIENT.
-- No team separation (all players pooled, including referee).
-- Tested on MacBook Air M4 16 GB; CUDA users should change `device="mps"` to `device="cuda"`.
+**Works (end-to-end, reproducible):**
+- ✅ **Tracking pipeline** — YOLOv8m + ByteTrack runs over a full 90-minute match
+  and produces `raw_tracks.parquet`, with checkpointing for crash recovery.
+- ✅ **Stats generation** — deterministic per-player distance, speed, sprint
+  counts, 15-minute blocks, and heatmaps.
+- ✅ **Fatigue scoring** — transparent, decomposable 0–100 injury-risk score with
+  honest `INSUFFICIENT` handling for partial tracks.
+- ✅ **Streamlit dashboard** — team overview + per-player detail, served entirely
+  from precomputed files (no ML at view time).
+- ✅ **Dummy-data path** — `gen_dummy_data.py` reproduces the full dashboard with
+  clean synthetic tracks, no video or GPU required.
+
+**Doesn't work yet / out of scope:**
+- ❌ **Reliable player identity** — ByteTrack switches IDs (and the halftime break
+  wipes them entirely). A "naive halftime stitch" pairs the top-22 most active H1
+  and H2 tracks, but identity is not truly persistent.
+- ❌ **Calibrated real-world measurements** — a single global pixel→metre scale on
+  a panning/zooming broadcast camera, combined with sparse tracking, means
+  **absolute distances are under-estimates** (median tracked distance on this
+  match is far below the true 6–12 km). Use the values for *relative* comparison,
+  not as ground truth. Homography-based calibration would fix this.
+- ❌ **Team assignment** — all detections are pooled (referee included); no jersey
+  clustering.
+- ❌ **Ball tracking** — not implemented; no possession/pass/shot analytics.
+- ❌ **Validated medical injury prediction** — the risk score is a transparent
+  *heuristic* load indicator, not a clinically validated injury model.
+
+> Tested on MacBook Air M4 16 GB. CUDA users should change `device="mps"` to
+> `device="cuda"` in `pipeline/01_track.py`.
+
+---
+
+## Verify it works in 30 seconds
+
+No video or GPU needed — generate synthetic data and launch the dashboard:
+
+```bash
+source .venv/bin/activate
+python scripts/gen_dummy_data.py     # writes player_summary.json, risk_scores.json, …
+streamlit run dashboard/app.py
+```
+
+In the browser you should see:
+- A **Team Overview** page with KPI tiles (full-match vs. total tracks) and a
+  sortable player table colour-coded LOW / MEDIUM / HIGH / INSUFFICIENT.
+- A **Player Detail** page with a pitch **heatmap**, a per-block **speed
+  timeline**, and the **decomposed fatigue breakdown** (the four 0–25 sub-scores).
+
+> The committed `data/processed/` files are the real-match outputs. Running
+> `gen_dummy_data.py` overwrites them locally for the demo — that's expected;
+> just re-run `02_stats.py` / `03_fatigue.py` to restore the real numbers.
 
 ---
 

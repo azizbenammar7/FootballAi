@@ -11,14 +11,15 @@ Outputs: data/processed/player_stats.parquet   (one row per player per 15-min bl
 Pixel → metres conversion
 --------------------------
 A standard football pitch is 105 m × 68 m.
-For a broadcast/tactical camera that shows the full pitch, the pitch width
-occupies roughly 90–95 % of the frame width.  Default assumption for 1920-wide
-video:  PITCH_PIXEL_WIDTH = 1820 → scale ≈ 0.0577 m/px.
+For a broadcast/tactical camera that shows the full pitch, the pitch length
+occupies roughly 90–95 % of the frame width.  Default assumption for this
+1280-wide video:  PITCH_PIXEL_WIDTH = 1216 → scale ≈ 0.086 m/px.
 
 Adjust PITCH_PIXEL_WIDTH at the top of this file if your video differs.
 Main error source: camera pan/zoom makes the scale non-constant across the pitch.
-This rough-scaling approach is acceptable for order-of-magnitude distance/speed
-estimates (±15–25 % typical error).
+This rough single-scale approach is acceptable only for order-of-magnitude and
+*relative* comparison between players. Because broadcast tracking is sparse and
+fragmented, absolute distances are under-estimates (see README "What doesn't").
 
 Sprint definition
 -----------------
@@ -41,7 +42,7 @@ import pandas as pd
 # Measure the pixel width the pitch occupies in a representative WIDE frame and
 # set it here. Must be <= the video width (this video is 1280px wide). In a wide
 # tactical shot the 105 m pitch length runs across the frame, spanning ~95% of it.
-PITCH_PIXEL_WIDTH = 12       # pixels (adjust per video; <= video width)
+PITCH_PIXEL_WIDTH = 1216     # pixels (~95% of this 1280px video; <= video width)
 PITCH_M_WIDTH = 105.0        # metres (standard pitch length, spans the frame width)
 M_PER_PX = PITCH_M_WIDTH / PITCH_PIXEL_WIDTH
 
@@ -53,7 +54,7 @@ MIN_SPRINT_DURATION_S = 1.0  # seconds
 # YOLO bbox centres jitter frame-to-frame and "teleport" after occlusions.
 # Without control this inflates distance to 20–40 km/player (unrealistic).
 SMOOTH_WINDOW = 5            # rolling-median window on positions (≈1 s at 5 FPS)
-MAX_SPEED_MS = 1200.0          # cap; displacement implying >12 m/s is an artefact
+MAX_SPEED_MS = 12.0         # cap; displacement implying >12 m/s is an artefact
 MAX_GAP_S = 3.0              # if a track is lost >3 s, don't accumulate the jump
 
 # ── Heatmap ────────────────────────────────────────────────────────────────────
