@@ -1,0 +1,2641 @@
+{
+  "1711": {
+    "track_id": 1711,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 3,
+      "h2_sprints": 0,
+      "h1_distance_m": 6223.9,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "4530": {
+    "track_id": 4530,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 9,
+      "h2_sprints": 0,
+      "h1_distance_m": 2259.6,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "6726": {
+    "track_id": 6726,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 5,
+      "h2_sprints": 0,
+      "h1_distance_m": 5170.1,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "10256": {
+    "track_id": 10256,
+    "risk_score": 50,
+    "risk_flag": "MEDIUM",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 0.0,
+      "distance_drop_pct": 83.4,
+      "h1_sprints": 9,
+      "h2_sprints": 10,
+      "h1_distance_m": 14749.1,
+      "h2_distance_m": 2441.1
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 0.0,
+      "distance_drop": 25.0,
+      "hsr_load": 25.0
+    }
+  },
+  "11115": {
+    "track_id": 11115,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 3,
+      "h2_sprints": 0,
+      "h1_distance_m": 7458.2,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "11587": {
+    "track_id": 11587,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 5,
+      "h2_sprints": 0,
+      "h1_distance_m": 2005.6,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "12389": {
+    "track_id": 12389,
+    "risk_score": 47,
+    "risk_flag": "MEDIUM",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 0.0,
+      "distance_drop_pct": 87.0,
+      "h1_sprints": 8,
+      "h2_sprints": 8,
+      "h1_distance_m": 13351.0,
+      "h2_distance_m": 1732.7
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 0.0,
+      "distance_drop": 25.0,
+      "hsr_load": 22.2
+    }
+  },
+  "13260": {
+    "track_id": 13260,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 4,
+      "h2_sprints": 0,
+      "h1_distance_m": 5882.3,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "17371": {
+    "track_id": 17371,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 2,
+      "h2_sprints": 0,
+      "h1_distance_m": 5531.8,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "18630": {
+    "track_id": 18630,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 3,
+      "h2_sprints": 0,
+      "h1_distance_m": 3058.6,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "21711": {
+    "track_id": 21711,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 2,
+      "h2_sprints": 0,
+      "h1_distance_m": 3173.1,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "23357": {
+    "track_id": 23357,
+    "risk_score": 25,
+    "risk_flag": "LOW",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 0.0,
+      "distance_drop_pct": 0.0,
+      "h1_sprints": 8,
+      "h2_sprints": 9,
+      "h1_distance_m": 14988.5,
+      "h2_distance_m": 15220.3
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 0.0,
+      "distance_drop": 0.0,
+      "hsr_load": 25.0
+    }
+  },
+  "27610": {
+    "track_id": 27610,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 5,
+      "h2_sprints": 0,
+      "h1_distance_m": 7701.8,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "31926": {
+    "track_id": 31926,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 5,
+      "h2_sprints": 0,
+      "h1_distance_m": 8360.6,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "35496": {
+    "track_id": 35496,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 1,
+      "h2_sprints": 0,
+      "h1_distance_m": 3665.1,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "35905": {
+    "track_id": 35905,
+    "risk_score": 25,
+    "risk_flag": "LOW",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 0.0,
+      "distance_drop_pct": 0.0,
+      "h1_sprints": 6,
+      "h2_sprints": 9,
+      "h1_distance_m": 8972.5,
+      "h2_distance_m": 13433.8
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 0.0,
+      "distance_drop": 0.0,
+      "hsr_load": 25.0
+    }
+  },
+  "36349": {
+    "track_id": 36349,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 4,
+      "h2_sprints": 0,
+      "h1_distance_m": 4564.4,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "36387": {
+    "track_id": 36387,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 3,
+      "h2_sprints": 0,
+      "h1_distance_m": 7004.8,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "39312": {
+    "track_id": 39312,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 3,
+      "h2_sprints": 0,
+      "h1_distance_m": 5809.6,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "39314": {
+    "track_id": 39314,
+    "risk_score": 56,
+    "risk_flag": "MEDIUM",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 25.0,
+      "distance_drop_pct": 89.1,
+      "h1_sprints": 8,
+      "h2_sprints": 6,
+      "h1_distance_m": 15108.1,
+      "h2_distance_m": 1647.4
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 6.2,
+      "distance_drop": 25.0,
+      "hsr_load": 24.7
+    }
+  },
+  "41992": {
+    "track_id": 41992,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 2,
+      "h2_sprints": 0,
+      "h1_distance_m": 2552.4,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "41993": {
+    "track_id": 41993,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 3,
+      "h2_sprints": 0,
+      "h1_distance_m": 2115.7,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "41994": {
+    "track_id": 41994,
+    "risk_score": 26,
+    "risk_flag": "LOW",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 0.0,
+      "distance_drop_pct": 48.2,
+      "h1_sprints": 4,
+      "h2_sprints": 8,
+      "h1_distance_m": 2857.5,
+      "h2_distance_m": 1480.4
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 0.0,
+      "distance_drop": 20.1,
+      "hsr_load": 6.4
+    }
+  },
+  "41995": {
+    "track_id": 41995,
+    "risk_score": 33,
+    "risk_flag": "LOW",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 0.0,
+      "distance_drop_pct": 69.8,
+      "h1_sprints": 2,
+      "h2_sprints": 6,
+      "h1_distance_m": 4007.0,
+      "h2_distance_m": 1211.1
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 0.0,
+      "distance_drop": 25.0,
+      "hsr_load": 7.7
+    }
+  },
+  "42003": {
+    "track_id": 42003,
+    "risk_score": 23,
+    "risk_flag": "LOW",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 0.0,
+      "distance_drop_pct": 0.0,
+      "h1_sprints": 5,
+      "h2_sprints": 8,
+      "h1_distance_m": 2887.4,
+      "h2_distance_m": 12718.0
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 0.0,
+      "distance_drop": 0.0,
+      "hsr_load": 23.0
+    }
+  },
+  "42007": {
+    "track_id": 42007,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 1,
+      "h2_sprints": 0,
+      "h1_distance_m": 3014.4,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "42024": {
+    "track_id": 42024,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 2,
+      "h2_sprints": 0,
+      "h1_distance_m": 2982.6,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "44340": {
+    "track_id": 44340,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 3,
+      "h2_sprints": 0,
+      "h1_distance_m": 2417.2,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "44820": {
+    "track_id": 44820,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 4,
+      "h2_sprints": 0,
+      "h1_distance_m": 2900.8,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "45152": {
+    "track_id": 45152,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 6,
+      "h2_sprints": 0,
+      "h1_distance_m": 4688.9,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "45634": {
+    "track_id": 45634,
+    "risk_score": 25,
+    "risk_flag": "LOW",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 0.0,
+      "distance_drop_pct": 0.0,
+      "h1_sprints": 4,
+      "h2_sprints": 8,
+      "h1_distance_m": 6623.7,
+      "h2_distance_m": 13578.5
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 0.0,
+      "distance_drop": 0.0,
+      "hsr_load": 25.0
+    }
+  },
+  "45839": {
+    "track_id": 45839,
+    "risk_score": 44,
+    "risk_flag": "MEDIUM",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 0.0,
+      "distance_drop_pct": 67.4,
+      "h1_sprints": 3,
+      "h2_sprints": 10,
+      "h1_distance_m": 9801.8,
+      "h2_distance_m": 3196.1
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 0.0,
+      "distance_drop": 25.0,
+      "hsr_load": 19.1
+    }
+  },
+  "45971": {
+    "track_id": 45971,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 4,
+      "h2_sprints": 0,
+      "h1_distance_m": 7785.7,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "46527": {
+    "track_id": 46527,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 2,
+      "h2_sprints": 0,
+      "h1_distance_m": 5277.0,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "52732": {
+    "track_id": 52732,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 3,
+      "h2_sprints": 0,
+      "h1_distance_m": 5697.8,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "54057": {
+    "track_id": 54057,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 4,
+      "h2_sprints": 0,
+      "h1_distance_m": 6806.5,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "54648": {
+    "track_id": 54648,
+    "risk_score": 33,
+    "risk_flag": "LOW",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 0.0,
+      "distance_drop_pct": 77.4,
+      "h1_sprints": 4,
+      "h2_sprints": 4,
+      "h1_distance_m": 4224.0,
+      "h2_distance_m": 954.0
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 0.0,
+      "distance_drop": 25.0,
+      "hsr_load": 7.6
+    }
+  },
+  "56401": {
+    "track_id": 56401,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 2,
+      "h2_sprints": 0,
+      "h1_distance_m": 3618.7,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "56434": {
+    "track_id": 56434,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 1,
+      "h2_sprints": 0,
+      "h1_distance_m": 5484.2,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "57907": {
+    "track_id": 57907,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 5,
+      "h2_sprints": 0,
+      "h1_distance_m": 6096.5,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "58068": {
+    "track_id": 58068,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 7,
+      "h2_sprints": 0,
+      "h1_distance_m": 1753.6,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "61056": {
+    "track_id": 61056,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 2,
+      "h2_sprints": 0,
+      "h1_distance_m": 2315.5,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "63803": {
+    "track_id": 63803,
+    "risk_score": 25,
+    "risk_flag": "LOW",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 0.0,
+      "distance_drop_pct": 0.0,
+      "h1_sprints": 8,
+      "h2_sprints": 12,
+      "h1_distance_m": 18323.6,
+      "h2_distance_m": 19195.3
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 0.0,
+      "distance_drop": 0.0,
+      "hsr_load": 25.0
+    }
+  },
+  "69905": {
+    "track_id": 69905,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 3,
+      "h2_sprints": 0,
+      "h1_distance_m": 3950.6,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "71682": {
+    "track_id": 71682,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 4,
+      "h2_sprints": 0,
+      "h1_distance_m": 2910.0,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "72974": {
+    "track_id": 72974,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 5,
+      "h2_sprints": 0,
+      "h1_distance_m": 2271.6,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "74565": {
+    "track_id": 74565,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 5,
+      "h2_sprints": 0,
+      "h1_distance_m": 9650.5,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "75664": {
+    "track_id": 75664,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 2,
+      "h2_sprints": 0,
+      "h1_distance_m": 3268.5,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "75668": {
+    "track_id": 75668,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 1,
+      "h2_sprints": 0,
+      "h1_distance_m": 2686.5,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "75704": {
+    "track_id": 75704,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 1,
+      "h2_sprints": 0,
+      "h1_distance_m": 2749.9,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "75707": {
+    "track_id": 75707,
+    "risk_score": 33,
+    "risk_flag": "LOW",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 0.0,
+      "distance_drop_pct": 73.8,
+      "h1_sprints": 2,
+      "h2_sprints": 5,
+      "h1_distance_m": 4048.2,
+      "h2_distance_m": 1061.9
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 0.0,
+      "distance_drop": 25.0,
+      "hsr_load": 7.5
+    }
+  },
+  "75708": {
+    "track_id": 75708,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 6,
+      "h2_sprints": 0,
+      "h1_distance_m": 2582.4,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "76225": {
+    "track_id": 76225,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 1,
+      "h2_sprints": 0,
+      "h1_distance_m": 2825.5,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "76919": {
+    "track_id": 76919,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.286,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 8,
+      "h2_sprints": 0,
+      "h1_distance_m": 3917.0,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "77574": {
+    "track_id": 77574,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 2,
+      "h2_sprints": 0,
+      "h1_distance_m": 4757.1,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "80600": {
+    "track_id": 80600,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 5,
+      "h2_sprints": 0,
+      "h1_distance_m": 5176.9,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "81310": {
+    "track_id": 81310,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 1,
+      "h2_sprints": 0,
+      "h1_distance_m": 6125.9,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "81755": {
+    "track_id": 81755,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 2,
+      "h2_sprints": 0,
+      "h1_distance_m": 2943.4,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "82275": {
+    "track_id": 82275,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 1,
+      "h2_sprints": 0,
+      "h1_distance_m": 3931.9,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "82343": {
+    "track_id": 82343,
+    "risk_score": 35,
+    "risk_flag": "LOW",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 0.0,
+      "distance_drop_pct": 89.0,
+      "h1_sprints": 4,
+      "h2_sprints": 4,
+      "h1_distance_m": 6201.9,
+      "h2_distance_m": 681.8
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 0.0,
+      "distance_drop": 25.0,
+      "hsr_load": 10.1
+    }
+  },
+  "83471": {
+    "track_id": 83471,
+    "risk_score": 35,
+    "risk_flag": "LOW",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 16.7,
+      "distance_drop_pct": 70.8,
+      "h1_sprints": 6,
+      "h2_sprints": 5,
+      "h1_distance_m": 3205.7,
+      "h2_distance_m": 935.3
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 4.2,
+      "distance_drop": 25.0,
+      "hsr_load": 6.1
+    }
+  },
+  "83874": {
+    "track_id": 83874,
+    "risk_score": 29,
+    "risk_flag": "LOW",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 37.5,
+      "distance_drop_pct": 32.0,
+      "h1_sprints": 8,
+      "h2_sprints": 5,
+      "h1_distance_m": 2485.6,
+      "h2_distance_m": 1691.1
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 9.4,
+      "distance_drop": 13.3,
+      "hsr_load": 6.2
+    }
+  },
+  "87439": {
+    "track_id": 87439,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 4,
+      "h2_sprints": 0,
+      "h1_distance_m": 2983.0,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "87517": {
+    "track_id": 87517,
+    "risk_score": 29,
+    "risk_flag": "LOW",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 14.3,
+      "distance_drop_pct": 0.0,
+      "h1_sprints": 7,
+      "h2_sprints": 6,
+      "h1_distance_m": 8779.3,
+      "h2_distance_m": 11006.6
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 3.6,
+      "distance_drop": 0.0,
+      "hsr_load": 25.0
+    }
+  },
+  "88089": {
+    "track_id": 88089,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 5,
+      "h2_sprints": 0,
+      "h1_distance_m": 2279.0,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "89614": {
+    "track_id": 89614,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 5,
+      "h2_sprints": 0,
+      "h1_distance_m": 3259.4,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "90992": {
+    "track_id": 90992,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 1,
+      "h2_sprints": 0,
+      "h1_distance_m": 3410.3,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "91034": {
+    "track_id": 91034,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 1,
+      "h2_sprints": 0,
+      "h1_distance_m": 3472.1,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "91206": {
+    "track_id": 91206,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 5,
+      "h2_sprints": 0,
+      "h1_distance_m": 4451.4,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "94129": {
+    "track_id": 94129,
+    "risk_score": 34,
+    "risk_flag": "LOW",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 0.0,
+      "distance_drop_pct": 82.9,
+      "h1_sprints": 2,
+      "h2_sprints": 5,
+      "h1_distance_m": 5239.4,
+      "h2_distance_m": 896.3
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 0.0,
+      "distance_drop": 25.0,
+      "hsr_load": 9.0
+    }
+  },
+  "94212": {
+    "track_id": 94212,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 1,
+      "h2_sprints": 0,
+      "h1_distance_m": 4721.7,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "94213": {
+    "track_id": 94213,
+    "risk_score": 33,
+    "risk_flag": "LOW",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 0.0,
+      "distance_drop_pct": 75.0,
+      "h1_sprints": 3,
+      "h2_sprints": 4,
+      "h1_distance_m": 4253.6,
+      "h2_distance_m": 1062.7
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 0.0,
+      "distance_drop": 25.0,
+      "hsr_load": 7.8
+    }
+  },
+  "94801": {
+    "track_id": 94801,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 4,
+      "h2_sprints": 0,
+      "h1_distance_m": 2862.7,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "97267": {
+    "track_id": 97267,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 2,
+      "h2_sprints": 0,
+      "h1_distance_m": 7022.3,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "99203": {
+    "track_id": 99203,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 3,
+      "h2_sprints": 0,
+      "h1_distance_m": 4837.9,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "101816": {
+    "track_id": 101816,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 3,
+      "h2_sprints": 0,
+      "h1_distance_m": 4124.3,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "103542": {
+    "track_id": 103542,
+    "risk_score": 46,
+    "risk_flag": "MEDIUM",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 28.6,
+      "distance_drop_pct": 81.9,
+      "h1_sprints": 7,
+      "h2_sprints": 5,
+      "h1_distance_m": 8200.0,
+      "h2_distance_m": 1484.2
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 7.1,
+      "distance_drop": 25.0,
+      "hsr_load": 14.3
+    }
+  },
+  "103648": {
+    "track_id": 103648,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 3,
+      "h2_sprints": 0,
+      "h1_distance_m": 3187.3,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "104378": {
+    "track_id": 104378,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 1,
+      "h2_sprints": 0,
+      "h1_distance_m": 4833.5,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "105327": {
+    "track_id": 105327,
+    "risk_score": 41,
+    "risk_flag": "MEDIUM",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 0.0,
+      "distance_drop_pct": 89.8,
+      "h1_sprints": 5,
+      "h2_sprints": 5,
+      "h1_distance_m": 9630.3,
+      "h2_distance_m": 980.3
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 0.0,
+      "distance_drop": 25.0,
+      "hsr_load": 15.6
+    }
+  },
+  "106101": {
+    "track_id": 106101,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 3,
+      "h2_sprints": 0,
+      "h1_distance_m": 7019.3,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "106279": {
+    "track_id": 106279,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 3,
+      "h2_sprints": 0,
+      "h1_distance_m": 2009.8,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "106293": {
+    "track_id": 106293,
+    "risk_score": 23,
+    "risk_flag": "LOW",
+    "coverage_frac": 0.286,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 0.0,
+      "distance_drop_pct": 0.0,
+      "h1_sprints": 8,
+      "h2_sprints": 10,
+      "h1_distance_m": 1974.3,
+      "h2_distance_m": 13936.5
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 0.0,
+      "distance_drop": 0.0,
+      "hsr_load": 23.4
+    }
+  },
+  "106338": {
+    "track_id": 106338,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 5,
+      "h2_sprints": 0,
+      "h1_distance_m": 1057.6,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "106347": {
+    "track_id": 106347,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 4,
+      "h2_sprints": 0,
+      "h1_distance_m": 1426.8,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "109722": {
+    "track_id": 109722,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 5,
+      "h2_sprints": 0,
+      "h1_distance_m": 5498.3,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "111920": {
+    "track_id": 111920,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 2,
+      "h2_sprints": 0,
+      "h1_distance_m": 7552.6,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "112664": {
+    "track_id": 112664,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 7,
+      "h2_sprints": 0,
+      "h1_distance_m": 2247.0,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "112707": {
+    "track_id": 112707,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 8,
+      "h2_sprints": 0,
+      "h1_distance_m": 3024.1,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "117127": {
+    "track_id": 117127,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 4,
+      "h2_sprints": 0,
+      "h1_distance_m": 2965.7,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "119725": {
+    "track_id": 119725,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 2,
+      "h2_sprints": 0,
+      "h1_distance_m": 8353.0,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "120438": {
+    "track_id": 120438,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 3,
+      "h2_sprints": 0,
+      "h1_distance_m": 7860.9,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "121754": {
+    "track_id": 121754,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.286,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 4,
+      "h2_sprints": 0,
+      "h1_distance_m": 4013.7,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "123804": {
+    "track_id": 123804,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 3,
+      "h2_sprints": 0,
+      "h1_distance_m": 3623.7,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {}
+  },
+  "128523": {
+    "track_id": 128523,
+    "risk_score": 65,
+    "risk_flag": "MEDIUM",
+    "coverage_frac": 0.143,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": 0.0,
+      "sprint_drop_pct": 100.0,
+      "distance_drop_pct": 100.0,
+      "h1_sprints": 5,
+      "h2_sprints": 0,
+      "h1_distance_m": 10359.5,
+      "h2_distance_m": 0.0
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 25.0,
+      "distance_drop": 25.0,
+      "hsr_load": 15.3
+    }
+  },
+  "130815": {
+    "track_id": 130815,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 2245.7
+    },
+    "score_breakdown": {}
+  },
+  "130842": {
+    "track_id": 130842,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 5041.0
+    },
+    "score_breakdown": {}
+  },
+  "136085": {
+    "track_id": 136085,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 2,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 3707.8
+    },
+    "score_breakdown": {}
+  },
+  "137063": {
+    "track_id": 137063,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 8,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 4942.3
+    },
+    "score_breakdown": {}
+  },
+  "137173": {
+    "track_id": 137173,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 3,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 7307.7
+    },
+    "score_breakdown": {}
+  },
+  "140456": {
+    "track_id": 140456,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 4,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 3938.3
+    },
+    "score_breakdown": {}
+  },
+  "141428": {
+    "track_id": 141428,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 2,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 9354.8
+    },
+    "score_breakdown": {}
+  },
+  "141447": {
+    "track_id": 141447,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 3,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 10416.3
+    },
+    "score_breakdown": {}
+  },
+  "141571": {
+    "track_id": 141571,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 6,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 8737.1
+    },
+    "score_breakdown": {}
+  },
+  "141724": {
+    "track_id": 141724,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 4,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 8101.3
+    },
+    "score_breakdown": {}
+  },
+  "142699": {
+    "track_id": 142699,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 3,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 5114.1
+    },
+    "score_breakdown": {}
+  },
+  "149441": {
+    "track_id": 149441,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 8,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 2706.1
+    },
+    "score_breakdown": {}
+  },
+  "151065": {
+    "track_id": 151065,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 3,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 6038.3
+    },
+    "score_breakdown": {}
+  },
+  "152590": {
+    "track_id": 152590,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 3,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 11772.8
+    },
+    "score_breakdown": {}
+  },
+  "154460": {
+    "track_id": 154460,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 3,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 3000.1
+    },
+    "score_breakdown": {}
+  },
+  "154473": {
+    "track_id": 154473,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 3583.8
+    },
+    "score_breakdown": {}
+  },
+  "156097": {
+    "track_id": 156097,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 4,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 8473.3
+    },
+    "score_breakdown": {}
+  },
+  "157298": {
+    "track_id": 157298,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 6,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 9181.2
+    },
+    "score_breakdown": {}
+  },
+  "157839": {
+    "track_id": 157839,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 3,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 5732.9
+    },
+    "score_breakdown": {}
+  },
+  "159531": {
+    "track_id": 159531,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 7,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 8091.1
+    },
+    "score_breakdown": {}
+  },
+  "159769": {
+    "track_id": 159769,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 11573.8
+    },
+    "score_breakdown": {}
+  },
+  "162243": {
+    "track_id": 162243,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 2582.1
+    },
+    "score_breakdown": {}
+  },
+  "164980": {
+    "track_id": 164980,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 6,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 7376.4
+    },
+    "score_breakdown": {}
+  },
+  "165176": {
+    "track_id": 165176,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 2,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 9789.2
+    },
+    "score_breakdown": {}
+  },
+  "165644": {
+    "track_id": 165644,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 3,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 2542.7
+    },
+    "score_breakdown": {}
+  },
+  "166199": {
+    "track_id": 166199,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 8,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 3199.4
+    },
+    "score_breakdown": {}
+  },
+  "171523": {
+    "track_id": 171523,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 8561.1
+    },
+    "score_breakdown": {}
+  },
+  "174130": {
+    "track_id": 174130,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 6,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 9743.7
+    },
+    "score_breakdown": {}
+  },
+  "175892": {
+    "track_id": 175892,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 7,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 5227.5
+    },
+    "score_breakdown": {}
+  },
+  "177843": {
+    "track_id": 177843,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 9,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 3719.4
+    },
+    "score_breakdown": {}
+  },
+  "178585": {
+    "track_id": 178585,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 4,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 2114.6
+    },
+    "score_breakdown": {}
+  },
+  "179467": {
+    "track_id": 179467,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 7013.0
+    },
+    "score_breakdown": {}
+  },
+  "179966": {
+    "track_id": 179966,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 2,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 1963.5
+    },
+    "score_breakdown": {}
+  },
+  "181126": {
+    "track_id": 181126,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 3,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 3410.7
+    },
+    "score_breakdown": {}
+  },
+  "182372": {
+    "track_id": 182372,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 4,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 10872.4
+    },
+    "score_breakdown": {}
+  },
+  "185284": {
+    "track_id": 185284,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 4,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 10774.3
+    },
+    "score_breakdown": {}
+  },
+  "186353": {
+    "track_id": 186353,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 6,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 3117.3
+    },
+    "score_breakdown": {}
+  },
+  "189783": {
+    "track_id": 189783,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 7,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 6584.4
+    },
+    "score_breakdown": {}
+  },
+  "190776": {
+    "track_id": 190776,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 1,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 7313.1
+    },
+    "score_breakdown": {}
+  },
+  "191448": {
+    "track_id": 191448,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 9278.7
+    },
+    "score_breakdown": {}
+  },
+  "193823": {
+    "track_id": 193823,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 4,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 9873.8
+    },
+    "score_breakdown": {}
+  },
+  "194602": {
+    "track_id": 194602,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 1,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 9581.0
+    },
+    "score_breakdown": {}
+  },
+  "199645": {
+    "track_id": 199645,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 3,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 2477.7
+    },
+    "score_breakdown": {}
+  },
+  "203191": {
+    "track_id": 203191,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 6,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 1869.1
+    },
+    "score_breakdown": {}
+  },
+  "206323": {
+    "track_id": 206323,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 4,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 4296.9
+    },
+    "score_breakdown": {}
+  },
+  "209403": {
+    "track_id": 209403,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 7975.4
+    },
+    "score_breakdown": {}
+  },
+  "210056": {
+    "track_id": 210056,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 6,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 9856.6
+    },
+    "score_breakdown": {}
+  },
+  "210067": {
+    "track_id": 210067,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 1,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 2033.7
+    },
+    "score_breakdown": {}
+  },
+  "210848": {
+    "track_id": 210848,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 9,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 12262.4
+    },
+    "score_breakdown": {}
+  },
+  "210982": {
+    "track_id": 210982,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 3,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 9758.9
+    },
+    "score_breakdown": {}
+  },
+  "213931": {
+    "track_id": 213931,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 3,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 5327.6
+    },
+    "score_breakdown": {}
+  },
+  "215995": {
+    "track_id": 215995,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 3,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 2841.1
+    },
+    "score_breakdown": {}
+  },
+  "222334": {
+    "track_id": 222334,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 6326.9
+    },
+    "score_breakdown": {}
+  },
+  "229713": {
+    "track_id": 229713,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 8973.4
+    },
+    "score_breakdown": {}
+  },
+  "231183": {
+    "track_id": 231183,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 3,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 7247.7
+    },
+    "score_breakdown": {}
+  },
+  "236979": {
+    "track_id": 236979,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.286,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 6,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 8372.9
+    },
+    "score_breakdown": {}
+  },
+  "240744": {
+    "track_id": 240744,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 7,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 9902.7
+    },
+    "score_breakdown": {}
+  },
+  "242601": {
+    "track_id": 242601,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 8461.4
+    },
+    "score_breakdown": {}
+  },
+  "242940": {
+    "track_id": 242940,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 4,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 8363.6
+    },
+    "score_breakdown": {}
+  },
+  "243111": {
+    "track_id": 243111,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 5946.1
+    },
+    "score_breakdown": {}
+  },
+  "243200": {
+    "track_id": 243200,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 2,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 1157.9
+    },
+    "score_breakdown": {}
+  },
+  "243203": {
+    "track_id": 243203,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 4,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 1617.0
+    },
+    "score_breakdown": {}
+  },
+  "243212": {
+    "track_id": 243212,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 3,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 963.0
+    },
+    "score_breakdown": {}
+  },
+  "243215": {
+    "track_id": 243215,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 6,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 938.7
+    },
+    "score_breakdown": {}
+  },
+  "243267": {
+    "track_id": 243267,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 6,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 1544.0
+    },
+    "score_breakdown": {}
+  },
+  "243293": {
+    "track_id": 243293,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 425.5
+    },
+    "score_breakdown": {}
+  },
+  "243295": {
+    "track_id": 243295,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 381.3
+    },
+    "score_breakdown": {}
+  },
+  "243309": {
+    "track_id": 243309,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 4,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 280.9
+    },
+    "score_breakdown": {}
+  },
+  "243340": {
+    "track_id": 243340,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 304.8
+    },
+    "score_breakdown": {}
+  },
+  "243342": {
+    "track_id": 243342,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 6,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 339.2
+    },
+    "score_breakdown": {}
+  },
+  "243351": {
+    "track_id": 243351,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 708.8
+    },
+    "score_breakdown": {}
+  },
+  "243353": {
+    "track_id": 243353,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 361.6
+    },
+    "score_breakdown": {}
+  },
+  "243358": {
+    "track_id": 243358,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 4,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 149.8
+    },
+    "score_breakdown": {}
+  },
+  "243367": {
+    "track_id": 243367,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 888.1
+    },
+    "score_breakdown": {}
+  },
+  "243379": {
+    "track_id": 243379,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 3,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 735.9
+    },
+    "score_breakdown": {}
+  },
+  "243442": {
+    "track_id": 243442,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 2,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 2012.6
+    },
+    "score_breakdown": {}
+  },
+  "243443": {
+    "track_id": 243443,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 2,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 932.6
+    },
+    "score_breakdown": {}
+  },
+  "243444": {
+    "track_id": 243444,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 5,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 1999.2
+    },
+    "score_breakdown": {}
+  },
+  "245097": {
+    "track_id": 245097,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 3,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 2456.2
+    },
+    "score_breakdown": {}
+  },
+  "246282": {
+    "track_id": 246282,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 7,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 10269.5
+    },
+    "score_breakdown": {}
+  },
+  "246311": {
+    "track_id": 246311,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 6,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 8461.9
+    },
+    "score_breakdown": {}
+  },
+  "246493": {
+    "track_id": 246493,
+    "risk_score": null,
+    "risk_flag": "INSUFFICIENT",
+    "coverage_frac": 0.143,
+    "reason": "partial track (ID switch / sub) \u2014 not present across both halves",
+    "fatigue_indicators": {
+      "h1_sprints": 0,
+      "h2_sprints": 7,
+      "h1_distance_m": 0.0,
+      "h2_distance_m": 7977.0
+    },
+    "score_breakdown": {}
+  }
+}

@@ -1,0 +1,10 @@
+# Custom ByteTrack config for football tracking.
+# Goal: keep player IDs alive longer through occlusions / brief misses so we get
+# fewer fragmented tracks. Based on ultralytics' default bytetrack.yaml.
+tracker_type: bytetrack
+track_high_thresh: 0.25    # first association threshold (lowered for small players)
+track_low_thresh: 0.10     # second association threshold
+new_track_thresh: 0.25     # min confidence to start a new track
+track_buffer: 90           # frames to keep a lost track alive (default 30 -> 90 = ~18s at 5 FPS)
+match_thresh: 0.85         # IoU match threshold for association
+fuse_score: true           # fuse detection confidence into association
