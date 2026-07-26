@@ -1,0 +1,54 @@
+{
+  "contract_version": "footballai.analysis-run/v1",
+  "logical_analysis_id": "22222222-2222-4222-8222-222222222222",
+  "run_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1",
+  "attempt_number": 1,
+  "previous_attempt_run_id": null,
+  "status": "failed",
+  "data_origin": "evaluation",
+  "input": {
+    "uri": "fixture://evaluation/benchmark-001.mp4",
+    "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "media_type": "video/mp4"
+  },
+  "code": {
+    "repository": "https://github.com/example/FootballAi",
+    "revision": "84b5457e0058b64fb2cbf31ea795c168debdcae5",
+    "dirty": false
+  },
+  "pipeline_version": "2.0.0",
+  "parameters": {},
+  "models": [],
+  "artifacts": [],
+  "stages": [
+    {
+      "stage_id": "video-validation-1",
+      "stage_name": "video_validation",
+      "required": true,
+      "status": "failed",
+      "progress_percent": 0,
+      "attempt_number": 1,
+      "started_at": null,
+      "finished_at": "2026-07-26T10:01:00Z",
+      "produced_artifact_ids": [],
+      "error": {
+        "error_code": "invalid_video_header",
+        "safe_message": "The input could not be validated as supported video.",
+        "retryable": true,
+        "occurred_at": "2026-07-26T10:01:00Z",
+        "technical_details": {"validation_step": "container_header"}
+      },
+      "performance_metrics": {"input_count": 1, "output_count": 0},
+      "message": "Input validation ended safely."
+    }
+  ],
+  "created_at": "2026-07-26T10:00:00Z",
+  "completed_at": "2026-07-26T10:01:00Z",
+  "failure": {
+    "error_code": "input_validation_failed",
+    "safe_message": "The attempt ended before processing began.",
+    "retryable": true,
+    "occurred_at": "2026-07-26T10:01:00Z",
+    "technical_details": null
+  }
+}

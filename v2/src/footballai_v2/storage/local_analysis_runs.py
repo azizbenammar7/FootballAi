@@ -7,8 +7,17 @@ import json
 import os
 import tempfile
 from pathlib import Path
+from typing import Mapping, Sequence
 
-from footballai_v2.contracts.v1 import AnalysisRun, AnalysisRunStatus, ArtifactReference
+from footballai_v2.contracts.v1 import (
+    AnalysisRun,
+    AnalysisRunStatus,
+    ArtifactCategory,
+    ArtifactReference,
+    CodeReference,
+    JsonValue,
+    ModelReference,
+)
 from footballai_v2.contracts.v1.analysis_run import (
     ContractValidationError,
     validate_relative_artifact_path,
@@ -33,7 +42,7 @@ class LocalAnalysisRunStore:
 
     Layout::
 
-        <root>/<analysis-run-id>/
+        <root>/<run-id>/
             manifest.json
             artifacts/...
 
@@ -53,49 +62,51 @@ class LocalAnalysisRunStore:
         """Atomically reserve a new run namespace and persist its manifest."""
         if run.status is not AnalysisRunStatus.QUEUED:
             raise ManifestConflictError("a run namespace must be created in queued state")
-        run_dir = self.run_directory(run.analysis_run_id)
+        run_dir = self.run_directory(run.run_id)
         try:
             run_dir.mkdir()
         except FileExistsError as exc:
-            raise RunAlreadyExistsError(run.analysis_run_id) from exc
+            raise RunAlreadyExistsError(run.run_id) from exc
         (run_dir / "artifacts").mkdir()
         try:
             self._write_manifest(run, replace_existing=False)
         except Exception:
             # Only remove the empty namespace created by this call.
-            self.manifest_path(run.analysis_run_id).unlink(missing_ok=True)
+            self.manifest_path(run.run_id).unlink(missing_ok=True)
             (run_dir / "artifacts").rmdir()
             run_dir.rmdir()
             raise
         return run_dir
 
-    def load(self, analysis_run_id: str) -> AnalysisRun:
-        run_dir = self.run_directory(analysis_run_id)
+    def load(self, run_id: str) -> AnalysisRun:
+        run_dir = self.run_directory(run_id)
         self._validate_run_directory(run_dir)
         manifest_path = run_dir / self.MANIFEST_NAME
         if not manifest_path.is_file() or manifest_path.is_symlink():
-            raise RunNotFoundError(analysis_run_id)
+            raise RunNotFoundError(run_id)
         try:
             data = json.loads(manifest_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError) as exc:
-            raise ContractValidationError(f"invalid stored manifest for {analysis_run_id}") from exc
+            raise ContractValidationError(f"invalid stored manifest for {run_id}") from exc
         run = AnalysisRun.from_dict(data)
-        if run.analysis_run_id != analysis_run_id:
+        if run.run_id != run_id:
             raise ManifestConflictError("manifest run ID does not match its directory")
         return run
 
     def save(self, run: AnalysisRun) -> None:
         """Atomically replace a manifest without changing its run namespace."""
-        current = self.load(run.analysis_run_id)
+        current = self.load(run.run_id)
         if current.status.is_terminal:
             raise ManifestConflictError("terminal manifests are immutable")
         allowed = {
             AnalysisRunStatus.QUEUED: {
                 AnalysisRunStatus.RUNNING,
+                AnalysisRunStatus.FAILED,
                 AnalysisRunStatus.CANCELLED,
             },
             AnalysisRunStatus.RUNNING: {
                 AnalysisRunStatus.SUCCEEDED,
+                AnalysisRunStatus.PARTIAL,
                 AnalysisRunStatus.FAILED,
                 AnalysisRunStatus.CANCELLED,
             },
@@ -106,7 +117,10 @@ class LocalAnalysisRunStore:
             )
         immutable_fields = (
             "contract_version",
-            "analysis_run_id",
+            "logical_analysis_id",
+            "run_id",
+            "attempt_number",
+            "previous_attempt_run_id",
             "data_origin",
             "input",
             "code",
@@ -117,15 +131,46 @@ class LocalAnalysisRunStore:
         )
         if any(getattr(current, name) != getattr(run, name) for name in immutable_fields):
             raise ManifestConflictError("run provenance cannot change after namespace creation")
-        if run.status is AnalysisRunStatus.SUCCEEDED:
-            self._verify_outputs(run)
+        if run.status in {AnalysisRunStatus.SUCCEEDED, AnalysisRunStatus.PARTIAL}:
+            self._verify_artifacts(run)
         self._write_manifest(run, replace_existing=True)
+
+    def create_retry_attempt(
+        self,
+        previous_run_id: str,
+        *,
+        code: CodeReference | None = None,
+        pipeline_version: str | None = None,
+        parameters: Mapping[str, JsonValue] | None = None,
+        models: Sequence[ModelReference] | None = None,
+        run_id: str | None = None,
+    ) -> AnalysisRun:
+        """Create a new queued namespace linked to a failed or partial attempt.
+
+        Logical input identity, origin, and logical analysis ID are copied from
+        the previous manifest. Attempt-specific code, pipeline, configuration,
+        and model provenance may be replaced explicitly and remains visible in
+        the new manifest.
+        """
+        previous = self.load(previous_run_id)
+        retry = AnalysisRun.retry_from(
+            previous,
+            code=code,
+            pipeline_version=pipeline_version,
+            parameters=parameters,
+            models=models,
+            run_id=run_id,
+        )
+        self.create(retry)
+        return retry
 
     def write_artifact(
         self,
-        analysis_run_id: str,
+        run_id: str,
         *,
+        artifact_id: str,
         name: str,
+        category: ArtifactCategory,
         relative_path: str,
         content: bytes,
         media_type: str,
@@ -134,8 +179,8 @@ class LocalAnalysisRunStore:
         """Write bytes once and return their content-addressed reference."""
         if not isinstance(content, bytes):
             raise TypeError("content must be bytes")
-        run_dir = self._require_run_directory(analysis_run_id)
-        if self.load(analysis_run_id).status is not AnalysisRunStatus.RUNNING:
+        run_dir = self._require_run_directory(run_id)
+        if self.load(run_id).status is not AnalysisRunStatus.RUNNING:
             raise ManifestConflictError("artifacts can only be written while a run is running")
         normalized = validate_relative_artifact_path(relative_path)
         destination = run_dir.joinpath(*Path(normalized).parts)
@@ -156,7 +201,9 @@ class LocalAnalysisRunStore:
             if os.path.exists(temp_name):
                 os.unlink(temp_name)
         return ArtifactReference(
+            artifact_id=artifact_id,
             name=name,
+            category=category,
             relative_path=normalized,
             media_type=media_type,
             sha256=hashlib.sha256(content).hexdigest(),
@@ -164,26 +211,26 @@ class LocalAnalysisRunStore:
             schema_version=schema_version,
         )
 
-    def run_directory(self, analysis_run_id: str) -> Path:
-        canonical = validate_run_id(analysis_run_id)
+    def run_directory(self, run_id: str) -> Path:
+        canonical = validate_run_id(run_id)
         return self.root / canonical
 
-    def manifest_path(self, analysis_run_id: str) -> Path:
-        return self.run_directory(analysis_run_id) / self.MANIFEST_NAME
+    def manifest_path(self, run_id: str) -> Path:
+        return self.run_directory(run_id) / self.MANIFEST_NAME
 
-    def artifact_path(self, analysis_run_id: str, relative_path: str) -> Path:
-        run_dir = self._require_run_directory(analysis_run_id)
+    def artifact_path(self, run_id: str, relative_path: str) -> Path:
+        run_dir = self._require_run_directory(run_id)
         normalized = validate_relative_artifact_path(relative_path)
         candidate = run_dir.joinpath(*Path(normalized).parts)
         self._require_within_run(candidate.resolve(), run_dir)
         return candidate
 
-    def _require_run_directory(self, analysis_run_id: str) -> Path:
-        run_dir = self.run_directory(analysis_run_id)
+    def _require_run_directory(self, run_id: str) -> Path:
+        run_dir = self.run_directory(run_id)
         self._validate_run_directory(run_dir)
         manifest_path = run_dir / self.MANIFEST_NAME
         if not manifest_path.is_file() or manifest_path.is_symlink():
-            raise RunNotFoundError(analysis_run_id)
+            raise RunNotFoundError(run_id)
         return run_dir
 
     def _validate_run_directory(self, run_dir: Path) -> None:
@@ -193,24 +240,28 @@ class LocalAnalysisRunStore:
             raise ContractValidationError("analysis-run directory cannot be a symlink")
         self._require_within_run(run_dir.resolve(), self.root)
 
-    def _verify_outputs(self, run: AnalysisRun) -> None:
-        for output in run.outputs:
-            path = self.artifact_path(run.analysis_run_id, output.relative_path)
+    def _verify_artifacts(self, run: AnalysisRun) -> None:
+        for artifact in run.artifacts:
+            path = self.artifact_path(run.run_id, artifact.relative_path)
             if not path.is_file() or path.is_symlink():
                 raise ManifestConflictError(
-                    f"output {output.name!r} is missing or is not a regular run artifact"
+                    f"artifact {artifact.name!r} is missing or is not a regular run artifact"
                 )
-            if path.stat().st_size != output.size_bytes:
-                raise ManifestConflictError(f"output {output.name!r} size does not match its manifest")
+            if path.stat().st_size != artifact.size_bytes:
+                raise ManifestConflictError(
+                    f"artifact {artifact.name!r} size does not match its manifest"
+                )
             digest = hashlib.sha256()
             with path.open("rb") as handle:
                 for chunk in iter(lambda: handle.read(1024 * 1024), b""):
                     digest.update(chunk)
-            if digest.hexdigest() != output.sha256:
-                raise ManifestConflictError(f"output {output.name!r} hash does not match its manifest")
+            if digest.hexdigest() != artifact.sha256:
+                raise ManifestConflictError(
+                    f"artifact {artifact.name!r} hash does not match its manifest"
+                )
 
     def _write_manifest(self, run: AnalysisRun, *, replace_existing: bool) -> None:
-        path = self.manifest_path(run.analysis_run_id)
+        path = self.manifest_path(run.run_id)
         payload = (
             json.dumps(run.to_dict(), indent=2, sort_keys=True, allow_nan=False) + "\n"
         ).encode("utf-8")

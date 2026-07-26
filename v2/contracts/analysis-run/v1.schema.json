@@ -2,12 +2,15 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://footballai.local/contracts/analysis-run/v1.schema.json",
   "title": "FootballAi analysis run v1",
-  "description": "Provenance, lifecycle, and isolated output references for one V2 analysis.",
+  "description": "Provenance, immutable attempt relationships, stage execution, and isolated artifact references for one V2 analysis-run attempt.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "contract_version",
-    "analysis_run_id",
+    "logical_analysis_id",
+    "run_id",
+    "attempt_number",
+    "previous_attempt_run_id",
     "status",
     "data_origin",
     "input",
@@ -15,23 +18,51 @@
     "pipeline_version",
     "parameters",
     "models",
-    "outputs",
+    "artifacts",
+    "stages",
     "created_at"
   ],
   "properties": {
     "contract_version": {
       "const": "footballai.analysis-run/v1"
     },
-    "analysis_run_id": {
-      "type": "string",
-      "format": "uuid",
-      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    "logical_analysis_id": {
+      "$ref": "#/$defs/uuidV4"
+    },
+    "run_id": {
+      "$ref": "#/$defs/uuidV4"
+    },
+    "attempt_number": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "previous_attempt_run_id": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/uuidV4"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "status": {
-      "enum": ["queued", "running", "succeeded", "failed", "cancelled"]
+      "enum": [
+        "queued",
+        "running",
+        "succeeded",
+        "partial",
+        "failed",
+        "cancelled"
+      ]
     },
     "data_origin": {
-      "enum": ["real", "synthetic"]
+      "enum": [
+        "real",
+        "synthetic",
+        "evaluation",
+        "legacy_v1"
+      ]
     },
     "input": {
       "$ref": "#/$defs/inputReference"
@@ -52,10 +83,16 @@
         "$ref": "#/$defs/modelReference"
       }
     },
-    "outputs": {
+    "artifacts": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/artifactReference"
+      }
+    },
+    "stages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/stageExecution"
       }
     },
     "created_at": {
@@ -71,10 +108,41 @@
       "format": "date-time"
     },
     "failure": {
-      "$ref": "#/$defs/failureDetail"
+      "$ref": "#/$defs/structuredError"
+    },
+    "partial_reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "cancellation_reason": {
+      "type": "string",
+      "minLength": 1
     }
   },
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "attempt_number": {
+            "const": 1
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "previous_attempt_run_id": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "previous_attempt_run_id": {
+            "$ref": "#/$defs/uuidV4"
+          }
+        }
+      }
+    },
     {
       "if": {
         "properties": {
@@ -85,20 +153,36 @@
       },
       "then": {
         "properties": {
-          "outputs": {
+          "artifacts": {
             "maxItems": 0
           }
         },
         "not": {
           "anyOf": [
             {
-              "required": ["started_at"]
+              "required": [
+                "started_at"
+              ]
             },
             {
-              "required": ["completed_at"]
+              "required": [
+                "completed_at"
+              ]
             },
             {
-              "required": ["failure"]
+              "required": [
+                "failure"
+              ]
+            },
+            {
+              "required": [
+                "partial_reason"
+              ]
+            },
+            {
+              "required": [
+                "cancellation_reason"
+              ]
             }
           ]
         }
@@ -113,19 +197,35 @@
         }
       },
       "then": {
-        "required": ["started_at"],
+        "required": [
+          "started_at"
+        ],
         "properties": {
-          "outputs": {
+          "artifacts": {
             "maxItems": 0
           }
         },
         "not": {
           "anyOf": [
             {
-              "required": ["completed_at"]
+              "required": [
+                "completed_at"
+              ]
             },
             {
-              "required": ["failure"]
+              "required": [
+                "failure"
+              ]
+            },
+            {
+              "required": [
+                "partial_reason"
+              ]
+            },
+            {
+              "required": [
+                "cancellation_reason"
+              ]
             }
           ]
         }
@@ -140,14 +240,74 @@
         }
       },
       "then": {
-        "required": ["started_at", "completed_at"],
+        "required": [
+          "started_at",
+          "completed_at"
+        ],
         "properties": {
-          "outputs": {
+          "artifacts": {
+            "minItems": 1
+          },
+          "stages": {
             "minItems": 1
           }
         },
         "not": {
-          "required": ["failure"]
+          "anyOf": [
+            {
+              "required": [
+                "failure"
+              ]
+            },
+            {
+              "required": [
+                "partial_reason"
+              ]
+            },
+            {
+              "required": [
+                "cancellation_reason"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "partial"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "started_at",
+          "completed_at",
+          "partial_reason"
+        ],
+        "properties": {
+          "artifacts": {
+            "minItems": 1
+          },
+          "stages": {
+            "minItems": 1
+          }
+        },
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "failure"
+              ]
+            },
+            {
+              "required": [
+                "cancellation_reason"
+              ]
+            }
+          ]
         }
       }
     },
@@ -160,11 +320,28 @@
         }
       },
       "then": {
-        "required": ["started_at", "completed_at", "failure"],
+        "required": [
+          "completed_at",
+          "failure"
+        ],
         "properties": {
-          "outputs": {
+          "artifacts": {
             "maxItems": 0
           }
+        },
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "partial_reason"
+              ]
+            },
+            {
+              "required": [
+                "cancellation_reason"
+              ]
+            }
+          ]
         }
       }
     },
@@ -177,19 +354,41 @@
         }
       },
       "then": {
-        "required": ["completed_at"],
+        "required": [
+          "completed_at"
+        ],
         "properties": {
-          "outputs": {
+          "artifacts": {
             "maxItems": 0
           }
         },
         "not": {
-          "required": ["failure"]
+          "anyOf": [
+            {
+              "required": [
+                "failure"
+              ]
+            },
+            {
+              "required": [
+                "partial_reason"
+              ]
+            }
+          ]
         }
       }
     }
   ],
   "$defs": {
+    "uuidV4": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9._-]{0,127}$"
+    },
     "sha256": {
       "type": "string",
       "pattern": "^[0-9a-f]{64}$"
@@ -197,7 +396,11 @@
     "inputReference": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["uri", "sha256", "media_type"],
+      "required": [
+        "uri",
+        "sha256",
+        "media_type"
+      ],
       "properties": {
         "uri": {
           "type": "string",
@@ -215,7 +418,11 @@
     "codeReference": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["repository", "revision", "dirty"],
+      "required": [
+        "repository",
+        "revision",
+        "dirty"
+      ],
       "properties": {
         "repository": {
           "type": "string",
@@ -233,7 +440,10 @@
     "modelReference": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "version"],
+      "required": [
+        "name",
+        "version"
+      ],
       "properties": {
         "name": {
           "type": "string",
@@ -252,16 +462,32 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "artifact_id",
         "name",
+        "category",
         "relative_path",
         "media_type",
         "sha256",
         "size_bytes"
       ],
       "properties": {
+        "artifact_id": {
+          "$ref": "#/$defs/identifier"
+        },
         "name": {
           "type": "string",
           "minLength": 1
+        },
+        "category": {
+          "enum": [
+            "source",
+            "tracks",
+            "metrics",
+            "summary",
+            "workload_advisory",
+            "visualization",
+            "other"
+          ]
         },
         "relative_path": {
           "type": "string",
@@ -284,21 +510,152 @@
         }
       }
     },
-    "failureDetail": {
+    "structuredError": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["code", "message", "retryable"],
+      "required": [
+        "error_code",
+        "safe_message",
+        "retryable",
+        "occurred_at",
+        "technical_details"
+      ],
       "properties": {
-        "code": {
-          "type": "string",
-          "minLength": 1
+        "error_code": {
+          "$ref": "#/$defs/identifier"
         },
-        "message": {
+        "safe_message": {
           "type": "string",
           "minLength": 1
         },
         "retryable": {
           "type": "boolean"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "technical_details": {
+          "oneOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "stageExecution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_id",
+        "stage_name",
+        "required",
+        "status",
+        "progress_percent",
+        "attempt_number",
+        "started_at",
+        "finished_at",
+        "produced_artifact_ids",
+        "error",
+        "performance_metrics",
+        "message"
+      ],
+      "properties": {
+        "stage_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "stage_name": {
+          "enum": [
+            "ingestion",
+            "video_validation",
+            "detection",
+            "tracking",
+            "identity_resolution",
+            "pitch_calibration",
+            "metrics",
+            "workload_advisory",
+            "artifact_publication"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "queued",
+            "running",
+            "succeeded",
+            "partial",
+            "failed",
+            "cancelled",
+            "skipped"
+          ]
+        },
+        "progress_percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "attempt_number": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "started_at": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "finished_at": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "produced_artifact_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "error": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/structuredError"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "performance_metrics": {
+          "type": "object"
+        },
+        "message": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     }

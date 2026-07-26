@@ -1,74 +1,129 @@
 # FootballAi V2
 
-V2 is the professional platform generation. It is developed alongside, and
-does not import or write into, the preserved V1 implementation in
-`../pipeline/`, `../dashboard/`, `../scripts/`, or `../data/processed/`.
-
-## Milestone 2 boundary
-
-This milestone introduces two provider-neutral foundations:
-
-1. `footballai.analysis-run/v1`, a strict provenance and lifecycle contract;
-2. a local storage adapter that gives each run a unique output namespace.
-
-FastAPI, workers, PostgreSQL, and Azure Blob Storage are deliberately not
-introduced here. Future adapters should consume this contract rather than
-inventing transport- or provider-specific run records.
+V2 is the professional platform generation. It is developed alongside the
+preserved V1 technical-test implementation. Milestone 2 does not import from
+or write into `../pipeline/`, `../dashboard/`, `../scripts/`, or
+`../data/processed/`.
 
 ## Analysis-run contract
 
-The Python implementation lives in
-`src/footballai_v2/contracts/v1/analysis_run.py`. The reviewable wire schema is
-`contracts/analysis-run/v1.schema.json`, with a terminal example under
-`contracts/analysis-run/examples/`.
-
-Every run records:
-
-- an explicit contract version and canonical UUID run ID;
-- lifecycle state and UTC timestamps;
-- `real` or `synthetic` data origin;
-- input URI, media type, and SHA-256 identity;
-- repository revision and dirty-worktree flag;
-- pipeline, parameters, and model versions;
-- content-addressed output references and their schema versions;
-- structured, sanitized failure details when a run fails.
-
-Unknown fields and invalid lifecycle combinations are rejected. Contract
-changes that remove, rename, reinterpret, or newly require a field must be
-published as `footballai.analysis-run/v2`; compatible consumers may continue
-to read v1 indefinitely.
-
-## Output isolation
-
-`LocalAnalysisRunStore` uses this layout:
+The first published analysis-run contract is:
 
 ```text
-<configured-root>/
-└── <analysis-run-id>/
-    ├── manifest.json
-    └── artifacts/
-        └── ...
+footballai.analysis-run/v1
 ```
 
-The root is always caller-configured; no V2 component defaults to the V1
-`data/processed/` directory. Run IDs reserve directories exclusively,
-artifact writes use exclusive creation, relative paths must stay below
-`artifacts/`, and manifest updates are atomic. Run provenance cannot change
-after creation, and a terminal manifest cannot be replaced.
+The platform generation is V2; the contract version is independently v1. The
+authoritative dependency-free Python model is under
+`src/footballai_v2/contracts/v1/`. The generated JSON Schema and safe examples
+are under `contracts/analysis-run/`.
 
-The local adapter is a development/test implementation of a storage boundary.
-An Azure adapter can later map the same relative keys to a run-prefixed blob
-container without changing the public contract.
+Run lifecycle values are exactly `queued`, `running`, `succeeded`, `partial`,
+`failed`, and `cancelled`. The terminal values (`succeeded`, `partial`,
+`failed`, `cancelled`) are immutable. A partial attempt ended before all
+mandatory work completed but produced valid, reviewable artifacts.
 
-## Bounded verification
+Data origins are explicit:
+
+- `real`: genuine user-provided or operational footage;
+- `synthetic`: generated development or demonstration data;
+- `evaluation`: licensed benchmark or validation footage;
+- `legacy_v1`: imported historical V1 artifacts. This label does not certify
+  that those artifacts meet V2 quality requirements.
+
+## Logical analysis and attempt chain
+
+One logical input can have multiple isolated attempts:
+
+```text
+Logical analysis
+├── Attempt 1 — failed
+├── Attempt 2 — partial
+└── Attempt 3 — succeeded
+```
+
+Each manifest records UUID-v4 `logical_analysis_id` and `run_id` values,
+`attempt_number`, and `previous_attempt_run_id`. The first attempt uses number
+1 and a null previous ID. A retry is allowed only from `failed` or `partial`;
+it receives a new run ID and directory, retains logical input identity and data
+origin, increments the attempt number, links to the previous run, and never
+rewrites historical manifests or artifacts.
+
+Code revision, dirty state, pipeline version, parameters, and model versions
+are attempt-specific. A retry may deliberately change them, and the new
+manifest must expose those differences. Within one attempt, all relationship
+and provenance fields are immutable after namespace creation.
+
+## Stage execution records
+
+Runs may schedule any subset of the stable initial stages: `ingestion`,
+`video_validation`, `detection`, `tracking`, `identity_resolution`,
+`pitch_calibration`, `metrics`, `workload_advisory`, and
+`artifact_publication`.
+
+Each stage records its ID, stable name, whether it is required, status,
+progress percentage, attempt number, start and finish timestamps, produced
+artifact IDs, structured safe error, JSON-compatible finite performance
+metrics, and an optional safe message. Stage statuses are `queued`, `running`,
+`succeeded`, `partial`, `failed`, `cancelled`, and `skipped`.
+
+Progress is bounded from 0 to 100. Running stages require a start time;
+terminal stages require a finish time; time cannot move backwards; succeeded
+stages require 100%; and failed stages require sanitized structured error
+information. Artifact IDs must resolve to artifacts registered in the same
+manifest. Stage IDs and names cannot be duplicated within one attempt.
+
+A running manifest may temporarily have no active stage while work has not yet
+been scheduled or while the local coordinator is between stages. Terminal run
+validation is stricter: success requires terminal records and all required
+stages to succeed; partial requires a useful artifact, a safe reason, and an
+incomplete required stage; failed requires a structured run error; and no
+terminal run may contain a running stage.
+
+## Artifacts and advisory terminology
+
+Artifacts have stable IDs, categories, relative paths, media types, byte sizes,
+SHA-256 hashes, and optional schema versions. The public serialized category
+and stage name is `workload_advisory`. Documentation and user interfaces call
+it **Workload and Fatigue Advisory**.
+
+This advisory is not a medical diagnosis, validated injury prediction, or
+clinical advice. V1 terminology remains unchanged for historical compatibility.
+
+## Configurable local storage
+
+`LocalAnalysisRunStore` always receives its root from the caller:
+
+```text
+<configured-root>/<run-id>/
+├── manifest.json
+└── artifacts/
+    └── ...
+```
+
+Tests use temporary directories. A future local application configuration may
+default to `data/runs`. A configured worker can mount any suitable root. A
+future Azure Blob adapter may map an attempt to `runs/<run-id>/...`; Azure is
+conceptual only and is not implemented in this milestone.
+
+Directories and artifacts are created exclusively, traversal and symlink
+escapes are rejected, manifest replacement is atomic, and registered artifact
+bytes are verified against size and SHA-256 metadata before terminal success
+or partial completion.
+
+## Regenerate and verify
 
 From the repository root:
 
 ```bash
-PYTHONPATH=v2/src python -m pytest -q v2/tests
-PYTHONPYCACHEPREFIX=/tmp/footballai-pycache python -m compileall -q v2/src v2/tests
+PYTHONPATH=v2/src .venv-test/bin/python -m footballai_v2.contracts.v1.schema \
+  v2/contracts/analysis-run/v1.schema.json
+
+PYTHONPYCACHEPREFIX=/tmp/footballai-v2-pycache \
+PYTHONPATH=v2/src \
+.venv-test/bin/python -m pytest -q -ra
 ```
 
-These tests use temporary directories only. They do not process video, use a
-GPU, access a network, or write V1 artifacts.
-
+The schema drift test compares the committed schema with fresh Python output,
+and every committed example is checked against both JSON Schema and the Python
+contract. Tests do not process video, access cloud services, or write V1 data.

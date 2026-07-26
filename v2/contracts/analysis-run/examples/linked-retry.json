@@ -1,0 +1,25 @@
+{
+  "contract_version": "footballai.analysis-run/v1",
+  "logical_analysis_id": "22222222-2222-4222-8222-222222222222",
+  "run_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2",
+  "attempt_number": 2,
+  "previous_attempt_run_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1",
+  "status": "queued",
+  "data_origin": "evaluation",
+  "input": {
+    "uri": "fixture://evaluation/benchmark-001.mp4",
+    "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+    "media_type": "video/mp4"
+  },
+  "code": {
+    "repository": "https://github.com/example/FootballAi",
+    "revision": "9999999999999999999999999999999999999999",
+    "dirty": false
+  },
+  "pipeline_version": "2.0.1",
+  "parameters": {"strict_container_validation": false},
+  "models": [],
+  "artifacts": [],
+  "stages": [],
+  "created_at": "2026-07-26T10:05:00Z"
+}

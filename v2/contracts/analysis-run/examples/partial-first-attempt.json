@@ -1,0 +1,68 @@
+{
+  "contract_version": "footballai.analysis-run/v1",
+  "logical_analysis_id": "33333333-3333-4333-8333-333333333333",
+  "run_id": "cccccccc-cccc-4ccc-8ccc-ccccccccccc1",
+  "attempt_number": 1,
+  "previous_attempt_run_id": null,
+  "status": "partial",
+  "data_origin": "legacy_v1",
+  "input": {
+    "uri": "fixture://legacy-v1/committed-artifacts",
+    "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+    "media_type": "application/vnd.footballai.legacy-artifact-set"
+  },
+  "code": {
+    "repository": "https://github.com/example/FootballAi",
+    "revision": "84b5457e0058b64fb2cbf31ea795c168debdcae5",
+    "dirty": false
+  },
+  "pipeline_version": "legacy-import/1.0.0",
+  "parameters": {},
+  "models": [],
+  "artifacts": [
+    {
+      "artifact_id": "legacy-summary",
+      "name": "Legacy summary",
+      "category": "summary",
+      "relative_path": "artifacts/player_summary.json",
+      "media_type": "application/json",
+      "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+      "size_bytes": 128,
+      "schema_version": "footballai.legacy-player-summary/v1"
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "metrics-1",
+      "stage_name": "metrics",
+      "required": true,
+      "status": "succeeded",
+      "progress_percent": 100,
+      "attempt_number": 1,
+      "started_at": "2026-07-26T11:00:01Z",
+      "finished_at": "2026-07-26T11:00:02Z",
+      "produced_artifact_ids": ["legacy-summary"],
+      "error": null,
+      "performance_metrics": {"duration_seconds": 1.0, "output_count": 1},
+      "message": "One reviewable legacy summary was imported."
+    },
+    {
+      "stage_id": "workload-advisory-1",
+      "stage_name": "workload_advisory",
+      "required": true,
+      "status": "partial",
+      "progress_percent": 70,
+      "attempt_number": 1,
+      "started_at": "2026-07-26T11:00:02Z",
+      "finished_at": "2026-07-26T11:00:03Z",
+      "produced_artifact_ids": [],
+      "error": null,
+      "performance_metrics": {"input_count": 1, "output_count": 0},
+      "message": "Some advisory inputs were unavailable."
+    }
+  ],
+  "created_at": "2026-07-26T11:00:00Z",
+  "started_at": "2026-07-26T11:00:01Z",
+  "completed_at": "2026-07-26T11:00:03Z",
+  "partial_reason": "Reviewable metrics were imported, but mandatory advisory inputs were incomplete."
+}
