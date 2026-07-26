@@ -164,6 +164,56 @@ class LocalAnalysisRunStore:
         self.create(retry)
         return retry
 
+    def list_runs(self) -> tuple[AnalysisRun, ...]:
+        """Return valid stored manifests newest first, ignoring foreign entries."""
+        runs: list[AnalysisRun] = []
+        for candidate in self.root.iterdir():
+            if not candidate.is_dir() or candidate.is_symlink():
+                continue
+            try:
+                validate_run_id(candidate.name)
+                runs.append(self.load(candidate.name))
+            except (ContractValidationError, ManifestConflictError, RunNotFoundError):
+                continue
+        return tuple(sorted(runs, key=lambda item: item.created_at, reverse=True))
+
+    def read_artifact_bytes(
+        self,
+        run_id: str,
+        artifact_id: str,
+        *,
+        max_bytes: int = 25 * 1024 * 1024,
+    ) -> bytes:
+        """Read one registered artifact after namespace, size, and hash checks."""
+        if not isinstance(max_bytes, int) or max_bytes < 1:
+            raise ValueError("max_bytes must be a positive integer")
+        run = self.load(run_id)
+        artifact = next(
+            (item for item in run.artifacts if item.artifact_id == artifact_id),
+            None,
+        )
+        if artifact is None:
+            raise RunNotFoundError(f"artifact {artifact_id!r} is not registered")
+        if artifact.size_bytes > max_bytes:
+            raise ManifestConflictError("registered artifact exceeds the configured read limit")
+        path = self.artifact_path(run_id, artifact.relative_path)
+        if not path.is_file() or path.is_symlink():
+            raise ManifestConflictError("registered artifact is missing or unsafe")
+        content = path.read_bytes()
+        if len(content) != artifact.size_bytes:
+            raise ManifestConflictError("registered artifact size does not match")
+        if hashlib.sha256(content).hexdigest() != artifact.sha256:
+            raise ManifestConflictError("registered artifact hash does not match")
+        return content
+
+    def artifact_integrity(self, run_id: str, artifact_id: str) -> bool:
+        """Return whether a registered artifact passes bounded integrity checks."""
+        try:
+            self.read_artifact_bytes(run_id, artifact_id)
+        except (ManifestConflictError, RunNotFoundError, OSError):
+            return False
+        return True
+
     def write_artifact(
         self,
         run_id: str,

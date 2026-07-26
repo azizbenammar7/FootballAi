@@ -146,3 +146,22 @@ imported manifest and warning artifact explain that track identities,
 calibration, movement, coverage, workload, and execution provenance remain
 approximate legacy data. No video, detector, tracking, or metric computation is
 performed by the importer.
+
+## Run the local read API
+
+The FastAPI adapter reads only from the configured V2 run root. With a demo run
+already present:
+
+```bash
+FOOTBALLAI_V2_RUN_ROOT=data/runs \
+FOOTBALLAI_V2_CORS_ORIGINS=http://localhost:5173 \
+PYTHONPATH=v2/src \
+.venv-test/bin/python -m uvicorn footballai_v2.api.main:app \
+  --host 127.0.0.1 --port 8000
+```
+
+The API is available at `http://localhost:8000/api/health`. It exposes run,
+manifest, artifact, team, and unverified-track read models. Registered artifact
+bytes are integrity-checked before legacy JSON is adapted. Internal absolute
+paths are redacted, UUID-v4 run IDs are validated, and CORS accepts only
+explicit HTTP localhost origins.
