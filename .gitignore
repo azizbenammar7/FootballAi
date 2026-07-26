@@ -41,6 +41,10 @@ __pycache__/
 venv/
 env/
 *.egg-info/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
 
 # ─────────────────────────────────────────────────────────────
 # Editor / OS / tooling
