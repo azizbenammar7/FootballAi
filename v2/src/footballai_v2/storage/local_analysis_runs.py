@@ -67,13 +67,15 @@ class LocalAnalysisRunStore:
             run_dir.mkdir()
         except FileExistsError as exc:
             raise RunAlreadyExistsError(run.run_id) from exc
-        (run_dir / "artifacts").mkdir()
+        for child in ("input", "artifacts", "logs", "tmp"):
+            (run_dir / child).mkdir()
         try:
             self._write_manifest(run, replace_existing=False)
         except Exception:
             # Only remove the empty namespace created by this call.
             self.manifest_path(run.run_id).unlink(missing_ok=True)
-            (run_dir / "artifacts").rmdir()
+            for child in ("input", "artifacts", "logs", "tmp"):
+                (run_dir / child).rmdir()
             run_dir.rmdir()
             raise
         return run_dir
@@ -100,11 +102,13 @@ class LocalAnalysisRunStore:
             raise ManifestConflictError("terminal manifests are immutable")
         allowed = {
             AnalysisRunStatus.QUEUED: {
+                AnalysisRunStatus.QUEUED,
                 AnalysisRunStatus.RUNNING,
                 AnalysisRunStatus.FAILED,
                 AnalysisRunStatus.CANCELLED,
             },
             AnalysisRunStatus.RUNNING: {
+                AnalysisRunStatus.RUNNING,
                 AnalysisRunStatus.SUCCEEDED,
                 AnalysisRunStatus.PARTIAL,
                 AnalysisRunStatus.FAILED,
@@ -134,6 +138,16 @@ class LocalAnalysisRunStore:
         if run.status in {AnalysisRunStatus.SUCCEEDED, AnalysisRunStatus.PARTIAL}:
             self._verify_artifacts(run)
         self._write_manifest(run, replace_existing=True)
+
+    def input_path(self, run_id: str) -> Path:
+        """Return the single safe uploaded input registered for a run."""
+        run_dir = self._require_run_directory(run_id)
+        input_dir = run_dir / "input"
+        candidates = [item for item in input_dir.iterdir() if item.is_file() and not item.is_symlink()]
+        if len(candidates) != 1:
+            raise ManifestConflictError("run must contain exactly one safe input file")
+        self._require_within_run(candidates[0].resolve(), run_dir)
+        return candidates[0]
 
     def create_retry_attempt(
         self,

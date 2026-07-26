@@ -59,6 +59,20 @@ export function LegacyWarning({ warnings }: { warnings: string[] }) {
   )
 }
 
+export function AnalysisWarning({ warnings, legacy = false }: { warnings: string[]; legacy?: boolean }) {
+  if (legacy) return <LegacyWarning warnings={warnings} />
+  const synthetic = warnings.some((item) => item.toLowerCase().includes('synthetic workflow result'))
+  return (
+    <aside className="legacy-warning quality-warning" role="alert">
+      <AlertTriangle aria-hidden="true" />
+      <div>
+        <strong>{synthetic ? 'Synthetic workflow result' : 'V1-compatible analysis'}</strong>
+        <p>{warnings[0] ?? 'Track identities are unverified and Workload and Fatigue Advisory outputs are heuristic and advisory only.'}</p>
+      </div>
+    </aside>
+  )
+}
+
 export function MetricCard({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (
     <div className="metric-card">

@@ -2,7 +2,7 @@ import { Activity, ChevronRight, Gauge, Map, ShieldAlert, Timer } from 'lucide-r
 import { Link, useParams } from 'react-router-dom'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useApi } from '../api'
-import { ErrorState, LegacyWarning, LoadingState, MetricCard, Panel, StatusBadge, formatDistance, shortId } from '../components/ui'
+import { AnalysisWarning, ErrorState, LoadingState, MetricCard, Panel, StatusBadge, formatDistance, shortId } from '../components/ui'
 import type { PlayerDetail } from '../types'
 
 function Details({ values }: { values: Record<string, unknown> }) {
@@ -21,7 +21,7 @@ export default function TrackPage() {
     <div className="page">
       <div className="breadcrumbs"><Link to="/runs">Analysis runs</Link><ChevronRight /><Link to={`/runs/${runId}`}>{shortId(runId!)}</Link><ChevronRight /><Link to={`/runs/${runId}/team`}>Team</Link><ChevronRight /><span>Track {data.player_id}</span></div>
       <div className="page-head track-hero"><div><span className="eyebrow">Identity not verified</span><h1>{data.label}</h1><p>Approximate legacy movement profile with explicit confidence limitations.</p></div><StatusBadge value={data.advisory.level} /></div>
-      <LegacyWarning warnings={data.warnings} />
+      <AnalysisWarning warnings={data.warnings} legacy={data.warnings.some((item) => item.toLowerCase().includes('legacy'))} />
       <div className="metrics-grid metrics-grid--five">
         <MetricCard label="Distance" value={formatDistance(data.total_distance_m)} detail="Image-space estimate" />
         <MetricCard label="Average speed" value={`${data.average_speed_ms.toFixed(2)} m/s`} />

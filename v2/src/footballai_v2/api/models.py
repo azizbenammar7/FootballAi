@@ -17,6 +17,50 @@ class HealthResponse(PublicModel):
     contract_version: str
 
 
+class PipelineProfile(PublicModel):
+    profile_id: str
+    display_name: str
+    description: str
+    available: bool
+    missing_requirements: list[str]
+    warnings: list[str]
+    purpose: str
+    gpu: str
+
+
+class PipelineProfileListResponse(PublicModel):
+    profiles: list[PipelineProfile]
+
+
+class QueuedRunResponse(PublicModel):
+    run_id: str
+    logical_analysis_id: str
+    attempt_number: int
+    status: str
+    progress_url: str
+
+
+class ProgressResponse(PublicModel):
+    run_id: str
+    logical_analysis_id: str
+    attempt_number: int
+    status: str
+    overall_progress_percent: float
+    active_stage: str | None
+    stages: list[StageView]
+    created_at: str
+    updated_at: str
+    can_cancel: bool
+    can_retry: bool
+    can_create_new_from_input: bool
+
+
+class OperationResponse(PublicModel):
+    run_id: str
+    status: str
+    message: str
+
+
 class StageView(PublicModel):
     stage_id: str
     stage_name: str
