@@ -1,6 +1,27 @@
 # Football Match Analysis Platform
 **eSteps / Mitus.AI — AI Intern Technical Test**
 
+## V1 and V2
+
+- **V1 — original technical-test prototype:** the historical YOLOv8 pipeline,
+  committed outputs, heuristic scoring, and Streamlit dashboard documented
+  below. Tag `technical-test-v1.0` preserves this baseline unchanged.
+- **V2 — professional platform under active development:** versioned immutable
+  analysis runs, isolated storage, a read-only local API, a safe legacy
+  importer, and a modern React football-analysis dashboard.
+
+Run the complete local V2 demo without inference:
+
+```bash
+make v2-demo
+```
+
+Then open `http://localhost:5173`. Imported legacy views prominently identify
+unverified tracks, approximate movement data, and advisory-only workload
+indicators. See [`docs/v2/LOCAL_DEMO.md`](docs/v2/LOCAL_DEMO.md).
+
+The remaining README is the preserved V1 technical-test documentation.
+
 End-to-end pipeline: detect & track players in a full 90-minute match →
 compute per-player stats → derive fatigue & injury-risk indicators →
 display in a Streamlit dashboard built for coaches and physios.
