@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 env:
-  PYTHONPYCACHEPREFIX: ${{ runner.temp }}/footballai-pycache
+  PYTHONPYCACHEPREFIX: /tmp/footballai-pycache
 
 jobs:
   bounded-tests:
