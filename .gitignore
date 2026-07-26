@@ -24,6 +24,9 @@ videos/
 data/processed/raw_tracks.parquet
 data/processed/raw_tracks_checkpoint.csv
 
+# Local V2 run manifests and copied artifacts (recreated by the demo importer)
+data/runs/
+
 # Keep the lightweight precomputed data that powers the dashboard
 !data/processed/meta.json
 !data/processed/player_stats.parquet

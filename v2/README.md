@@ -127,3 +127,22 @@ PYTHONPATH=v2/src \
 The schema drift test compares the committed schema with fresh Python output,
 and every committed example is checked against both JSON Schema and the Python
 contract. Tests do not process video, access cloud services, or write V1 data.
+
+## Import the preserved V1 demo artifacts
+
+The Milestone 3 importer reads the committed V1 artifacts without modifying or
+recomputing them, then copies supported files into a new isolated
+`legacy_v1` run:
+
+```bash
+PYTHONPATH=v2/src .venv-test/bin/python -m footballai_v2.cli.import_legacy_v1 \
+  --source data/processed \
+  --output-root data/runs
+```
+
+The command prints the generated run ID, terminal status, and manifest path.
+`data/runs/` is ignored because it is reproducible local runtime state. The
+imported manifest and warning artifact explain that track identities,
+calibration, movement, coverage, workload, and execution provenance remain
+approximate legacy data. No video, detector, tracking, or metric computation is
+performed by the importer.
