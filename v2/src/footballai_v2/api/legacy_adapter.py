@@ -37,15 +37,15 @@ def _number(value: Any, default: float = 0.0) -> float:
 
 
 class LegacyRunAdapter:
-    """Read only registered, integrity-checked artifacts from one legacy run."""
+    """Read integrity-checked legacy or V2 dashboard-compatible artifacts."""
 
     def __init__(self, store: LocalAnalysisRunStore, run: AnalysisRun) -> None:
-        if run.data_origin is not DataOrigin.LEGACY_V1:
-            raise LegacyDataError("summary adapters currently support legacy_v1 runs only")
         self.store = store
         self.run = run
         self.summary = self._json_artifact("legacy-player-summary")
         self.advisories = self._optional_json_artifact("workload-advisory") or {}
+        if isinstance(self.advisories, dict) and isinstance(self.advisories.get("tracks"), dict):
+            self.advisories = self.advisories["tracks"]
         if not isinstance(self.summary, dict) or not isinstance(self.summary.get("players"), dict):
             raise LegacyDataError("legacy player summary has an unsupported shape")
         if not isinstance(self.advisories, dict):
@@ -122,7 +122,7 @@ class LegacyRunAdapter:
             run_id=self.run.run_id,
             logical_analysis_id=self.run.logical_analysis_id,
             origin=self.run.data_origin.value,
-            legacy=True,
+            legacy=self.run.data_origin is DataOrigin.LEGACY_V1,
             match_duration_seconds=_number(
                 self.summary.get("match_duration_s", self.summary.get("duration_s", 0))
             ),
@@ -149,7 +149,7 @@ class LegacyRunAdapter:
             results.append(
                 PlayerListItem(
                     player_id=player_id,
-                    label=f"Legacy track {player_id}",
+                    label=(f"Legacy track {player_id}" if self.run.data_origin is DataOrigin.LEGACY_V1 else f"Unverified track {player_id}"),
                     identity_verified=False,
                     total_distance_m=_number(player.get("total_distance_m")),
                     average_speed_ms=_number(player.get("mean_speed_ms")),

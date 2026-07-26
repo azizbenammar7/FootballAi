@@ -1,7 +1,7 @@
 # FootballAi V2 dashboard
 
 Local React 19, TypeScript, Vite, Recharts, Vitest, Testing Library and
-Playwright dashboard for the V2 read API.
+Playwright dashboard for the V2 upload, progress, and results API.
 
 From the repository root, the complete local demo is:
 

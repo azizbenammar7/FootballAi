@@ -1,7 +1,7 @@
 # FootballAi V2
 
 V2 is the professional platform generation. It is developed alongside the
-preserved V1 technical-test implementation. Milestone 2 does not import from
+preserved V1 technical-test implementation. V2 does not import from
 or write into `../pipeline/`, `../dashboard/`, `../scripts/`, or
 `../data/processed/`.
 
@@ -97,8 +97,10 @@ clinical advice. V1 terminology remains unchanged for historical compatibility.
 ```text
 <configured-root>/<run-id>/
 ├── manifest.json
-└── artifacts/
-    └── ...
+├── input/source.<ext>
+├── artifacts/...
+├── logs/
+└── tmp/
 ```
 
 Tests use temporary directories. A future local application configuration may
@@ -126,7 +128,8 @@ PYTHONPATH=v2/src \
 
 The schema drift test compares the committed schema with fresh Python output,
 and every committed example is checked against both JSON Schema and the Python
-contract. Tests do not process video, access cloud services, or write V1 data.
+contract. Tests use tiny generated media only, access no cloud services,
+download no model weights, and write no V1 data.
 
 ## Import the preserved V1 demo artifacts
 
@@ -147,21 +150,32 @@ calibration, movement, coverage, workload, and execution provenance remain
 approximate legacy data. No video, detector, tracking, or metric computation is
 performed by the importer.
 
-## Run the local read API
+## Run the local execution workflow
 
-The FastAPI adapter reads only from the configured V2 run root. With a demo run
-already present:
+The one-command demo starts FastAPI, a durable local queue worker, and React:
+
+```bash
+make v2-demo
+```
+
+For separate process development:
 
 ```bash
 FOOTBALLAI_V2_RUN_ROOT=data/runs \
+FOOTBALLAI_V2_QUEUE_ROOT=data/job-queue \
 FOOTBALLAI_V2_CORS_ORIGINS=http://localhost:5173 \
 PYTHONPATH=v2/src \
 .venv-test/bin/python -m uvicorn footballai_v2.api.main:app \
   --host 127.0.0.1 --port 8000
+
+FOOTBALLAI_V2_RUN_ROOT=data/runs \
+FOOTBALLAI_V2_QUEUE_ROOT=data/job-queue \
+PYTHONPATH=v2/src \
+.venv-test/bin/python -m footballai_v2.worker
 ```
 
-The API is available at `http://localhost:8000/api/health`. It exposes run,
-manifest, artifact, team, and unverified-track read models. Registered artifact
-bytes are integrity-checked before legacy JSON is adapted. Internal absolute
-paths are redacted, UUID-v4 run IDs are validated, and CORS accepts only
-explicit HTTP localhost origins.
+The API is available at `http://localhost:8000/api/health`. It exposes upload,
+profile, progress, cancellation, retry, clone, manifest, artifact, team, and
+unverified-track models. Registered artifact bytes are integrity-checked.
+Internal absolute paths are redacted, UUID-v4 run IDs are validated, and CORS
+accepts only explicit HTTP localhost origins.

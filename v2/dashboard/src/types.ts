@@ -12,6 +12,12 @@ export interface RunListItem {
 
 export interface RunListResponse { runs: RunListItem[] }
 
+export interface PipelineProfile {
+  profile_id: string; display_name: string; description: string; available: boolean
+  missing_requirements: string[]; warnings: string[]; purpose: string; gpu: string
+}
+export interface PipelineProfileList { profiles: PipelineProfile[] }
+
 export interface StageRecord {
   stage_id: string
   stage_name: string
@@ -61,6 +67,12 @@ export interface RunDetail {
   warnings: string[]
   attempt_chain: AttemptLink[]
   stages: StageRecord[]
+}
+
+export interface RunProgress {
+  run_id: string; logical_analysis_id: string; attempt_number: number; status: RunListItem['status']
+  overall_progress_percent: number; active_stage: string | null; stages: StageRecord[]
+  created_at: string; updated_at: string; can_cancel: boolean; can_retry: boolean; can_create_new_from_input: boolean
 }
 
 export interface Artifact {

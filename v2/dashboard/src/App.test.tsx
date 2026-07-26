@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
@@ -31,6 +32,16 @@ const player = {
   distance_timeline: [{ block_index: 0, minute: 0, value: 0 }, { block_index: 1, minute: 15, value: 1000 }],
   advisory: { label: 'Workload and Fatigue Advisory', level: 'MEDIUM', score: .4, reason: 'Approximate.', indicators: {}, breakdown: {}, advisory_only: true }, warnings,
 }
+const demoWarning = 'Synthetic workflow result. This run demonstrates the full upload, processing, progress and dashboard workflow.'
+const profiles = { profiles: [
+  { profile_id: 'demo_fast', display_name: 'Demo fast', description: 'Deterministic workflow.', available: true, missing_requirements: [], warnings: [demoWarning], purpose: 'Workflow validation', gpu: 'not_required' },
+  { profile_id: 'v1_compat', display_name: 'V1-compatible analysis', description: 'Historical algorithm adapter.', available: false, missing_requirements: ['ultralytics'], warnings: ['V1-compatible analysis'], purpose: 'CV execution', gpu: 'optional' },
+] }
+const progress = {
+  run_id: run.run_id, logical_analysis_id: run.logical_analysis_id, attempt_number: 1, status: 'succeeded',
+  overall_progress_percent: 100, active_stage: null, stages: detail.stages, created_at: run.created_at,
+  updated_at: run.created_at, can_cancel: false, can_retry: false, can_create_new_from_input: true,
+}
 
 function jsonResponse(value: unknown, status = 200) {
   return Promise.resolve(new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } }))
@@ -38,7 +49,7 @@ function jsonResponse(value: unknown, status = 200) {
 function renderRoute(route: string) { return render(<MemoryRouter initialEntries={[route]}><App /></MemoryRouter>) }
 
 beforeEach(() => { vi.stubGlobal('fetch', vi.fn()) })
-afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks() })
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks() })
 
 describe('dashboard states and analysis views', () => {
   it('renders a loading state', async () => {
@@ -99,5 +110,44 @@ describe('dashboard states and analysis views', () => {
     renderRoute('/about')
     expect(await screen.findByText('Advisory language')).toBeInTheDocument()
     await waitFor(() => expect(document.body.textContent?.toLowerCase()).not.toContain('medical prediction'))
+  })
+
+  it('renders the New Analysis form without auto-submitting selected files', async () => {
+    vi.mocked(fetch).mockReturnValue(jsonResponse(profiles))
+    const user = userEvent.setup()
+    renderRoute('/analyses/new')
+    expect(await screen.findByRole('heading', { name: 'New Analysis' })).toBeInTheDocument()
+    const file = new File(['video'], 'fixture.mp4', { type: 'video/mp4' })
+    await user.upload(screen.getByLabelText('Football video'), file)
+    expect(screen.getByText('fixture.mp4')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Start analysis' })).toBeEnabled()
+    expect(fetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows profile availability and missing requirements', async () => {
+    vi.mocked(fetch).mockReturnValue(jsonResponse(profiles))
+    renderRoute('/analyses/new')
+    expect(await screen.findByText(/V1-compatible analysis unavailable — missing: ultralytics/)).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /V1-compatible analysis — unavailable/ })).toBeDisabled()
+  })
+
+  it('renders completed live progress, attempt history and synthetic warning', async () => {
+    const demoDetail = { ...detail, origin: 'evaluation', warnings: [demoWarning], pipeline_version: 'demo_fast/1.0.0' }
+    vi.mocked(fetch).mockImplementation((input) => String(input).endsWith('/progress') ? jsonResponse(progress) : jsonResponse(demoDetail))
+    renderRoute(`/runs/${run.run_id}/progress`)
+    expect(await screen.findByRole('heading', { name: 'Analysis complete' })).toBeInTheDocument()
+    expect(screen.getByText('Synthetic workflow result')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open results' })).toBeInTheDocument()
+    expect(screen.getByText('Attempt chain')).toBeInTheDocument()
+  })
+
+  it('shows safe failed-attempt controls without medical prediction language', async () => {
+    const failedProgress = { ...progress, status: 'failed', overall_progress_percent: 10, can_retry: true }
+    const failedDetail = { ...detail, status: 'failed', completed_at: run.created_at, failure: { error_code: 'test_stage_failure', safe_message: 'Detection stopped safely.' } }
+    vi.mocked(fetch).mockImplementation((input) => String(input).endsWith('/progress') ? jsonResponse(failedProgress) : jsonResponse(failedDetail))
+    renderRoute(`/runs/${run.run_id}/progress`)
+    expect(await screen.findByText('test_stage_failure')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Retry as new attempt' })).toBeInTheDocument()
+    expect(document.body.textContent?.toLowerCase()).not.toContain('medical prediction')
   })
 })

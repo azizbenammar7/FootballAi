@@ -6,19 +6,24 @@
 - **V1 — original technical-test prototype:** the historical YOLOv8 pipeline,
   committed outputs, heuristic scoring, and Streamlit dashboard documented
   below. Tag `technical-test-v1.0` preserves this baseline unchanged.
-- **V2 — professional platform under active development:** versioned immutable
-  analysis runs, isolated storage, a read-only local API, a safe legacy
-  importer, and a modern React football-analysis dashboard.
+- **V2 — professional platform under active development:** streaming video
+  ingestion, versioned immutable attempts, an atomic local job queue, a
+  separate execution worker, a safe legacy importer, and a React workflow for
+  upload, live progress, cancellation, retry, and results.
 
-Run the complete local V2 demo without inference:
+Run the complete local V2 demo (the generated `demo_fast` profile requires no
+ML model or GPU):
 
 ```bash
 make v2-demo
 ```
 
-Then open `http://localhost:5173`. Imported legacy views prominently identify
+Open the dashboard URL printed by the command. Uploaded bytes, run artifacts,
+and local queue records are ignored by Git. Imported legacy views prominently identify
 unverified tracks, approximate movement data, and advisory-only workload
-indicators. See [`docs/v2/LOCAL_DEMO.md`](docs/v2/LOCAL_DEMO.md).
+indicators; generated workflow values are persistently labeled synthetic. See
+[`docs/v2/LOCAL_DEMO.md`](docs/v2/LOCAL_DEMO.md) and
+[`docs/v2/ANALYSIS_EXECUTION.md`](docs/v2/ANALYSIS_EXECUTION.md).
 
 The remaining README is the preserved V1 technical-test documentation.
 

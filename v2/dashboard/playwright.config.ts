@@ -1,16 +1,21 @@
 import { defineConfig, devices } from '@playwright/test'
 
 const pythonExecutable = process.env.FOOTBALLAI_V2_PYTHON ?? '../../.venv-test/bin/python'
+const e2eRoot = `/tmp/footballai-v2-e2e-${process.pid}`
+const apiPort = Number(process.env.FOOTBALLAI_V2_E2E_API_PORT ?? 18080)
+const dashboardPort = Number(process.env.FOOTBALLAI_V2_E2E_DASHBOARD_PORT ?? 14173)
+const serviceEnvironment = `FOOTBALLAI_V2_PYTHON=${pythonExecutable} FOOTBALLAI_V2_API_PORT=${apiPort} FOOTBALLAI_V2_RUN_ROOT=${e2eRoot}/runs FOOTBALLAI_V2_QUEUE_ROOT=${e2eRoot}/queue FOOTBALLAI_V2_CORS_ORIGINS=http://127.0.0.1:${dashboardPort} FOOTBALLAI_ENABLE_TEST_PROFILES=1 FOOTBALLAI_DEMO_STAGE_DELAY_SECONDS=0.25`
 
 export default defineConfig({
   testDir: './tests/e2e',
   timeout: 30_000,
   fullyParallel: false,
+  workers: 1,
   retries: 0,
   reporter: [['list'], ['html', { open: 'never' }]],
   outputDir: 'test-results',
   use: {
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL: `http://127.0.0.1:${dashboardPort}`,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
@@ -18,14 +23,14 @@ export default defineConfig({
   webServer: [
     {
       command:
-        `PYTHONPATH=../src ${pythonExecutable} -m footballai_v2.cli.import_legacy_v1 --source ../../data/processed --output-root ../../data/runs && FOOTBALLAI_V2_RUN_ROOT=../../data/runs FOOTBALLAI_V2_CORS_ORIGINS=http://127.0.0.1:4173 PYTHONPATH=../src ${pythonExecutable} -m uvicorn footballai_v2.api.main:app --host 127.0.0.1 --port 8000`,
-      url: 'http://127.0.0.1:8000/api/health',
+        `${serviceEnvironment} ../dev/run_e2e_services.sh`,
+      url: `http://127.0.0.1:${apiPort}/api/health`,
       timeout: 60_000,
       reuseExistingServer: false,
     },
     {
-      command: 'npm run preview -- --host 127.0.0.1 --port 4173',
-      url: 'http://127.0.0.1:4173',
+      command: `VITE_API_BASE=http://127.0.0.1:${apiPort} npm run dev -- --host 127.0.0.1 --port ${dashboardPort} --strictPort`,
+      url: `http://127.0.0.1:${dashboardPort}`,
       timeout: 30_000,
       reuseExistingServer: false,
     },

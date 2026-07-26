@@ -9,6 +9,7 @@ from footballai_v2.api import create_app
 
 
 run_root = Path(os.environ.get("FOOTBALLAI_V2_RUN_ROOT", "data/runs"))
+queue_root = Path(os.environ.get("FOOTBALLAI_V2_QUEUE_ROOT", "data/job-queue"))
 allowed_origins = tuple(
     item.strip()
     for item in os.environ.get(
@@ -18,4 +19,4 @@ allowed_origins = tuple(
     if item.strip()
 )
 
-app = create_app(run_root, allowed_origins=allowed_origins)
+app = create_app(run_root, queue_root=queue_root, allowed_origins=allowed_origins)

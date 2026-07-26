@@ -2,7 +2,7 @@ import { Activity, ChevronRight, Gauge, Timer, UsersRound } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { useApi } from '../api'
-import { ErrorState, LegacyWarning, LoadingState, MetricCard, Panel, StatusBadge, formatDistance, shortId } from '../components/ui'
+import { AnalysisWarning, ErrorState, LoadingState, MetricCard, Panel, StatusBadge, formatDistance, shortId } from '../components/ui'
 import type { PlayerListResponse, TeamSummary } from '../types'
 
 const advisoryColors: Record<string, string> = { LOW: '#4ae89a', MEDIUM: '#f7c65d', HIGH: '#ff7b67', INSUFFICIENT: '#778a83', UNAVAILABLE: '#55645f' }
@@ -18,8 +18,8 @@ export default function TeamPage() {
   return (
     <div className="page">
       <div className="breadcrumbs"><Link to="/runs">Analysis runs</Link><ChevronRight /><Link to={`/runs/${runId}`}>{shortId(runId!)}</Link><ChevronRight /><span>Team overview</span></div>
-      <div className="page-head"><div><span className="eyebrow">Legacy team view</span><h1>Team overview</h1><p>Aggregate movement and advisory context across unverified tracks.</p></div><span className="match-clock"><Timer />{(data.match_duration_seconds / 60).toFixed(1)} min</span></div>
-      <LegacyWarning warnings={data.warnings} />
+      <div className="page-head"><div><span className="eyebrow">Advisory team view</span><h1>Team overview</h1><p>Aggregate movement and advisory context across unverified tracks.</p></div><span className="match-clock"><Timer />{(data.match_duration_seconds / 60).toFixed(1)} min</span></div>
+      <AnalysisWarning warnings={data.warnings} legacy={data.legacy} />
       <div className="metrics-grid">
         <MetricCard label="Unverified tracks" value={String(data.total_tracks)} detail={`${data.scored_tracks} advisory-scored`} />
         <MetricCard label="Aggregate distance" value={formatDistance(data.distance.total_m)} detail={`${formatDistance(data.distance.average_per_track_m)} average`} />

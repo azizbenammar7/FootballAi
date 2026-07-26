@@ -4,6 +4,8 @@ import AppShell from './components/AppShell'
 import { LoadingState } from './components/ui'
 
 const AboutPage = lazy(() => import('./pages/AboutPage'))
+const NewAnalysisPage = lazy(() => import('./pages/NewAnalysisPage'))
+const RunProgressPage = lazy(() => import('./pages/RunProgressPage'))
 const RunDetailPage = lazy(() => import('./pages/RunDetailPage'))
 const RunsPage = lazy(() => import('./pages/RunsPage'))
 const TeamPage = lazy(() => import('./pages/TeamPage'))
@@ -16,7 +18,9 @@ export default function App() {
         <Route element={<AppShell />}>
           <Route index element={<Navigate to="/runs" replace />} />
           <Route path="runs" element={<RunsPage />} />
+          <Route path="analyses/new" element={<NewAnalysisPage />} />
           <Route path="runs/:runId" element={<RunDetailPage />} />
+          <Route path="runs/:runId/progress" element={<RunProgressPage />} />
           <Route path="runs/:runId/team" element={<TeamPage />} />
           <Route path="runs/:runId/tracks/:playerId" element={<TrackPage />} />
           <Route path="about" element={<AboutPage />} />

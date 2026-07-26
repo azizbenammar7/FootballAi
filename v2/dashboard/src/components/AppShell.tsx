@@ -1,4 +1,4 @@
-import { Activity, CircleHelp, Database, Menu, X } from 'lucide-react'
+import { Activity, CircleHelp, Database, Menu, PlusCircle, X } from 'lucide-react'
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 
@@ -19,6 +19,7 @@ export default function AppShell() {
           <div><strong>FootballAi</strong><small>Analysis workspace · V2</small></div>
         </div>
         <nav aria-label="Primary navigation" onClick={() => setOpen(false)}>
+          <NavLink to="/analyses/new"><PlusCircle aria-hidden="true" />New Analysis</NavLink>
           <NavLink to="/runs"><Database aria-hidden="true" />Analysis runs</NavLink>
           <NavLink to="/about"><CircleHelp aria-hidden="true" />System &amp; about</NavLink>
         </nav>

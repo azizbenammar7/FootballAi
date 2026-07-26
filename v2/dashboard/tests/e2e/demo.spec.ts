@@ -12,7 +12,7 @@ test('local legacy demo navigates without browser errors', async ({ page }) => {
   await expect(page.getByText('legacy v1').first()).toBeVisible()
   await page.screenshot({ path: 'test-results/runs-overview.png', fullPage: true })
 
-  await page.getByRole('link', { name: /^View run/ }).first().click()
+  await page.locator('.run-row').filter({ hasText: 'legacy v1' }).getByRole('link', { name: /^View run/ }).click()
   await expect(page.getByText('Legacy V1 analysis')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Stage timeline' })).toBeVisible()
   await page.screenshot({ path: 'test-results/run-detail.png', fullPage: true })

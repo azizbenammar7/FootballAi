@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Sequence
 from urllib.parse import urlparse
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import UUID4
 
@@ -20,17 +20,26 @@ from footballai_v2.api.models import (
     AttemptLink,
     HealthResponse,
     ManifestResponse,
+    OperationResponse,
+    PipelineProfile,
+    PipelineProfileListResponse,
     PlayerDetailResponse,
     PlayerListResponse,
     ProvenanceView,
     RunDetailResponse,
     RunListItem,
     RunListResponse,
+    ProgressResponse,
+    QueuedRunResponse,
     StageView,
     TeamSummaryResponse,
 )
-from footballai_v2.contracts.v1 import ANALYSIS_RUN_CONTRACT_VERSION, AnalysisRun
-from footballai_v2.storage import LocalAnalysisRunStore, RunNotFoundError
+from footballai_v2.contracts.v1 import ANALYSIS_RUN_CONTRACT_VERSION, AnalysisRun, AnalysisRunStatus, InvalidStatusTransition
+from footballai_v2.execution.adapters import profile_catalog
+from footballai_v2.execution.cancellation import CancellationStore
+from footballai_v2.execution.coordinator import AnalysisCoordinator, ExecutionSettings, UploadValidationError
+from footballai_v2.execution.progress import active_stage, overall_progress
+from footballai_v2.storage import LocalAnalysisRunStore, ManifestConflictError, RunNotFoundError
 
 
 logger = logging.getLogger("footballai_v2.api")
@@ -96,14 +105,19 @@ def _validate_local_origins(origins: Sequence[str]) -> list[str]:
 def create_app(
     run_root: str | Path,
     *,
+    queue_root: str | Path | None = None,
     allowed_origins: Sequence[str] = ("http://localhost:5173",),
+    settings: ExecutionSettings | None = None,
 ) -> FastAPI:
     """Create a local, read-oriented API bound to one configured run root."""
-    store = LocalAnalysisRunStore(run_root)
+    execution_settings = settings or ExecutionSettings.from_environment(run_root, queue_root)
+    coordinator = AnalysisCoordinator(execution_settings)
+    store = coordinator.store
+    cancellations = CancellationStore(store.root)
     app = FastAPI(
         title="FootballAi V2 local analysis API",
         version="1.0.0",
-        description="Read-only local API for versioned FootballAi analysis runs.",
+        description="Local upload, execution-control, and results API for versioned FootballAi analysis runs.",
     )
     app.state.run_store = store
     origins = _validate_local_origins(allowed_origins)
@@ -111,7 +125,7 @@ def create_app(
         CORSMiddleware,
         allow_origins=origins,
         allow_credentials=False,
-        allow_methods=["GET"],
+        allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["Accept", "Content-Type", "X-Request-ID"],
     )
 
@@ -152,6 +166,38 @@ def create_app(
             service="footballai-v2-local-api",
             contract_version=ANALYSIS_RUN_CONTRACT_VERSION,
         )
+
+    @app.get("/api/v1/pipeline-profiles", response_model=PipelineProfileListResponse, summary="List local execution profiles")
+    def pipeline_profiles() -> PipelineProfileListResponse:
+        return PipelineProfileListResponse(profiles=[PipelineProfile(**item) for item in profile_catalog(include_test=execution_settings.allow_test_profiles)])
+
+    @app.post(
+        "/api/v1/analyses", response_model=QueuedRunResponse, status_code=202,
+        summary="Stream a validated football video into a queued V2 analysis",
+        description="The request stores and probes one bounded video, creates an immutable attempt, and enqueues only a safe job reference. Analysis runs in the separate worker.",
+    )
+    def create_analysis(
+        video: UploadFile = File(description="One MP4, MOV, MKV, or WebM football video."),
+        match_name: str = Form(min_length=1, max_length=160),
+        home_team: str = Form(default="", max_length=100), away_team: str = Form(default="", max_length=100),
+        competition: str = Form(default="", max_length=120), match_date: str = Form(default="", max_length=32),
+        venue: str = Form(default="", max_length=160), notes: str = Form(default="", max_length=1000),
+        data_origin: str = Form(default="real", max_length=32), pipeline_profile: str = Form(default="demo_fast", max_length=64),
+    ) -> QueuedRunResponse:
+        temporary = None
+        if not match_name.strip():
+            raise HTTPException(status_code=422, detail={"error_code": "invalid_metadata", "message": "Match name cannot be blank."})
+        try:
+            temporary, checksum, size, extension = coordinator.stream_upload(video.file, video.filename or "")
+            run = coordinator.create_analysis(
+                temporary, filename=video.filename or "", checksum=checksum, size_bytes=size, extension=extension,
+                content_type=video.content_type or "application/octet-stream",
+                metadata={"match_name": match_name.strip(), "home_team": home_team.strip(), "away_team": away_team.strip(), "competition": competition.strip(), "match_date": match_date.strip(), "venue": venue.strip(), "notes": notes.strip(), "data_origin": data_origin, "pipeline_profile": pipeline_profile},
+            )
+        except UploadValidationError as exc:
+            if temporary is not None: temporary.unlink(missing_ok=True)
+            raise HTTPException(status_code=413 if exc.code == "upload_too_large" else 422, detail={"error_code": exc.code, "message": exc.safe_message}) from exc
+        return _queued_response(run)
 
     @app.get("/api/v1/runs", response_model=RunListResponse)
     def list_runs() -> RunListResponse:
@@ -226,6 +272,54 @@ def create_app(
             stages=[_stage_view(item) for item in run.stages],
         )
 
+    @app.get("/api/v1/runs/{run_id}/progress", response_model=ProgressResponse, summary="Read weighted stage progress")
+    def progress(run_id: UUID4) -> ProgressResponse:
+        run = load_run(run_id)
+        updated = run.completed_at or next((stage.finished_at or stage.started_at for stage in reversed(run.stages) if stage.finished_at or stage.started_at), None) or run.created_at
+        can_clone = False
+        try:
+            store.input_path(run.run_id); can_clone = True
+        except (ManifestConflictError, RunNotFoundError):
+            pass
+        return ProgressResponse(
+            run_id=run.run_id, logical_analysis_id=run.logical_analysis_id, attempt_number=run.attempt_number,
+            status=run.status.value, overall_progress_percent=overall_progress(run), active_stage=active_stage(run),
+            stages=[_stage_view(item) for item in run.stages], created_at=_timestamp(run.created_at), updated_at=_timestamp(updated),
+            can_cancel=run.status in {AnalysisRunStatus.QUEUED, AnalysisRunStatus.RUNNING},
+            can_retry=run.status in {AnalysisRunStatus.FAILED, AnalysisRunStatus.PARTIAL},
+            can_create_new_from_input=can_clone,
+        )
+
+    @app.post("/api/v1/runs/{run_id}/cancel", response_model=OperationResponse, summary="Persistently request cancellation")
+    def cancel(run_id: UUID4) -> OperationResponse:
+        run = load_run(run_id)
+        if run.status.is_terminal:
+            raise HTTPException(status_code=409, detail="Terminal analysis attempts cannot be cancelled")
+        if run.status is AnalysisRunStatus.QUEUED:
+            coordinator.queue.cancel(run.run_id)
+            store.save(run.cancel(reason="Cancelled before execution."))
+            return OperationResponse(run_id=run.run_id, status="cancelled", message="Queued analysis cancelled.")
+        cancellations.request(run.run_id)
+        return OperationResponse(run_id=run.run_id, status="running", message="Cancellation requested; the worker will stop at a safe checkpoint.")
+
+    @app.post("/api/v1/runs/{run_id}/retry", response_model=QueuedRunResponse, status_code=202, summary="Create a new retry attempt")
+    def retry(run_id: UUID4) -> QueuedRunResponse:
+        load_run(run_id)
+        try:
+            return _queued_response(coordinator.retry(str(run_id)))
+        except InvalidStatusTransition as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except (ManifestConflictError, OSError) as exc:
+            raise HTTPException(status_code=409, detail="The source input could not be reused safely.") from exc
+
+    @app.post("/api/v1/runs/{run_id}/clone", response_model=QueuedRunResponse, status_code=202, summary="Create a new logical analysis from uploaded input")
+    def clone(run_id: UUID4) -> QueuedRunResponse:
+        load_run(run_id)
+        try:
+            return _queued_response(coordinator.clone(str(run_id)))
+        except (ManifestConflictError, RunNotFoundError, OSError) as exc:
+            raise HTTPException(status_code=409, detail="This run has no reusable uploaded input.") from exc
+
     @app.get("/api/v1/runs/{run_id}/manifest", response_model=ManifestResponse)
     def manifest(run_id: UUID4) -> ManifestResponse:
         return ManifestResponse(manifest=_public_manifest(load_run(run_id)))
@@ -272,3 +366,7 @@ def create_app(
             raise HTTPException(status_code=404, detail="Player track not found") from exc
 
     return app
+
+
+def _queued_response(run: AnalysisRun) -> QueuedRunResponse:
+    return QueuedRunResponse(run_id=run.run_id, logical_analysis_id=run.logical_analysis_id, attempt_number=run.attempt_number, status=run.status.value, progress_url=f"/api/v1/runs/{run.run_id}/progress")

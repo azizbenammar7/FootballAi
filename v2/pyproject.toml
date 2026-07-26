@@ -14,10 +14,12 @@ test = [
   "httpx2==2.9.1",
   "jsonschema==4.25.1",
   "pytest==8.4.1",
+  "python-multipart==0.0.22",
 ]
 api = [
   "fastapi==0.140.0",
   "uvicorn==0.51.0",
+  "python-multipart==0.0.22",
 ]
 
 [tool.setuptools.packages.find]

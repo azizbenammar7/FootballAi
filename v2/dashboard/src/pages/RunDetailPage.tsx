@@ -1,7 +1,7 @@
 import { Box, CheckCircle2, ChevronRight, Clock3, FileCheck2, GitBranch, ShieldAlert } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { useApi } from '../api'
-import { ErrorState, LegacyWarning, LoadingState, OriginBadge, Panel, StatusBadge, formatDate, shortId } from '../components/ui'
+import { AnalysisWarning, ErrorState, LoadingState, OriginBadge, Panel, StatusBadge, formatDate, shortId } from '../components/ui'
 import type { ArtifactListResponse, RunDetail } from '../types'
 
 export default function RunDetailPage() {
@@ -18,9 +18,9 @@ export default function RunDetailPage() {
         <div><span className="eyebrow">Immutable attempt #{run.attempt_number}</span><h1>{shortId(run.run_id)}</h1><p>{run.contract_version} · created {formatDate(run.created_at)}</p></div>
         <div className="badge-row"><StatusBadge value={run.status} /><OriginBadge value={run.origin} /></div>
       </div>
-      {run.origin === 'legacy_v1' && <LegacyWarning warnings={run.warnings} />}
+      {run.warnings.length > 0 && <AnalysisWarning warnings={run.warnings} legacy={run.origin === 'legacy_v1'} />}
       <div className="action-strip">
-        <Link className="button button--primary" to={`/runs/${run.run_id}/team`}>Open team overview <ChevronRight /></Link>
+        <Link className="button button--primary" to={run.status === 'succeeded' || run.status === 'partial' ? `/runs/${run.run_id}/team` : `/runs/${run.run_id}/progress`}>{run.status === 'succeeded' || run.status === 'partial' ? 'Open team overview' : 'Open live progress'} <ChevronRight /></Link>
         <span><FileCheck2 />{artifacts.data?.artifacts.filter((item) => item.integrity_state === 'verified').length ?? 0} verified artifacts</span>
       </div>
       <div className="detail-grid">
@@ -38,7 +38,7 @@ export default function RunDetailPage() {
         <div className="detail-stack">
           <Panel>
             <div className="panel-head"><div><span className="eyebrow">History</span><h2>Attempt chain</h2></div><GitBranch /></div>
-            <div className="attempt-chain">{run.attempt_chain.map((attempt) => <div key={attempt.run_id}><span>Attempt {attempt.attempt_number}</span><strong>{shortId(attempt.run_id)}</strong><StatusBadge value={attempt.status} /></div>)}</div>
+            <div className="attempt-chain">{run.attempt_chain.map((attempt) => <Link key={attempt.run_id} to={`/runs/${attempt.run_id}/progress`}><span>Attempt {attempt.attempt_number}</span><strong>{shortId(attempt.run_id)}</strong><StatusBadge value={attempt.status} /></Link>)}</div>
           </Panel>
           <Panel>
             <div className="panel-head"><div><span className="eyebrow">Source</span><h2>Provenance</h2></div><Box /></div>
