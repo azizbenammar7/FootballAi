@@ -1,0 +1,23 @@
+{
+  "7": {
+    "track_id": 7,
+    "risk_score": 25,
+    "risk_flag": "LOW",
+    "coverage_frac": 1.0,
+    "fatigue_indicators": {
+      "speed_decay_slope_ms_per_block": -0.2,
+      "sprint_drop_pct": 0.0,
+      "distance_drop_pct": 0.0,
+      "h1_sprints": 1,
+      "h2_sprints": 1,
+      "h1_distance_m": 61.7,
+      "h2_distance_m": 61.7
+    },
+    "score_breakdown": {
+      "speed_decay": 0.0,
+      "sprint_drop": 0.0,
+      "distance_drop": 0.0,
+      "hsr_load": 25.0
+    }
+  }
+}
