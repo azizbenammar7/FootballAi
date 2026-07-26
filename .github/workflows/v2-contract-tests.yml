@@ -97,6 +97,12 @@ jobs:
       - name: Install bounded Chromium runtime
         run: npx playwright install --with-deps chromium
 
+      - name: Install generated-fixture media tool
+        working-directory: ${{ github.workspace }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ffmpeg
+
       - name: Confirm generated-fixture media tool
         run: ffmpeg -version
 
