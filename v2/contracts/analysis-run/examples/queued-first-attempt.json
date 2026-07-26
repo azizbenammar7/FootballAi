@@ -1,0 +1,40 @@
+{
+  "contract_version": "footballai.analysis-run/v1",
+  "logical_analysis_id": "11111111-1111-4111-8111-111111111111",
+  "run_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
+  "attempt_number": 1,
+  "previous_attempt_run_id": null,
+  "status": "queued",
+  "data_origin": "synthetic",
+  "input": {
+    "uri": "fixture://synthetic/match-001.mp4",
+    "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "media_type": "video/mp4"
+  },
+  "code": {
+    "repository": "https://github.com/example/FootballAi",
+    "revision": "84b5457e0058b64fb2cbf31ea795c168debdcae5",
+    "dirty": false
+  },
+  "pipeline_version": "2.0.0",
+  "parameters": {"effective_fps": 5},
+  "models": [],
+  "artifacts": [],
+  "stages": [
+    {
+      "stage_id": "ingestion-1",
+      "stage_name": "ingestion",
+      "required": true,
+      "status": "queued",
+      "progress_percent": 0,
+      "attempt_number": 1,
+      "started_at": null,
+      "finished_at": null,
+      "produced_artifact_ids": [],
+      "error": null,
+      "performance_metrics": {},
+      "message": "Waiting for a local worker."
+    }
+  ],
+  "created_at": "2026-07-26T10:00:00Z"
+}
