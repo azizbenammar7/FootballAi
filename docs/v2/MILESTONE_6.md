@@ -19,6 +19,12 @@ Delivered:
   warnings;
 - queue, upload, worker, API, component, build, and Playwright workflow tests.
 
+Post-milestone runtime hardening adds an exact optional `v1_compat` dependency
+lock, explicit ignored YOLOv8m weight management, structured readiness and
+device diagnostics, safe empty-detection handling, provenance for every
+effective setting, and bounded manual real-inference smoke coverage. Normal CI
+still runs without ML dependencies or model downloads.
+
 Security boundaries include local-only CORS, no authentication-free remote
 deployment, no arbitrary shell command strings, no user-derived paths, no
 unbounded media defaults, no log endpoint, and Git ignores for inputs and

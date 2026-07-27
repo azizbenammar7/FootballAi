@@ -14,7 +14,9 @@ export interface RunListResponse { runs: RunListItem[] }
 
 export interface PipelineProfile {
   profile_id: string; display_name: string; description: string; available: boolean
-  missing_requirements: string[]; warnings: string[]; purpose: string; gpu: string
+  readiness_status: string; readiness_message: string; setup_command: string | null
+  missing_requirements: string[]; runtime_errors: string[]; runtime: Record<string, unknown>
+  warnings: string[]; purpose: string; gpu: string
 }
 export interface PipelineProfileList { profiles: PipelineProfile[] }
 

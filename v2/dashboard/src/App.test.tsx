@@ -34,8 +34,8 @@ const player = {
 }
 const demoWarning = 'Synthetic workflow result. This run demonstrates the full upload, processing, progress and dashboard workflow.'
 const profiles = { profiles: [
-  { profile_id: 'demo_fast', display_name: 'Demo fast', description: 'Deterministic workflow.', available: true, missing_requirements: [], warnings: [demoWarning], purpose: 'Workflow validation', gpu: 'not_required' },
-  { profile_id: 'v1_compat', display_name: 'V1-compatible analysis', description: 'Historical algorithm adapter.', available: false, missing_requirements: ['ultralytics'], warnings: ['V1-compatible analysis'], purpose: 'CV execution', gpu: 'optional' },
+  { profile_id: 'demo_fast', display_name: 'Demo fast', description: 'Deterministic workflow.', available: true, readiness_status: 'ready', readiness_message: 'Ready.', setup_command: null, missing_requirements: [], runtime_errors: [], runtime: { device: 'not_required', model: null }, warnings: [demoWarning], purpose: 'Workflow validation', gpu: 'not_required' },
+  { profile_id: 'v1_compat', display_name: 'V1-compatible analysis', description: 'Historical algorithm adapter.', available: false, readiness_status: 'missing_python_packages', readiness_message: 'V1-compatible analysis is unavailable. Run: make v2-v1-compat-setup', setup_command: 'make v2-v1-compat-setup', missing_requirements: ['ultralytics'], runtime_errors: [], runtime: { device: 'unavailable', model: 'yolov8m.pt' }, warnings: ['V1-compatible analysis'], purpose: 'CV execution', gpu: 'optional' },
 ] }
 const progress = {
   run_id: run.run_id, logical_analysis_id: run.logical_analysis_id, attempt_number: 1, status: 'succeeded',
@@ -127,8 +127,16 @@ describe('dashboard states and analysis views', () => {
   it('shows profile availability and missing requirements', async () => {
     vi.mocked(fetch).mockReturnValue(jsonResponse(profiles))
     renderRoute('/analyses/new')
-    expect(await screen.findByText(/V1-compatible analysis unavailable — missing: ultralytics/)).toBeInTheDocument()
+    expect(await screen.findByText(/V1-compatible analysis unavailable \(missing_python_packages\)/)).toBeInTheDocument()
+    expect(screen.getAllByText(/make v2-v1-compat-setup/).length).toBeGreaterThan(0)
     expect(screen.getByRole('option', { name: /V1-compatible analysis — unavailable/ })).toBeDisabled()
+  })
+
+  it('enables the V1-compatible option only when readiness is ready', async () => {
+    const readyProfiles = { profiles: profiles.profiles.map((profile) => profile.profile_id === 'v1_compat' ? { ...profile, available: true, readiness_status: 'ready', readiness_message: 'V1-compatible analysis is ready.', missing_requirements: [], runtime: { device: 'mps', model: 'yolov8m.pt' } } : profile) }
+    vi.mocked(fetch).mockReturnValue(jsonResponse(readyProfiles))
+    renderRoute('/analyses/new')
+    expect(await screen.findByRole('option', { name: 'V1-compatible analysis' })).toBeEnabled()
   })
 
   it('renders completed live progress, attempt history and synthetic warning', async () => {

@@ -12,9 +12,10 @@ from pathlib import Path
 from typing import BinaryIO, Mapping
 
 from footballai_v2.contracts.v1 import (
-    AnalysisRun, CodeReference, DataOrigin, InputReference, StageExecution, StageName, StageStatus, StructuredError, utc_now,
+    AnalysisRun, CodeReference, DataOrigin, InputReference, ModelReference, StageExecution, StageName, StageStatus, StructuredError, utc_now,
 )
 from footballai_v2.execution.adapters import profile_catalog
+from footballai_v2.execution.adapters.v1_compat_runtime import check_v1_compat_readiness
 from footballai_v2.execution.contracts import ExecutionJob
 from footballai_v2.execution.queue import LocalFilesystemQueue
 from footballai_v2.storage import LocalAnalysisRunStore, ManifestConflictError
@@ -128,9 +129,18 @@ class AnalysisCoordinator:
             temporary.unlink(missing_ok=True); raise UploadValidationError("invalid_origin", "Legacy origin is reserved for imported artifacts.")
         warnings = list(profile_info["warnings"])
         parameters = {**dict(metadata), "pipeline_profile": profile, "original_filename": filename, "upload_size_bytes": size_bytes, "video_probe": probe, "quality_warnings": warnings}
+        models: tuple[ModelReference, ...] = ()
+        if profile == "v1_compat":
+            readiness = check_v1_compat_readiness()
+            if not readiness.ready or readiness.config is None:
+                temporary.unlink(missing_ok=True)
+                raise UploadValidationError("profile_unavailable", "Selected pipeline profile is unavailable on this machine.")
+            parameters["v1_compat"] = readiness.config.public_dict()
+            models = (ModelReference("yolov8m.pt", "ultralytics-yolov8m", readiness.config.model_sha256),)
         run = AnalysisRun.new(
             data_origin=origin, input=InputReference(f"run-input://source{extension}", checksum, MEDIA_TYPES[extension]),
             code=self._code_reference(), pipeline_version=f"{profile}/1.0.0", parameters=parameters,
+            models=models,
             stages=self._queued_stages(1, profile),
         )
         run_dir = self.store.create(run)

@@ -32,6 +32,21 @@ measurements. `v1_compat` only becomes selectable when its optional local CV
 dependencies and existing model weights are present; it never downloads them
 as part of tests.
 
+To prepare and start the optional preserved-algorithm profile:
+
+```bash
+make v2-v1-compat-setup
+make v2-v1-compat-readiness
+make v2-demo-v1-compat
+```
+
+The setup uses `.venv-test`, prepares ignored `.models/yolov8m.pt`, and is the
+only command allowed to download that model when absent. API, worker, seed,
+and readiness processes all use the same `FOOTBALLAI_V2_PYTHON` executable.
+The combined demo refuses to start until readiness is `ready`, preserves
+user-provided run/queue/model/device overrides, and prints device, model, API,
+and dashboard information. See [V1_COMPAT_SETUP.md](V1_COMPAT_SETUP.md).
+
 Complete validation:
 
 ```bash

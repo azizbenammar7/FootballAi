@@ -22,7 +22,12 @@ class PipelineProfile(PublicModel):
     display_name: str
     description: str
     available: bool
+    readiness_status: str
+    readiness_message: str
+    setup_command: str | None
     missing_requirements: list[str]
+    runtime_errors: list[str]
+    runtime: dict[str, Any]
     warnings: list[str]
     purpose: str
     gpu: str
