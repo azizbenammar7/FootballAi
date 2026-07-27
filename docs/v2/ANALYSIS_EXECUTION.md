@@ -43,9 +43,19 @@ copied source bytes. Cancelled and succeeded attempts cannot retry.
 - `demo_fast`: deterministic results seeded by input checksum and match name.
   It has no ML dependency and always carries the synthetic-workflow warning.
 - `v1_compat`: runs the preserved YOLOv8/ByteTrack, metrics, and advisory
-  scripts inside `<run>/tmp/v1-compat`. All outputs stay under the V2 run. It
-  is unavailable when optional packages or local weights are missing and does
-  not claim V2 identity resolution, calibration, or scientific validation.
+  algorithm family inside `<run>/tmp/v1-compat`. V2 controls the explicit
+  model, device, FPS, image size, and confidence; preserved V1 statistics and
+  fatigue scripts run unchanged when tracking produces usable rows. All
+  outputs and caches stay under the V2 run. Empty detections produce honest
+  empty artifacts. The worker is offline and cannot auto-download weights or
+  missing packages. This profile does not claim V2 identity resolution,
+  calibration, or scientific validation.
+
+Readiness distinguishes missing Python packages, missing system tools, missing
+or invalid model weights, unsupported Python/platform, runtime import/device
+errors, and `ready`. Public responses contain versions, selected device, model
+name, and checksum, but never an absolute local model path. The dashboard only
+enables the option for `ready` and otherwise shows `make v2-v1-compat-setup`.
 
 ## Resource configuration
 
@@ -55,6 +65,17 @@ copied source bytes. Cancelled and succeeded attempts cannot retry.
 `FOOTBALLAI_WORKER_ID`, `FOOTBALLAI_WORKER_POLL_SECONDS`, and
 `FOOTBALLAI_JOB_CLAIM_TIMEOUT_SECONDS` control local execution. Defaults are
 bounded for development.
+
+V1 compatibility additionally uses
+`FOOTBALLAI_V1_COMPAT_MODEL_PATH`,
+`FOOTBALLAI_V1_COMPAT_DEVICE` (`auto`, `mps`, `cpu`, or `cuda`),
+`FOOTBALLAI_V1_COMPAT_TARGET_FPS`,
+`FOOTBALLAI_V1_COMPAT_IMAGE_SIZE`, and
+`FOOTBALLAI_V1_COMPAT_CONFIDENCE`. Effective values and model checksum are
+recorded in immutable run provenance. On Apple Silicon, `auto` selects MPS
+when available and otherwise selects CPU; an explicitly unavailable device
+fails before execution. A runtime MPS failure is surfaced and never silently
+replayed on CPU.
 
 Artifacts use stable schemas `footballai.team-summary/v1`,
 `footballai.track-summary/v1`, `footballai.track-detail/v1`,

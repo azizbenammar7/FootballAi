@@ -25,6 +25,18 @@ indicators; generated workflow values are persistently labeled synthetic. See
 [`docs/v2/LOCAL_DEMO.md`](docs/v2/LOCAL_DEMO.md) and
 [`docs/v2/ANALYSIS_EXECUTION.md`](docs/v2/ANALYSIS_EXECUTION.md).
 
+For genuine local YOLOv8m + ByteTrack compatibility execution:
+
+```bash
+make v2-v1-compat-setup
+make v2-v1-compat-smoke
+make v2-demo-v1-compat
+```
+
+See [`docs/v2/V1_COMPAT_SETUP.md`](docs/v2/V1_COMPAT_SETUP.md). `v1_compat`
+is a preserved-algorithm compatibility profile. It is not the future
+detector-neutral V2 production engine.
+
 The remaining README is the preserved V1 technical-test documentation.
 
 End-to-end pipeline: detect & track players in a full 90-minute match →
