@@ -31,6 +31,9 @@ jobs:
       - name: Validate Python syntax
         run: python -m compileall -q v2/src v2/tests tests pipeline scripts dashboard
 
+      - name: Reject tracked model weights and uploaded videos
+        run: ./v2/dev/check_no_tracked_models.sh
+
       - name: Run V1 characterization and V2 contract tests
         run: PYTHONPATH=v2/src python -m pytest -q -ra
 
