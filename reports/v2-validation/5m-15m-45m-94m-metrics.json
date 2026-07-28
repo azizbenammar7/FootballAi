@@ -1,0 +1,722 @@
+{
+  "generated_at": "2026-07-28T16:49:55.920305Z",
+  "note": "V2 v1_compat 5/15/45/94-minute full-match acceptance comparison. Sources referenced by label only; no private absolute paths. Runs live under the gitignored run root.",
+  "acceptance_decision": "PASS WITH LIMITATIONS",
+  "frame_overlap_5_15_45": {
+    "method": "ffmpeg -ss <t> single-frame extraction, 64x64 grayscale, 16x16 average-hash (256-bit), Hamming distance",
+    "timestamps_s": [
+      1,
+      30,
+      120,
+      240
+    ],
+    "hamming_out_of_256": {
+      "t1": {
+        "5v15": 0,
+        "5v45": 0,
+        "15v45": 0
+      },
+      "t30": {
+        "5v15": 1,
+        "5v45": 3,
+        "15v45": 2
+      },
+      "t120": {
+        "5v15": 0,
+        "5v45": 0,
+        "15v45": 0
+      },
+      "t240": {
+        "5v15": 0,
+        "5v45": 0,
+        "15v45": 0
+      }
+    },
+    "note_byte_identical": "downscaled frame at t=1 is byte-identical for 15m and 45m (md5 2a5ffead57)",
+    "conclusion": "Temporal overlap VERIFIED. All three clips share the same opening content from the same match start. 5m is opening ~4.6min, 15m opening ~15.3min, 45m full ~46.2min first half.",
+    "caveat": "V1 keeps top-N longest tracks over the WHOLE clip, so scored-track aggregates are not directly comparable across differing durations even on overlapping frames; ByteTrack IDs differ between independent runs. Compare detection density and spatial/aggregate behavior, not track IDs."
+  },
+  "frame_overlap_45_vs_94": {
+    "method": "ffmpeg -ss <t> single-frame extraction from 45m stored input (720p) and 94m source (1080p), 64x64 grayscale, 16x16 average-hash (256-bit), Hamming distance",
+    "reference_run": "aca8de80-2fb2-4ce4-953a-5af33259ac48 (45-minute)",
+    "timestamps_s": [
+      1,
+      30,
+      120,
+      240,
+      900,
+      2400
+    ],
+    "hamming_45_vs_94_out_of_256": {
+      "1": 3,
+      "30": 2,
+      "120": 0,
+      "240": 1,
+      "900": 4,
+      "2400": 0
+    },
+    "note": "Distances 0-4/256 despite 720p vs 1080p resolution difference and independent encodes.",
+    "conclusion": "VERIFIED: the 94-minute full-match video contains the same opening first half as the 45-minute run (same match, same kickoff). By transitivity with the prior 5m<15m<45m verification, all four clips share the same opening.",
+    "caveat": "Overlap verified only within the shared 0-2400s window (inside the 45m clip). The 94m second half has no reference to compare. ByteTrack IDs are independent across runs; compare aggregate/spatial behavior, not track IDs, and note V1 selects top-N tracks over the whole clip so per-track rosters differ by horizon."
+  },
+  "source_metadata": {
+    "5-minute source": {
+      "resolution": "1280x720",
+      "codec": "h264",
+      "src_fps": 30
+    },
+    "15-minute source": {
+      "resolution": "1280x720",
+      "codec": "h264",
+      "src_fps": 30
+    },
+    "45-minute source": {
+      "resolution": "1280x720",
+      "codec": "h264",
+      "src_fps": 30
+    },
+    "94-minute full-match source": {
+      "resolution": "1920x1080",
+      "codec": "h264",
+      "src_fps": 30
+    }
+  },
+  "runs": [
+    {
+      "label": "5-minute source",
+      "identity": {
+        "run_id": "0593bf4d-942a-4d0d-a577-f38ebb9e32d1",
+        "logical_analysis_id": "928cd088-7aa7-46c2-bc85-50d6b1ea3f93",
+        "attempt_number": 1,
+        "status": "succeeded",
+        "origin": "real",
+        "match_name": "Belgium vs Japan",
+        "home_team": "Belgium",
+        "away_team": "Japan",
+        "competition": "WC",
+        "pipeline_version": "v1_compat/1.0.0"
+      },
+      "input": {
+        "duration_s": 275.833,
+        "byte_size": 316596726,
+        "sha256": "13fca791280a9f91a550340d7a610f1c8764843ccd22a711c9e45786c1af240a",
+        "container": "3g2"
+      },
+      "config": {
+        "selected_device": "mps",
+        "requested_device": "auto",
+        "model_name": "yolov8m.pt",
+        "model_sha256": "5d4a90cdc7a21786cc59cd19778e9eafff836df9e2da32524737c7ee6efe4fe5",
+        "target_fps": 5.0,
+        "image_size": 1280,
+        "confidence": 0.2,
+        "m_per_px": 0.086349,
+        "effective_fps": 5.0,
+        "sprint_speed_threshold_ms": 5.5,
+        "match_duration_s": 274.2
+      },
+      "execution": {
+        "created_at": "2026-07-27T19:12:50.025667Z",
+        "started_at": "2026-07-27T19:12:50.195695Z",
+        "completed_at": "2026-07-27T19:17:51.880578Z",
+        "total_processing_s": 301.68,
+        "queue_wait_s": 0.17
+      },
+      "stages": [
+        {
+          "stage_id": "ingestion",
+          "status": "succeeded",
+          "duration_s": 0.126,
+          "progress": 100,
+          "started_at": "2026-07-27T19:12:50.196884Z",
+          "finished_at": "2026-07-27T19:12:50.323142Z"
+        },
+        {
+          "stage_id": "video_validation",
+          "status": "succeeded",
+          "duration_s": 0.126,
+          "progress": 100,
+          "started_at": "2026-07-27T19:12:50.325368Z",
+          "finished_at": "2026-07-27T19:12:50.451621Z"
+        },
+        {
+          "stage_id": "detection",
+          "status": "succeeded",
+          "duration_s": 300.868,
+          "progress": 100,
+          "started_at": "2026-07-27T19:12:50.455001Z",
+          "finished_at": "2026-07-27T19:17:51.323147Z"
+        },
+        {
+          "stage_id": "tracking",
+          "status": "succeeded",
+          "duration_s": 0.125,
+          "progress": 100,
+          "started_at": "2026-07-27T19:17:51.327952Z",
+          "finished_at": "2026-07-27T19:17:51.453214Z"
+        },
+        {
+          "stage_id": "identity_resolution",
+          "status": "skipped",
+          "duration_s": null,
+          "progress": 0,
+          "started_at": null,
+          "finished_at": "2026-07-27T19:17:51.454895Z"
+        },
+        {
+          "stage_id": "pitch_calibration",
+          "status": "skipped",
+          "duration_s": null,
+          "progress": 0,
+          "started_at": null,
+          "finished_at": "2026-07-27T19:17:51.456205Z"
+        },
+        {
+          "stage_id": "metrics",
+          "status": "succeeded",
+          "duration_s": 0.135,
+          "progress": 100,
+          "started_at": "2026-07-27T19:17:51.457350Z",
+          "finished_at": "2026-07-27T19:17:51.592530Z"
+        },
+        {
+          "stage_id": "workload_advisory",
+          "status": "succeeded",
+          "duration_s": 0.133,
+          "progress": 100,
+          "started_at": "2026-07-27T19:17:51.604544Z",
+          "finished_at": "2026-07-27T19:17:51.737146Z"
+        },
+        {
+          "stage_id": "artifact_publication",
+          "status": "succeeded",
+          "duration_s": 0.126,
+          "progress": 100,
+          "started_at": "2026-07-27T19:17:51.738630Z",
+          "finished_at": "2026-07-27T19:17:51.864767Z"
+        }
+      ],
+      "output": {
+        "detection_count": 7399,
+        "frames_processed": 1379,
+        "total_track_count": 401,
+        "scored_track_count": 23,
+        "insufficient_track_count": 378,
+        "max_track_observations": 64,
+        "mean_obs_per_raw_track": 18.45,
+        "fragmentation_ratio_raw_per_scored": 17.43,
+        "insufficient_track_pct": 94.26,
+        "aggregate_distance_m": 1185.88,
+        "sprint_count": 31,
+        "advisory_distribution": {
+          "HIGH": 10,
+          "MEDIUM": 9,
+          "LOW": 4
+        },
+        "advisory_scored_tracks": 23,
+        "artifact_count": 7,
+        "artifact_total_bytes": 210924,
+        "warning_count": 1,
+        "mean_scored_speed_ms": 2.79,
+        "mean_scored_active_time_s": 189.37
+      },
+      "normalized": {
+        "video_minutes": 4.597,
+        "proc_s_per_video_min": 65.62,
+        "proc_to_video_ratio": 1.0937,
+        "effective_fps_over_processing": 4.571,
+        "detections_per_video_min": 1609.452,
+        "detections_per_frame": 5.365,
+        "tracks_per_video_min": 87.227,
+        "scored_tracks_per_video_min": 5.003,
+        "distance_per_video_min": 257.956,
+        "sprints_per_video_min": 6.743,
+        "input_mb_per_video_min": 68.87,
+        "artifact_mb_per_video_min": 0.0459
+      },
+      "integrity": {
+        "checked": 7,
+        "ok": 7,
+        "missing": [],
+        "checksum_fail": []
+      }
+    },
+    {
+      "label": "15-minute source",
+      "identity": {
+        "run_id": "517161f6-ca9d-496e-aab3-6f72de3e6fd2",
+        "logical_analysis_id": "ba993347-6a98-4cbd-ac10-d4ae45174aa9",
+        "attempt_number": 1,
+        "status": "succeeded",
+        "origin": "real",
+        "match_name": "Ble jap 15 minutes version",
+        "home_team": "bel",
+        "away_team": "jap",
+        "competition": "",
+        "pipeline_version": "v1_compat/1.0.0"
+      },
+      "input": {
+        "duration_s": 918.628,
+        "byte_size": 1054400993,
+        "sha256": "22783fd6bf2c90e12fdcbc94b8a6867bc0e50552416df1a2a5e4d4948115681d",
+        "container": "3g2"
+      },
+      "config": {
+        "selected_device": "mps",
+        "requested_device": "auto",
+        "model_name": "yolov8m.pt",
+        "model_sha256": "5d4a90cdc7a21786cc59cd19778e9eafff836df9e2da32524737c7ee6efe4fe5",
+        "target_fps": 5.0,
+        "image_size": 1280,
+        "confidence": 0.2,
+        "m_per_px": 0.086349,
+        "effective_fps": 5.0,
+        "sprint_speed_threshold_ms": 5.5,
+        "match_duration_s": 916.0
+      },
+      "execution": {
+        "created_at": "2026-07-27T20:42:11.633849Z",
+        "started_at": "2026-07-27T20:42:11.771620Z",
+        "completed_at": "2026-07-27T20:56:36.951574Z",
+        "total_processing_s": 865.18,
+        "queue_wait_s": 0.138
+      },
+      "stages": [
+        {
+          "stage_id": "ingestion",
+          "status": "succeeded",
+          "duration_s": 0.125,
+          "progress": 100,
+          "started_at": "2026-07-27T20:42:11.778935Z",
+          "finished_at": "2026-07-27T20:42:11.904388Z"
+        },
+        {
+          "stage_id": "video_validation",
+          "status": "succeeded",
+          "duration_s": 0.123,
+          "progress": 100,
+          "started_at": "2026-07-27T20:42:11.906215Z",
+          "finished_at": "2026-07-27T20:42:12.028921Z"
+        },
+        {
+          "stage_id": "detection",
+          "status": "succeeded",
+          "duration_s": 864.336,
+          "progress": 100,
+          "started_at": "2026-07-27T20:42:12.034159Z",
+          "finished_at": "2026-07-27T20:56:36.370130Z"
+        },
+        {
+          "stage_id": "tracking",
+          "status": "succeeded",
+          "duration_s": 0.129,
+          "progress": 100,
+          "started_at": "2026-07-27T20:56:36.377328Z",
+          "finished_at": "2026-07-27T20:56:36.506463Z"
+        },
+        {
+          "stage_id": "identity_resolution",
+          "status": "skipped",
+          "duration_s": null,
+          "progress": 0,
+          "started_at": null,
+          "finished_at": "2026-07-27T20:56:36.511574Z"
+        },
+        {
+          "stage_id": "pitch_calibration",
+          "status": "skipped",
+          "duration_s": null,
+          "progress": 0,
+          "started_at": null,
+          "finished_at": "2026-07-27T20:56:36.514072Z"
+        },
+        {
+          "stage_id": "metrics",
+          "status": "succeeded",
+          "duration_s": 0.131,
+          "progress": 100,
+          "started_at": "2026-07-27T20:56:36.515351Z",
+          "finished_at": "2026-07-27T20:56:36.646332Z"
+        },
+        {
+          "stage_id": "workload_advisory",
+          "status": "succeeded",
+          "duration_s": 0.13,
+          "progress": 100,
+          "started_at": "2026-07-27T20:56:36.650264Z",
+          "finished_at": "2026-07-27T20:56:36.780053Z"
+        },
+        {
+          "stage_id": "artifact_publication",
+          "status": "succeeded",
+          "duration_s": 0.133,
+          "progress": 100,
+          "started_at": "2026-07-27T20:56:36.785508Z",
+          "finished_at": "2026-07-27T20:56:36.918049Z"
+        }
+      ],
+      "output": {
+        "detection_count": 24919,
+        "frames_processed": 4592,
+        "total_track_count": 1365,
+        "scored_track_count": 22,
+        "insufficient_track_count": 1343,
+        "max_track_observations": 126,
+        "mean_obs_per_raw_track": 18.26,
+        "fragmentation_ratio_raw_per_scored": 62.05,
+        "insufficient_track_pct": 98.39,
+        "aggregate_distance_m": 2274.19,
+        "sprint_count": 61,
+        "advisory_distribution": {
+          "HIGH": 10,
+          "MEDIUM": 9,
+          "LOW": 3
+        },
+        "advisory_scored_tracks": 22,
+        "artifact_count": 7,
+        "artifact_total_bytes": 205651,
+        "warning_count": 1,
+        "mean_scored_speed_ms": 3.865,
+        "mean_scored_active_time_s": 484.99
+      },
+      "normalized": {
+        "video_minutes": 15.31,
+        "proc_s_per_video_min": 56.51,
+        "proc_to_video_ratio": 0.9418,
+        "effective_fps_over_processing": 5.308,
+        "detections_per_video_min": 1627.579,
+        "detections_per_frame": 5.427,
+        "tracks_per_video_min": 89.155,
+        "scored_tracks_per_video_min": 1.437,
+        "distance_per_video_min": 148.538,
+        "sprints_per_video_min": 3.984,
+        "input_mb_per_video_min": 68.87,
+        "artifact_mb_per_video_min": 0.0134
+      },
+      "integrity": {
+        "checked": 7,
+        "ok": 7,
+        "missing": [],
+        "checksum_fail": []
+      }
+    },
+    {
+      "label": "45-minute source",
+      "identity": {
+        "run_id": "aca8de80-2fb2-4ce4-953a-5af33259ac48",
+        "logical_analysis_id": "5617755c-b0ab-4442-ae48-ee43c14e6d25",
+        "attempt_number": 1,
+        "status": "succeeded",
+        "origin": "real",
+        "match_name": "Belgium vs Japan \u2014 45-minute validation",
+        "home_team": "Belgium",
+        "away_team": "Japan",
+        "competition": "World Cup",
+        "pipeline_version": "v1_compat/1.0.0"
+      },
+      "input": {
+        "duration_s": 2772.579,
+        "byte_size": 3180383500,
+        "sha256": "5ee5b9ba945b642600280dd798f6a4312c68100c2875b87f3b9639ed67a113e5",
+        "container": "3g2"
+      },
+      "config": {
+        "selected_device": "mps",
+        "requested_device": "auto",
+        "model_name": "yolov8m.pt",
+        "model_sha256": "5d4a90cdc7a21786cc59cd19778e9eafff836df9e2da32524737c7ee6efe4fe5",
+        "target_fps": 5.0,
+        "image_size": 1280,
+        "confidence": 0.2,
+        "m_per_px": 0.086349,
+        "effective_fps": 5.0,
+        "sprint_speed_threshold_ms": 5.5,
+        "match_duration_s": 2771.2
+      },
+      "execution": {
+        "created_at": "2026-07-27T21:24:57.175822Z",
+        "started_at": "2026-07-27T21:24:57.375374Z",
+        "completed_at": "2026-07-27T22:28:29.883147Z",
+        "total_processing_s": 3812.51,
+        "queue_wait_s": 0.2
+      },
+      "stages": [
+        {
+          "stage_id": "ingestion",
+          "status": "succeeded",
+          "duration_s": 0.125,
+          "progress": 100,
+          "started_at": "2026-07-27T21:24:57.377312Z",
+          "finished_at": "2026-07-27T21:24:57.502405Z"
+        },
+        {
+          "stage_id": "video_validation",
+          "status": "succeeded",
+          "duration_s": 0.127,
+          "progress": 100,
+          "started_at": "2026-07-27T21:24:57.504055Z",
+          "finished_at": "2026-07-27T21:24:57.631441Z"
+        },
+        {
+          "stage_id": "detection",
+          "status": "succeeded",
+          "duration_s": 3811.702,
+          "progress": 100,
+          "started_at": "2026-07-27T21:24:57.634913Z",
+          "finished_at": "2026-07-27T22:28:29.337246Z"
+        },
+        {
+          "stage_id": "tracking",
+          "status": "succeeded",
+          "duration_s": 0.127,
+          "progress": 100,
+          "started_at": "2026-07-27T22:28:29.342661Z",
+          "finished_at": "2026-07-27T22:28:29.469589Z"
+        },
+        {
+          "stage_id": "identity_resolution",
+          "status": "skipped",
+          "duration_s": null,
+          "progress": 0,
+          "started_at": null,
+          "finished_at": "2026-07-27T22:28:29.473214Z"
+        },
+        {
+          "stage_id": "pitch_calibration",
+          "status": "skipped",
+          "duration_s": null,
+          "progress": 0,
+          "started_at": null,
+          "finished_at": "2026-07-27T22:28:29.474720Z"
+        },
+        {
+          "stage_id": "metrics",
+          "status": "succeeded",
+          "duration_s": 0.125,
+          "progress": 100,
+          "started_at": "2026-07-27T22:28:29.476084Z",
+          "finished_at": "2026-07-27T22:28:29.601032Z"
+        },
+        {
+          "stage_id": "workload_advisory",
+          "status": "succeeded",
+          "duration_s": 0.126,
+          "progress": 100,
+          "started_at": "2026-07-27T22:28:29.605194Z",
+          "finished_at": "2026-07-27T22:28:29.731675Z"
+        },
+        {
+          "stage_id": "artifact_publication",
+          "status": "succeeded",
+          "duration_s": 0.124,
+          "progress": 100,
+          "started_at": "2026-07-27T22:28:29.736004Z",
+          "finished_at": "2026-07-27T22:28:29.860457Z"
+        }
+      ],
+      "output": {
+        "detection_count": 83941,
+        "frames_processed": 13862,
+        "total_track_count": 4406,
+        "scored_track_count": 70,
+        "insufficient_track_count": 4336,
+        "max_track_observations": 95,
+        "mean_obs_per_raw_track": 19.05,
+        "fragmentation_ratio_raw_per_scored": 62.94,
+        "insufficient_track_pct": 98.41,
+        "aggregate_distance_m": 4584.28,
+        "sprint_count": 124,
+        "advisory_distribution": {
+          "HIGH": 3,
+          "MEDIUM": 9,
+          "LOW": 12
+        },
+        "advisory_scored_tracks": 24,
+        "artifact_count": 7,
+        "artifact_total_bytes": 619317,
+        "warning_count": 1,
+        "mean_scored_speed_ms": 3.317,
+        "mean_scored_active_time_s": 430.05
+      },
+      "normalized": {
+        "video_minutes": 46.21,
+        "proc_s_per_video_min": 82.5,
+        "proc_to_video_ratio": 1.3751,
+        "effective_fps_over_processing": 3.636,
+        "detections_per_video_min": 1816.525,
+        "detections_per_frame": 6.055,
+        "tracks_per_video_min": 95.348,
+        "scored_tracks_per_video_min": 1.515,
+        "distance_per_video_min": 99.206,
+        "sprints_per_video_min": 2.683,
+        "input_mb_per_video_min": 68.83,
+        "artifact_mb_per_video_min": 0.0134
+      },
+      "integrity": {
+        "checked": 7,
+        "ok": 7,
+        "missing": [],
+        "checksum_fail": []
+      }
+    },
+    {
+      "label": "94-minute full-match source",
+      "identity": {
+        "run_id": "2e8d5dee-5c3e-4080-bc6d-e4a39db35983",
+        "logical_analysis_id": "9d3a0d5c-a0ea-4ded-b2ff-7fd16c2f71f2",
+        "attempt_number": 1,
+        "status": "succeeded",
+        "origin": "real",
+        "match_name": "Belgium vs Japan \u2014 94-minute acceptance test",
+        "home_team": "Belgium",
+        "away_team": "Japan",
+        "competition": "World Cup",
+        "pipeline_version": "v1_compat/1.0.0"
+      },
+      "input": {
+        "duration_s": 5739.253,
+        "byte_size": 8305267086,
+        "sha256": "fcf5418f08a6dbe38dad06976fdff5171d9c03288bd121a3b8d2768919d55f02",
+        "container": "3g2"
+      },
+      "config": {
+        "selected_device": "mps",
+        "requested_device": "auto",
+        "model_name": "yolov8m.pt",
+        "model_sha256": "5d4a90cdc7a21786cc59cd19778e9eafff836df9e2da32524737c7ee6efe4fe5",
+        "target_fps": 5.0,
+        "image_size": 1280,
+        "confidence": 0.2,
+        "m_per_px": 0.086349,
+        "effective_fps": 5.0,
+        "sprint_speed_threshold_ms": 5.5,
+        "match_duration_s": 5739.0
+      },
+      "execution": {
+        "created_at": "2026-07-28T12:19:27.095388Z",
+        "started_at": "2026-07-28T12:19:27.382514Z",
+        "completed_at": "2026-07-28T16:47:31.779825Z",
+        "total_processing_s": 16084.4,
+        "queue_wait_s": 0.287
+      },
+      "stages": [
+        {
+          "stage_id": "ingestion",
+          "status": "succeeded",
+          "duration_s": 0.126,
+          "progress": 100,
+          "started_at": "2026-07-28T12:19:27.386910Z",
+          "finished_at": "2026-07-28T12:19:27.512634Z"
+        },
+        {
+          "stage_id": "video_validation",
+          "status": "succeeded",
+          "duration_s": 0.122,
+          "progress": 100,
+          "started_at": "2026-07-28T12:19:27.520418Z",
+          "finished_at": "2026-07-28T12:19:27.642503Z"
+        },
+        {
+          "stage_id": "detection",
+          "status": "succeeded",
+          "duration_s": 16083.592,
+          "progress": 100,
+          "started_at": "2026-07-28T12:19:27.645444Z",
+          "finished_at": "2026-07-28T16:47:31.237337Z"
+        },
+        {
+          "stage_id": "tracking",
+          "status": "succeeded",
+          "duration_s": 0.122,
+          "progress": 100,
+          "started_at": "2026-07-28T16:47:31.240450Z",
+          "finished_at": "2026-07-28T16:47:31.362059Z"
+        },
+        {
+          "stage_id": "identity_resolution",
+          "status": "skipped",
+          "duration_s": null,
+          "progress": 0,
+          "started_at": null,
+          "finished_at": "2026-07-28T16:47:31.364808Z"
+        },
+        {
+          "stage_id": "pitch_calibration",
+          "status": "skipped",
+          "duration_s": null,
+          "progress": 0,
+          "started_at": null,
+          "finished_at": "2026-07-28T16:47:31.366634Z"
+        },
+        {
+          "stage_id": "metrics",
+          "status": "succeeded",
+          "duration_s": 0.122,
+          "progress": 100,
+          "started_at": "2026-07-28T16:47:31.368194Z",
+          "finished_at": "2026-07-28T16:47:31.489830Z"
+        },
+        {
+          "stage_id": "workload_advisory",
+          "status": "succeeded",
+          "duration_s": 0.127,
+          "progress": 100,
+          "started_at": "2026-07-28T16:47:31.492379Z",
+          "finished_at": "2026-07-28T16:47:31.619157Z"
+        },
+        {
+          "stage_id": "artifact_publication",
+          "status": "succeeded",
+          "duration_s": 0.127,
+          "progress": 100,
+          "started_at": "2026-07-28T16:47:31.620974Z",
+          "finished_at": "2026-07-28T16:47:31.747506Z"
+        }
+      ],
+      "output": {
+        "detection_count": 196272,
+        "frames_processed": 28696,
+        "total_track_count": 8099,
+        "scored_track_count": 190,
+        "insufficient_track_count": 7909,
+        "max_track_observations": 1735,
+        "mean_obs_per_raw_track": 24.23,
+        "fragmentation_ratio_raw_per_scored": 42.63,
+        "insufficient_track_pct": 97.65,
+        "aggregate_distance_m": 12884.33,
+        "sprint_count": 432,
+        "advisory_distribution": {
+          "HIGH": 22,
+          "MEDIUM": 1,
+          "LOW": 0
+        },
+        "advisory_scored_tracks": 23,
+        "artifact_count": 7,
+        "artifact_total_bytes": 1637699,
+        "warning_count": 1,
+        "mean_scored_speed_ms": 3.834,
+        "mean_scored_active_time_s": 520.42
+      },
+      "normalized": {
+        "video_minutes": 95.654,
+        "proc_s_per_video_min": 168.15,
+        "proc_to_video_ratio": 2.8025,
+        "effective_fps_over_processing": 1.784,
+        "detections_per_video_min": 2051.891,
+        "detections_per_frame": 6.84,
+        "tracks_per_video_min": 84.67,
+        "scored_tracks_per_video_min": 1.986,
+        "distance_per_video_min": 134.697,
+        "sprints_per_video_min": 4.516,
+        "input_mb_per_video_min": 86.83,
+        "artifact_mb_per_video_min": 0.0171
+      },
+      "integrity": {
+        "checked": 7,
+        "ok": 7,
+        "missing": [],
+        "checksum_fail": []
+      }
+    }
+  ]
+}
