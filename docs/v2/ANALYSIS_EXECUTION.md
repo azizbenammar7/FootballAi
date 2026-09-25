@@ -42,14 +42,17 @@ copied source bytes. Cancelled and succeeded attempts cannot retry.
 
 - `demo_fast`: deterministic results seeded by input checksum and match name.
   It has no ML dependency and always carries the synthetic-workflow warning.
-- `v1_compat`: runs the preserved YOLOv8/ByteTrack, metrics, and advisory
-  algorithm family inside `<run>/tmp/v1-compat`. V2 controls the explicit
+- `v1_compat`: runs decoupled YOLO detection and ByteTrack tracking, followed
+  by the preserved metrics and advisory algorithm family inside
+  `<run>/tmp/v1-compat`. V2 controls the explicit
   model, device, FPS, image size, and confidence; preserved V1 statistics and
   fatigue scripts run unchanged when tracking produces usable rows. All
-  outputs and caches stay under the V2 run. Empty detections produce honest
-  empty artifacts. The worker is offline and cannot auto-download weights or
-  missing packages. This profile does not claim V2 identity resolution,
-  calibration, or scientific validation.
+  outputs and caches stay under the V2 run. Versioned detection and tracklet
+  Parquet artifacts allow tracker replay without detector inference; see
+  [AI1 detection/tracking decoupling](AI1_DETECTION_TRACKING.md). Empty
+  detections produce honest empty artifacts. The worker is offline and cannot
+  auto-download weights or missing packages. This profile does not claim V2
+  identity resolution, calibration, or scientific validation.
 
 Readiness distinguishes missing Python packages, missing system tools, missing
 or invalid model weights, unsupported Python/platform, runtime import/device
@@ -77,8 +80,10 @@ when available and otherwise selects CPU; an explicitly unavailable device
 fails before execution. A runtime MPS failure is surfaced and never silently
 replayed on CPU.
 
-Artifacts use stable schemas `footballai.team-summary/v1`,
+Artifacts use stable schemas `footballai.detections/v1`,
+`footballai.tracklets/v1`, `footballai.team-summary/v1`,
 `footballai.track-summary/v1`, `footballai.track-detail/v1`,
 `footballai.workload-advisory/v1`, and
-`footballai.analysis-diagnostics/v1`. Workload and Fatigue Advisory is
+`footballai.analysis-diagnostics/v2` for genuine AI1 runs. Synthetic runs
+retain `footballai.analysis-diagnostics/v1`. Workload and Fatigue Advisory is
 heuristic and advisory only, never diagnosis or clinical advice.

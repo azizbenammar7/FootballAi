@@ -22,6 +22,7 @@ from footballai_v2.contracts.v1 import (
 from footballai_v2.execution.adapters import DemoPipeline, V1CompatPipeline
 from footballai_v2.execution.contracts import ExecutionJob
 from footballai_v2.execution.errors import CancellationObserved, ExecutionFailure
+from footballai_v2.execution.generated_artifact import GeneratedArtifact
 from footballai_v2.storage.ports import AnalysisRepository, ObjectStorage
 
 
@@ -80,15 +81,36 @@ class AnalysisExecutor:
                 if self.stage_delay_seconds:
                     time.sleep(self.stage_delay_seconds)
                 self._checkpoint(job.run_id)
-                frame_stage = stage.stage_name.value in {"detection", "tracking"}
-                finished = replace(running, status=StageStatus.SUCCEEDED, progress_percent=100, finished_at=utc_now(), performance_metrics={"job_id": job.job_id, "run_id": job.run_id, "logical_analysis_id": job.logical_analysis_id, "attempt_number": job.attempt_number, "worker_id": worker_id, "stage": stage.stage_name.value, "status": "succeeded", "duration_seconds": round(self.stage_delay_seconds, 3), "frames_processed": 1 if frame_stage else 0, "processing_fps": round(1 / self.stage_delay_seconds, 2) if frame_stage and self.stage_delay_seconds else 0, "input_count": 1, "output_count": 1, "error_code": None}, message=f"{stage.stage_name.value.replace('_', ' ').title()} completed")
+                performance = self._stage_result(
+                    job, worker_id, stage.stage_name.value, payloads
+                )
+                finished = replace(
+                    running, status=StageStatus.SUCCEEDED, progress_percent=100,
+                    finished_at=utc_now(), performance_metrics=performance,
+                    produced_artifact_ids=(),
+                    message=f"{stage.stage_name.value.replace('_', ' ').title()} completed",
+                )
                 run = run.with_stages((*run.stages[:index], finished, *run.stages[index + 1:])); self.repository.save(run)
             if payloads is None:
                 payloads = self._build_artifacts(adapter, run, duration)
             category_by_id = {"team-summary": ArtifactCategory.SUMMARY, "track-summary": ArtifactCategory.TRACKS, "track-detail": ArtifactCategory.TRACKS, "workload-advisory": ArtifactCategory.WORKLOAD_ADVISORY, "analysis-diagnostics": ArtifactCategory.OTHER}
-            schema_by_id = {key: value["schema"] for key, value in payloads.items()}
             for artifact_id, payload in payloads.items():
-                artifacts.append(self.object_storage.write_artifact(run.run_id, artifact_id=artifact_id, name=artifact_id.replace("-", " ").title(), category=category_by_id[artifact_id], relative_path=f"artifacts/{artifact_id}.json", content=(json.dumps(payload, indent=2, sort_keys=True) + "\n").encode(), media_type="application/json", schema_version=schema_by_id[artifact_id]))
+                if isinstance(payload, GeneratedArtifact):
+                    artifacts.append(self.object_storage.write_artifact(
+                        run.run_id, artifact_id=payload.artifact_id, name=payload.name,
+                        category=payload.category, relative_path=payload.relative_path,
+                        content=payload.content, media_type=payload.media_type,
+                        schema_version=payload.schema_version,
+                    ))
+                else:
+                    artifacts.append(self.object_storage.write_artifact(
+                        run.run_id, artifact_id=artifact_id,
+                        name=artifact_id.replace("-", " ").title(),
+                        category=category_by_id[artifact_id],
+                        relative_path=f"artifacts/{artifact_id}.json",
+                        content=(json.dumps(payload, indent=2, sort_keys=True) + "\n").encode(),
+                        media_type="application/json", schema_version=payload["schema"],
+                    ))
             # Compatibility aliases let the preserved dashboard adapter read the stable generated schema.
             summary_alias = self.object_storage.write_artifact(run.run_id, artifact_id="legacy-player-summary", name="Dashboard track summary", category=ArtifactCategory.SUMMARY, relative_path="artifacts/dashboard-track-summary.json", content=(json.dumps(payloads["track-summary"], sort_keys=True) + "\n").encode(), media_type="application/json", schema_version="footballai.track-summary/v1")
             advisory_alias_payload = payloads["workload-advisory"]["tracks"]
@@ -102,12 +124,13 @@ class AnalysisExecutor:
                 if not self.object_storage.artifact_reference_integrity(run.run_id, reference):
                     raise ExecutionFailure("artifact_integrity_failed", "A generated artifact failed integrity verification.")
             current = self.repository.load(job.run_id)
+            published_stages = self._published_stages(current.stages, artifacts)
             if current.parameters.get("force_partial") is True:
-                stages = list(current.stages)
+                stages = list(published_stages)
                 stages[-1] = replace(stages[-1], status=StageStatus.PARTIAL, progress_percent=80, message="Useful artifacts published before a controlled partial stop")
                 run = current.complete_partial(artifacts, "Controlled partial completion with useful artifacts.", stages=stages)
             else:
-                run = current.succeed(artifacts, stages=current.stages)
+                run = current.succeed(artifacts, stages=published_stages)
             self.repository.save(run)
             logger.info("job_complete job_id=%s run_id=%s logical_analysis_id=%s attempt_number=%s worker_id=%s status=succeeded duration_seconds=%.3f", job.job_id, job.run_id, job.logical_analysis_id, job.attempt_number, worker_id, time.perf_counter() - started)
             return run.status
@@ -135,7 +158,9 @@ class AnalysisExecutor:
             logger.error("job_failed job_id=%s run_id=%s logical_analysis_id=%s attempt_number=%s worker_id=%s stage=%s status=failed duration_seconds=%.3f frames_processed=0 processing_fps=0 input_count=1 output_count=0 error_code=%s", job.job_id, job.run_id, job.logical_analysis_id, job.attempt_number, worker_id, stages[active_index].stage_name.value if active_index >= 0 else "ingestion", time.perf_counter() - started, code)
             return AnalysisRunStatus.FAILED
 
-    def _build_artifacts(self, adapter, run: AnalysisRun, duration: float) -> dict[str, dict]:
+    def _build_artifacts(
+        self, adapter, run: AnalysisRun, duration: float
+    ) -> dict[str, dict | GeneratedArtifact]:
         """Materialize the source input through object storage for the pipeline.
 
         The context manager downloads to a bounded worker-local workspace (a no-op
@@ -149,3 +174,52 @@ class AnalysisExecutor:
     def _checkpoint(self, run_id: str) -> None:
         if self.repository.cancellation_requested(run_id):
             raise CancellationObserved()
+
+    def _stage_result(self, job, worker_id: str, stage_name: str, payloads) -> dict:
+        frame_stage = stage_name in {"detection", "tracking"}
+        duration_seconds = round(self.stage_delay_seconds, 3)
+        frames_processed = 1 if frame_stage else 0
+        output_count = 1
+        if job.pipeline_profile == "v1_compat" and payloads:
+            diagnostics = payloads.get("analysis-diagnostics", {})
+            timings = diagnostics.get("stage_timings", {}) if isinstance(diagnostics, dict) else {}
+            tracking = diagnostics.get("tracking", {}) if isinstance(diagnostics, dict) else {}
+            detection = diagnostics.get("detection", {}) if isinstance(diagnostics, dict) else {}
+            if stage_name == "detection":
+                duration_seconds = float(timings.get("video_decoding_detection_seconds", 0))
+                frames_processed = int(detection.get("frames_processed", 0))
+                output_count = int(detection.get("detection_count", 0))
+            elif stage_name == "tracking":
+                duration_seconds = float(timings.get("tracking_seconds", 0))
+                frames_processed = int(tracking.get("frames_processed", 0))
+                output_count = int(tracking.get("total_tracklets", 0))
+            elif stage_name == "metrics":
+                duration_seconds = float(timings.get("diagnostic_computation_seconds", 0))
+                output_count = int(diagnostics.get("output_count", 0))
+        return {
+            "job_id": job.job_id, "run_id": job.run_id,
+            "logical_analysis_id": job.logical_analysis_id,
+            "attempt_number": job.attempt_number, "worker_id": worker_id,
+            "stage": stage_name, "status": "succeeded",
+            "duration_seconds": round(duration_seconds, 6),
+            "frames_processed": frames_processed,
+            "processing_fps": round(frames_processed / duration_seconds, 2)
+            if frame_stage and duration_seconds else 0,
+            "input_count": 1, "output_count": output_count, "error_code": None,
+        }
+
+    @staticmethod
+    def _published_stages(stages, artifacts):
+        artifact_ids = tuple(item.artifact_id for item in artifacts)
+        available = set(artifact_ids)
+        result = []
+        for stage in stages:
+            produced: tuple[str, ...] = ()
+            if stage.stage_name.value == "detection" and "detections" in available:
+                produced = ("detections",)
+            elif stage.stage_name.value == "tracking" and "tracklets" in available:
+                produced = ("tracklets",)
+            elif stage.stage_name.value == "artifact_publication":
+                produced = artifact_ids
+            result.append(replace(stage, produced_artifact_ids=produced))
+        return tuple(result)

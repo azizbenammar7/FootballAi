@@ -12,6 +12,10 @@ from fastapi.testclient import TestClient
 from footballai_v2.api import create_app
 from footballai_v2.execution.coordinator import AnalysisCoordinator, ExecutionSettings, UploadValidationError
 from footballai_v2.execution.executor import AnalysisExecutor
+from footballai_v2.execution.adapters.v1_compat_pipeline import V1CompatPipeline
+from footballai_v2.execution.adapters.v1_compat_runtime import V1CompatConfig, V1CompatReadiness
+from footballai_v2.execution.generated_artifact import GeneratedArtifact
+from footballai_v2.contracts.v1 import ArtifactCategory
 
 
 @pytest.fixture
@@ -90,6 +94,63 @@ def test_worker_advances_all_stages_and_publishes_stable_artifacts(workflow):
     artifacts = client.get(f"/api/v1/runs/{created['run_id']}/artifacts").json()["artifacts"]
     schemas = {item["schema_version"] for item in artifacts}
     assert {"footballai.team-summary/v1", "footballai.track-summary/v1", "footballai.track-detail/v1", "footballai.workload-advisory/v1", "footballai.analysis-diagnostics/v1"} <= schemas
+
+
+def test_ai1_binary_artifacts_integrity_stage_metrics_and_compatibility_aliases(workflow, tmp_path, monkeypatch):
+    client, settings = workflow
+    model = tmp_path / "yolov8m.pt"
+    model.write_bytes(b"model")
+    config = V1CompatConfig(5, 1280, .2, "cpu", "cpu", model, "a" * 64)
+    ready = V1CompatReadiness("ready", (), (), {"device": "cpu"}, config)
+    monkeypatch.setattr("footballai_v2.execution.adapters.v1_compat_pipeline.check_v1_compat_readiness", lambda: ready)
+    monkeypatch.setattr("footballai_v2.execution.coordinator.check_v1_compat_readiness", lambda: ready)
+
+    common = {"run_id": "test", "warnings": ["tracklet != player"], "provenance": {}}
+    payloads = {
+        "detections": GeneratedArtifact(
+            "detections", "Cached detections", ArtifactCategory.OTHER,
+            "artifacts/detections.parquet", b"PAR1detections", "application/vnd.apache.parquet",
+            "footballai.detections/v1",
+        ),
+        "tracklets": GeneratedArtifact(
+            "tracklets", "Temporary tracklets", ArtifactCategory.TRACKS,
+            "artifacts/tracklets.parquet", b"PAR1tracklets", "application/vnd.apache.parquet",
+            "footballai.tracklets/v1",
+        ),
+        "team-summary": {**common, "schema": "footballai.team-summary/v1", "players": {}},
+        "track-summary": {**common, "schema": "footballai.track-summary/v1", "players": {}},
+        "track-detail": {**common, "schema": "footballai.track-detail/v1", "tracks": {}},
+        "workload-advisory": {**common, "schema": "footballai.workload-advisory/v1", "tracks": {}},
+        "analysis-diagnostics": {
+            **common, "schema": "footballai.analysis-diagnostics/v2", "output_count": 0,
+            "detection": {"frames_processed": 100, "detection_count": 400},
+            "tracking": {"frames_processed": 100, "total_tracklets": 12},
+            "stage_timings": {
+                "video_decoding_detection_seconds": 8.0,
+                "tracking_seconds": .5,
+                "diagnostic_computation_seconds": .01,
+            },
+        },
+    }
+    monkeypatch.setattr(V1CompatPipeline, "build_artifacts", lambda *args, **kwargs: payloads)
+
+    created = upload(client, profile="v1_compat").json()
+    _, status = execute_one(client, settings)
+    assert status.value == "succeeded"
+    run = client.app.state.run_store.load(created["run_id"])
+    artifacts = {item.artifact_id: item for item in run.artifacts}
+    assert artifacts["detections"].schema_version == "footballai.detections/v1"
+    assert artifacts["tracklets"].schema_version == "footballai.tracklets/v1"
+    assert client.app.state.object_storage.artifact_integrity(run.run_id, "detections")
+    assert client.app.state.object_storage.artifact_integrity(run.run_id, "tracklets")
+    stages = {stage.stage_name.value: stage for stage in run.stages}
+    assert stages["detection"].performance_metrics["duration_seconds"] == 8.0
+    assert stages["tracking"].performance_metrics["duration_seconds"] == .5
+    assert stages["detection"].produced_artifact_ids == ("detections",)
+    assert stages["tracking"].produced_artifact_ids == ("tracklets",)
+    assert stages["identity_resolution"].status.value == "skipped"
+    assert stages["pitch_calibration"].status.value == "skipped"
+    assert {"legacy-player-summary", "dashboard-workload-advisory"} <= set(artifacts)
 
 
 def test_demo_output_is_deterministic_and_changes_with_checksum(workflow):

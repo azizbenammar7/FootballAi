@@ -97,6 +97,14 @@ it **Workload and Fatigue Advisory**.
 This advisory is not a medical diagnosis, validated injury prediction, or
 clinical advice. V1 terminology remains unchanged for historical compatibility.
 
+AI1 adds the versioned `footballai.detections/v1` and
+`footballai.tracklets/v1` Parquet artifacts to genuine `v1_compat` runs, with
+descriptive fragmentation measures in `footballai.analysis-diagnostics/v2`.
+Detection executes once; ByteTrack can be replayed against the same cache.
+See [`../docs/v2/AI1_DETECTION_TRACKING.md`](../docs/v2/AI1_DETECTION_TRACKING.md).
+Tracklets are not persistent player identities; identity resolution remains a
+future stage.
+
 ## Configurable local storage
 
 `LocalAnalysisRunStore` always receives its root from the caller:

@@ -11,7 +11,9 @@ import time
 from pathlib import Path
 from typing import Callable
 
-from footballai_v2.contracts.v1 import AnalysisRun
+from footballai_v2.contracts.v1 import AnalysisRun, ArtifactCategory
+from footballai_v2.execution.ai1.artifacts import DETECTIONS_SCHEMA, PARQUET_MEDIA_TYPE, TRACKLETS_SCHEMA
+from footballai_v2.execution.ai1.diagnostics import DIAGNOSTICS_SCHEMA
 from footballai_v2.execution.adapters.demo_pipeline import DemoPipeline
 from footballai_v2.execution.adapters.v1_compat_runtime import (
     REPOSITORY_ROOT,
@@ -22,10 +24,12 @@ from footballai_v2.execution.adapters.v1_compat_runtime import (
     validate_model_file,
 )
 from footballai_v2.execution.errors import CancellationObserved, ExecutionFailure
+from footballai_v2.execution.generated_artifact import GeneratedArtifact
 
 
 V1_WARNING = (
-    "V1-compatible analysis. Track identities are unverified, positions are not homography-calibrated, "
+    "V1-compatible analysis. Tracking diagnostics — track IDs are temporary tracklets, not verified player identities. "
+    "Positions are not homography-calibrated, "
     "and Workload and Fatigue Advisory outputs are heuristic and advisory only."
 )
 
@@ -87,7 +91,7 @@ class V1CompatPipeline:
         duration_seconds: float,
         input_path: Path | None = None,
         cancellation_requested: Callable[[], bool] | None = None,
-    ) -> dict[str, dict]:
+    ) -> dict[str, dict | GeneratedArtifact]:
         if input_path is None:
             raise ExecutionFailure("v1_input_missing", "The V1-compatible input is unavailable.", retryable=False)
         readiness = check_v1_compat_readiness()
@@ -114,11 +118,20 @@ class V1CompatPipeline:
         log_path.parent.mkdir(parents=True, exist_ok=True)
         commands = [
             [
-                sys.executable, "-m", "footballai_v2.execution.adapters.v1_compat_tracking",
+                sys.executable, "-m", "footballai_v2.execution.adapters.v1_compat_detection",
                 "--video", str(input_path), "--output-dir", str(processed),
-                "--model", str(config.model_path), "--tracker", str(tracker_path),
+                "--model", str(config.model_path), "--model-sha256", config.model_sha256,
                 "--device", config.selected_device, "--target-fps", str(config.target_fps),
                 "--image-size", str(config.image_size), "--confidence", str(config.confidence),
+                "--source-video-sha256", run.input.sha256,
+                "--code-revision", run.code.revision,
+                "--pipeline-version", run.pipeline_version,
+            ],
+            [
+                sys.executable, "-m", "footballai_v2.execution.adapters.v1_compat_tracking",
+                "--detections", str(processed / "detections.parquet"),
+                "--output-dir", str(processed), "--tracker", str(tracker_path),
+                "--source-run-id", run.run_id,
             ],
         ]
         timeout = float(os.getenv("FOOTBALLAI_V1_SUBPROCESS_TIMEOUT_SECONDS", "7200"))
@@ -135,6 +148,7 @@ class V1CompatPipeline:
         try:
             with log_path.open("ab") as log:
                 self._run(commands[0], work, log, timeout, cancellation_requested, child_environment, config.selected_device)
+                self._run(commands[1], work, log, timeout, cancellation_requested, child_environment, config.selected_device)
                 tracking = self._tracking_summary(processed)
                 if not tracking["empty_after_v1_filters"]:
                     self._run(
@@ -148,7 +162,9 @@ class V1CompatPipeline:
         finally:
             self._truncate_log(log_path, int(os.getenv("FOOTBALLAI_MAX_RUN_LOG_BYTES", str(2 * 1024 * 1024))))
 
+        detection = self._json_output(processed / "detection_summary.json", "v1_detection_output_invalid")
         tracking = self._tracking_summary(processed)
+        fragmentation = self._json_output(processed / "fragmentation_diagnostics.json", "v1_diagnostics_output_invalid")
         if tracking["empty_after_v1_filters"]:
             summary = {"match_duration_s": duration_seconds, "total_tracks": 0, "players": {}}
             advisory: dict = {}
@@ -184,11 +200,29 @@ class V1CompatPipeline:
             "disclaimer": "Advisory only; not diagnosis or clinical advice.",
         }
         diagnostics = {
-            **common, "schema": "footballai.analysis-diagnostics/v1", "input_count": 1,
+            **common, "schema": DIAGNOSTICS_SCHEMA, "input_count": 1,
             "output_count": len(summary.get("players", {})), "message": result_message,
-            "tracking": tracking,
+            "detection": detection, "tracking": tracking,
+            "observed_metrics": fragmentation["observed_metrics"],
+            "interpretation": fragmentation["interpretation"],
+            "ground_truth_metrics": fragmentation["ground_truth_metrics"],
+            "stage_timings": {
+                "video_decoding_detection_seconds": detection["video_decoding_detection_seconds"],
+                "tracking_seconds": tracking["tracking_seconds"],
+                "diagnostic_computation_seconds": tracking["diagnostic_computation_seconds"],
+            },
         }
         return {
+            "detections": GeneratedArtifact(
+                "detections", "Cached detections", ArtifactCategory.OTHER,
+                "artifacts/detections.parquet", (processed / "detections.parquet").read_bytes(),
+                PARQUET_MEDIA_TYPE, DETECTIONS_SCHEMA,
+            ),
+            "tracklets": GeneratedArtifact(
+                "tracklets", "Temporary tracklets", ArtifactCategory.TRACKS,
+                "artifacts/tracklets.parquet", (processed / "tracklets.parquet").read_bytes(),
+                PARQUET_MEDIA_TYPE, TRACKLETS_SCHEMA,
+            ),
             "team-summary": team_summary, "track-summary": track_summary,
             "track-detail": track_detail, "workload-advisory": workload,
             "analysis-diagnostics": diagnostics,
@@ -224,9 +258,24 @@ class V1CompatPipeline:
             value = json.loads((processed / "tracking_summary.json").read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
             raise ExecutionFailure("v1_tracking_output_invalid", "V1-compatible tracking did not produce valid diagnostics.") from exc
-        required = {"frames_processed", "detection_rows", "tracked_ids", "max_track_observations", "empty_after_v1_filters"}
+        required = {
+            "frames_processed", "detection_rows", "tracked_ids", "max_track_observations",
+            "empty_after_v1_filters", "total_detections", "total_tracklets",
+            "tracking_seconds", "diagnostic_computation_seconds", "tracklets_byte_size",
+            "tracklets_sha256",
+        }
         if set(value) != required:
             raise ExecutionFailure("v1_tracking_output_invalid", "V1-compatible tracking diagnostics are incomplete.")
+        return value
+
+    @staticmethod
+    def _json_output(path: Path, error_code: str) -> dict:
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ExecutionFailure(error_code, "V1-compatible execution produced invalid diagnostics.") from exc
+        if not isinstance(value, dict):
+            raise ExecutionFailure(error_code, "V1-compatible execution produced invalid diagnostics.")
         return value
 
     @staticmethod
