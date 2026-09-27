@@ -1,0 +1,1525 @@
+{
+  "crop_strategy": "early_middle_late/v1",
+  "samples": [
+    {
+      "bbox_xyxy": [
+        240.99786376953125,
+        546.9049072265625,
+        307.01568603515625,
+        699.9964599609375
+      ],
+      "frame_index": 0,
+      "label": "early",
+      "relative_path": "crops/tracklet_000001/early-f000000.jpg",
+      "sha256": "b710e7f47a616c3ea938640f83e87c2a9635fc5208bc20719a7485c7400a9850",
+      "timestamp_seconds": 0.0,
+      "tracklet_id": "tracklet_000001"
+    },
+    {
+      "bbox_xyxy": [
+        281.1759033203125,
+        439.6178894042969,
+        343.781982421875,
+        594.4976196289062
+      ],
+      "frame_index": 168,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000001/middle-f000168.jpg",
+      "sha256": "18a9eca2fa79d7dff5495d351e48d76053c55a71e56ff64d1cd0ac0d00d279a2",
+      "timestamp_seconds": 5.6056,
+      "tracklet_id": "tracklet_000001"
+    },
+    {
+      "bbox_xyxy": [
+        529.8555908203125,
+        666.943603515625,
+        586.5333251953125,
+        802.1817016601562
+      ],
+      "frame_index": 366,
+      "label": "late",
+      "relative_path": "crops/tracklet_000001/late-f000366.jpg",
+      "sha256": "24b6358b6164fdb53854b7b3a53f968472bf4768484ef0789243e97ea9240c06",
+      "timestamp_seconds": 12.212200000000001,
+      "tracklet_id": "tracklet_000001"
+    },
+    {
+      "bbox_xyxy": [
+        533.8901977539062,
+        529.1332397460938,
+        578.6261596679688,
+        676.1840209960938
+      ],
+      "frame_index": 0,
+      "label": "early",
+      "relative_path": "crops/tracklet_000002/early-f000000.jpg",
+      "sha256": "cb0ed99ceb6b6d8feaff37d05f6900e078d082b8147c2737a52865a9c04ab72a",
+      "timestamp_seconds": 0.0,
+      "tracklet_id": "tracklet_000002"
+    },
+    {
+      "bbox_xyxy": [
+        582.4998779296875,
+        431.0870666503906,
+        632.079833984375,
+        579.2687377929688
+      ],
+      "frame_index": 156,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000002/middle-f000156.jpg",
+      "sha256": "79328f343892edc7d8f37a8b992642b0efac6ca09fbeb8c88c946986fd74df93",
+      "timestamp_seconds": 5.2052000000000005,
+      "tracklet_id": "tracklet_000002"
+    },
+    {
+      "bbox_xyxy": [
+        673.5174560546875,
+        586.5895385742188,
+        720.0,
+        740.72509765625
+      ],
+      "frame_index": 312,
+      "label": "late",
+      "relative_path": "crops/tracklet_000002/late-f000312.jpg",
+      "sha256": "d399b652d94738bdb54f63498844fff2e284dc2d1cad9b63a8ef44443710ba56",
+      "timestamp_seconds": 10.410400000000001,
+      "tracklet_id": "tracklet_000002"
+    },
+    {
+      "bbox_xyxy": [
+        414.45916748046875,
+        454.0987548828125,
+        474.07232666015625,
+        593.208740234375
+      ],
+      "frame_index": 0,
+      "label": "early",
+      "relative_path": "crops/tracklet_000003/early-f000000.jpg",
+      "sha256": "0a37f088227db41a544fbea24857189a3d87b0a90d9366a7fd97a154f50379e7",
+      "timestamp_seconds": 0.0,
+      "tracklet_id": "tracklet_000003"
+    },
+    {
+      "bbox_xyxy": [
+        467.76678466796875,
+        335.6651916503906,
+        535.005859375,
+        465.23956298828125
+      ],
+      "frame_index": 168,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000003/middle-f000168.jpg",
+      "sha256": "64eb35a322b2ece36ddd109f8692743c204ee0c5fb9ac06038d2a24dc4a97585",
+      "timestamp_seconds": 5.6056,
+      "tracklet_id": "tracklet_000003"
+    },
+    {
+      "bbox_xyxy": [
+        654.3837280273438,
+        591.2387084960938,
+        717.5914916992188,
+        719.6157836914062
+      ],
+      "frame_index": 342,
+      "label": "late",
+      "relative_path": "crops/tracklet_000003/late-f000342.jpg",
+      "sha256": "e13b900bad83633cb369e68cdf10817589625021ae1ecfc23b30084913ebcc18",
+      "timestamp_seconds": 11.4114,
+      "tracklet_id": "tracklet_000003"
+    },
+    {
+      "bbox_xyxy": [
+        370.0556640625,
+        1217.5565185546875,
+        424.9859619140625,
+        1279.6463623046875
+      ],
+      "frame_index": 0,
+      "label": "early",
+      "relative_path": "crops/tracklet_000004/early-f000000.jpg",
+      "sha256": "d7fd4ac0ae20d3c03b34121228c711ad4878ab1dd9219a64aa254dbdb4fdcced",
+      "timestamp_seconds": 0.0,
+      "tracklet_id": "tracklet_000004"
+    },
+    {
+      "bbox_xyxy": [
+        319.6968688964844,
+        1151.93310546875,
+        405.88360595703125,
+        1279.86962890625
+      ],
+      "frame_index": 144,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000004/middle-f000144.jpg",
+      "sha256": "015f6e8c8c3c022e8cb32b57e718213b052550fef6ae04ed5f8f933b2df8ffbc",
+      "timestamp_seconds": 4.8048,
+      "tracklet_id": "tracklet_000004"
+    },
+    {
+      "bbox_xyxy": [
+        390.3162536621094,
+        1247.99853515625,
+        409.6114501953125,
+        1279.767822265625
+      ],
+      "frame_index": 294,
+      "label": "late",
+      "relative_path": "crops/tracklet_000004/late-f000294.jpg",
+      "sha256": "f033e8ddceb1bc8005af6c0f7ce85bec18e21733b3c95a99e88c79dc9ee7f852",
+      "timestamp_seconds": 9.809800000000001,
+      "tracklet_id": "tracklet_000004"
+    },
+    {
+      "bbox_xyxy": [
+        157.90557861328125,
+        473.085693359375,
+        199.50469970703125,
+        614.951904296875
+      ],
+      "frame_index": 0,
+      "label": "early",
+      "relative_path": "crops/tracklet_000005/early-f000000.jpg",
+      "sha256": "9d6b762981e939ed0365f21d6f73d2142a39a46fcc70a93def3b7aedda1e602c",
+      "timestamp_seconds": 0.0,
+      "tracklet_id": "tracklet_000005"
+    },
+    {
+      "bbox_xyxy": [
+        238.56068420410156,
+        351.6902160644531,
+        284.6705627441406,
+        489.7322692871094
+      ],
+      "frame_index": 210,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000005/middle-f000210.jpg",
+      "sha256": "6379dee66cef10c3494d73fdb9b51ad6e0755c19877f63c04bf99d490503a5b0",
+      "timestamp_seconds": 7.007000000000001,
+      "tracklet_id": "tracklet_000005"
+    },
+    {
+      "bbox_xyxy": [
+        555.0236206054688,
+        918.2875366210938,
+        613.6118774414062,
+        1051.33837890625
+      ],
+      "frame_index": 546,
+      "label": "late",
+      "relative_path": "crops/tracklet_000005/late-f000546.jpg",
+      "sha256": "a42bc64979f8f937f21ebf9cd25cac7a00c5c6d5b06080225ca659d937e23fae",
+      "timestamp_seconds": 18.2182,
+      "tracklet_id": "tracklet_000005"
+    },
+    {
+      "bbox_xyxy": [
+        342.04864501953125,
+        516.2430419921875,
+        398.44085693359375,
+        663.2354736328125
+      ],
+      "frame_index": 0,
+      "label": "early",
+      "relative_path": "crops/tracklet_000006/early-f000000.jpg",
+      "sha256": "6a2fe7bf4293caa09633204d7d35b346008c34444a394bc44d890405071e2cba",
+      "timestamp_seconds": 0.0,
+      "tracklet_id": "tracklet_000006"
+    },
+    {
+      "bbox_xyxy": [
+        369.4942932128906,
+        478.54351806640625,
+        435.3447265625,
+        612.6870727539062
+      ],
+      "frame_index": 126,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000006/middle-f000126.jpg",
+      "sha256": "b084e48d360f71f3986d1ba451b279fdd45e36fbdc231b88ec94c30bcfce94ea",
+      "timestamp_seconds": 4.2042,
+      "tracklet_id": "tracklet_000006"
+    },
+    {
+      "bbox_xyxy": [
+        656.7271728515625,
+        514.5332641601562,
+        715.03515625,
+        635.3464965820312
+      ],
+      "frame_index": 312,
+      "label": "late",
+      "relative_path": "crops/tracklet_000006/late-f000312.jpg",
+      "sha256": "edb9936138f3fde50fd8cfb52519c8f976f39f330a36e510d0ee13978c2ae776",
+      "timestamp_seconds": 10.410400000000001,
+      "tracklet_id": "tracklet_000006"
+    },
+    {
+      "bbox_xyxy": [
+        141.24948120117188,
+        1205.9423828125,
+        201.90310668945312,
+        1279.6552734375
+      ],
+      "frame_index": 0,
+      "label": "early",
+      "relative_path": "crops/tracklet_000007/early-f000000.jpg",
+      "sha256": "91d7b5019341f498b1037c3e5d74fb34a7bc73ecb80134ab0c9a84e5e792c1f2",
+      "timestamp_seconds": 0.0,
+      "tracklet_id": "tracklet_000007"
+    },
+    {
+      "bbox_xyxy": [
+        171.37826538085938,
+        1120.572509765625,
+        265.92083740234375,
+        1279.784912109375
+      ],
+      "frame_index": 150,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000007/middle-f000150.jpg",
+      "sha256": "d8f4c3487f364c31313cce4a39a3af59d42e69aa3c7676e5d8f0cd3068bd26fe",
+      "timestamp_seconds": 5.005,
+      "tracklet_id": "tracklet_000007"
+    },
+    {
+      "bbox_xyxy": [
+        257.24261474609375,
+        1258.138671875,
+        272.2366638183594,
+        1279.8023681640625
+      ],
+      "frame_index": 306,
+      "label": "late",
+      "relative_path": "crops/tracklet_000007/late-f000306.jpg",
+      "sha256": "8b54d1f27f496ecbf7b990203882a6e802b74392df3385520e1a47641dac0861",
+      "timestamp_seconds": 10.2102,
+      "tracklet_id": "tracklet_000007"
+    },
+    {
+      "bbox_xyxy": [
+        303.63336181640625,
+        443.0594482421875,
+        360.0653076171875,
+        567.7676391601562
+      ],
+      "frame_index": 0,
+      "label": "early",
+      "relative_path": "crops/tracklet_000008/early-f000000.jpg",
+      "sha256": "3ea5622a89a35dc72816dee92e029825aa5a6b432d84980532e87bd18cbd597e",
+      "timestamp_seconds": 0.0,
+      "tracklet_id": "tracklet_000008"
+    },
+    {
+      "bbox_xyxy": [
+        346.66015625,
+        394.7921142578125,
+        406.19183349609375,
+        505.7552795410156
+      ],
+      "frame_index": 126,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000008/middle-f000126.jpg",
+      "sha256": "edc1df1d8317e21c6d00af742a570619069f5141d9f3a5eb5186314ae49c36aa",
+      "timestamp_seconds": 4.2042,
+      "tracklet_id": "tracklet_000008"
+    },
+    {
+      "bbox_xyxy": [
+        442.4251708984375,
+        325.6410217285156,
+        504.5387878417969,
+        438.8494567871094
+      ],
+      "frame_index": 258,
+      "label": "late",
+      "relative_path": "crops/tracklet_000008/late-f000258.jpg",
+      "sha256": "708b496655dc0c0a0e94acc242b30372578a9120afe0df592a612ccde6c7d6bf",
+      "timestamp_seconds": 8.608600000000001,
+      "tracklet_id": "tracklet_000008"
+    },
+    {
+      "bbox_xyxy": [
+        81.47145080566406,
+        1209.521484375,
+        141.31646728515625,
+        1279.66259765625
+      ],
+      "frame_index": 0,
+      "label": "early",
+      "relative_path": "crops/tracklet_000009/early-f000000.jpg",
+      "sha256": "161a97c936b35eb40dd72ac91b08ec91c45eb0997ef4d172f67e2acf521054c6",
+      "timestamp_seconds": 0.0,
+      "tracklet_id": "tracklet_000009"
+    },
+    {
+      "bbox_xyxy": [
+        109.17289733886719,
+        1123.8648681640625,
+        202.2071075439453,
+        1279.5020751953125
+      ],
+      "frame_index": 150,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000009/middle-f000150.jpg",
+      "sha256": "236b17d75cf6466585acdfae2efe8ba701bdd4e2d5c60af10a27bf9f35a4f8f6",
+      "timestamp_seconds": 5.005,
+      "tracklet_id": "tracklet_000009"
+    },
+    {
+      "bbox_xyxy": [
+        184.00978088378906,
+        1243.726806640625,
+        205.59617614746094,
+        1279.761962890625
+      ],
+      "frame_index": 300,
+      "label": "late",
+      "relative_path": "crops/tracklet_000009/late-f000300.jpg",
+      "sha256": "6e3a0f801a7fc18380ae6e9633bfb65d2139a3ab0ac70ac41ec90a8f35e67fbb",
+      "timestamp_seconds": 10.01,
+      "tracklet_id": "tracklet_000009"
+    },
+    {
+      "bbox_xyxy": [
+        476.84051513671875,
+        1217.568603515625,
+        543.9138793945312,
+        1279.805908203125
+      ],
+      "frame_index": 0,
+      "label": "early",
+      "relative_path": "crops/tracklet_000010/early-f000000.jpg",
+      "sha256": "3bc36b09f67fc8d602e0c4d1c1cafa7240ba3b6cdd47dff73b5aa034c408735c",
+      "timestamp_seconds": 0.0,
+      "tracklet_id": "tracklet_000010"
+    },
+    {
+      "bbox_xyxy": [
+        500.4491882324219,
+        1139.712158203125,
+        599.8941650390625,
+        1279.731201171875
+      ],
+      "frame_index": 144,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000010/middle-f000144.jpg",
+      "sha256": "418452639c0701b9688226d01419b026f23e59cb41dffef206980da1f3157e92",
+      "timestamp_seconds": 4.8048,
+      "tracklet_id": "tracklet_000010"
+    },
+    {
+      "bbox_xyxy": [
+        556.2838745117188,
+        1233.03955078125,
+        584.158203125,
+        1279.7427978515625
+      ],
+      "frame_index": 288,
+      "label": "late",
+      "relative_path": "crops/tracklet_000010/late-f000288.jpg",
+      "sha256": "f6ee6e4173bc59d08d86dd1ce831241f17fb82e6401cb63d218ed6f6233ba449",
+      "timestamp_seconds": 9.6096,
+      "tracklet_id": "tracklet_000010"
+    },
+    {
+      "bbox_xyxy": [
+        55.80570983886719,
+        1191.4488525390625,
+        105.12945556640625,
+        1279.6497802734375
+      ],
+      "frame_index": 0,
+      "label": "early",
+      "relative_path": "crops/tracklet_000011/early-f000000.jpg",
+      "sha256": "317c248a28899871b93580a5a244f7791b204d5b4337f6d1fe9d22970a8200d5",
+      "timestamp_seconds": 0.0,
+      "tracklet_id": "tracklet_000011"
+    },
+    {
+      "bbox_xyxy": [
+        77.17113494873047,
+        1102.0999755859375,
+        156.77479553222656,
+        1279.29833984375
+      ],
+      "frame_index": 150,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000011/middle-f000150.jpg",
+      "sha256": "d654d085dc453188cd331a653150c7d11d64f8ce0f129e16247410cba8bb8b8a",
+      "timestamp_seconds": 5.005,
+      "tracklet_id": "tracklet_000011"
+    },
+    {
+      "bbox_xyxy": [
+        174.3875274658203,
+        1246.25341796875,
+        192.07386779785156,
+        1279.7493896484375
+      ],
+      "frame_index": 306,
+      "label": "late",
+      "relative_path": "crops/tracklet_000011/late-f000306.jpg",
+      "sha256": "a7eedf6ba606ecf3c26fbe9f1064fa0fef66a604bb73c603de0791806e9ec7d7",
+      "timestamp_seconds": 10.2102,
+      "tracklet_id": "tracklet_000011"
+    },
+    {
+      "bbox_xyxy": [
+        573.992431640625,
+        1224.784423828125,
+        640.722900390625,
+        1279.660400390625
+      ],
+      "frame_index": 0,
+      "label": "early",
+      "relative_path": "crops/tracklet_000012/early-f000000.jpg",
+      "sha256": "0b2fece0d0def3272fdbabdc12da4a9645b4e17c6c04bd87c0f870127612be44",
+      "timestamp_seconds": 0.0,
+      "tracklet_id": "tracklet_000012"
+    },
+    {
+      "bbox_xyxy": [
+        593.516357421875,
+        1137.291748046875,
+        709.9024658203125,
+        1278.4544677734375
+      ],
+      "frame_index": 150,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000012/middle-f000150.jpg",
+      "sha256": "73e081e089174c1d0b666f5f4c284ad732451d55345fba77110b91c85f1bf90b",
+      "timestamp_seconds": 5.005,
+      "tracklet_id": "tracklet_000012"
+    },
+    {
+      "bbox_xyxy": [
+        687.8052978515625,
+        1262.4617919921875,
+        700.6810302734375,
+        1279.912353515625
+      ],
+      "frame_index": 300,
+      "label": "late",
+      "relative_path": "crops/tracklet_000012/late-f000300.jpg",
+      "sha256": "72c4ac744aaf6c572e22df62078282ff011a12332255651cea92b1ff948f190a",
+      "timestamp_seconds": 10.01,
+      "tracklet_id": "tracklet_000012"
+    },
+    {
+      "bbox_xyxy": [
+        652.3468017578125,
+        1228.030517578125,
+        707.9476318359375,
+        1279.777099609375
+      ],
+      "frame_index": 0,
+      "label": "early",
+      "relative_path": "crops/tracklet_000013/early-f000000.jpg",
+      "sha256": "c521f2a1c6edc69f893ae8854ee87732284341f0e09ce01b61773ef6c32fd099",
+      "timestamp_seconds": 0.0,
+      "tracklet_id": "tracklet_000013"
+    },
+    {
+      "bbox_xyxy": [
+        669.6072998046875,
+        1171.4273681640625,
+        720.0,
+        1279.734619140625
+      ],
+      "frame_index": 132,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000013/middle-f000132.jpg",
+      "sha256": "3de2e7caf08adeaf1a521a54c5ea6b5f5732261f621da202d1c73f754ef30d95",
+      "timestamp_seconds": 4.4044,
+      "tracklet_id": "tracklet_000013"
+    },
+    {
+      "bbox_xyxy": [
+        680.6143798828125,
+        1209.5517578125,
+        711.0709838867188,
+        1279.71044921875
+      ],
+      "frame_index": 270,
+      "label": "late",
+      "relative_path": "crops/tracklet_000013/late-f000270.jpg",
+      "sha256": "ac9b491131e8130cf48687090cb6008b89657146ec9931681fd685cb5fc75390",
+      "timestamp_seconds": 9.009,
+      "tracklet_id": "tracklet_000013"
+    },
+    {
+      "bbox_xyxy": [
+        0.1183328628540039,
+        435.67742919921875,
+        28.472793579101562,
+        537.7235717773438
+      ],
+      "frame_index": 0,
+      "label": "early",
+      "relative_path": "crops/tracklet_000014/early-f000000.jpg",
+      "sha256": "2c5fb745b36cdb1a4167c26b205d054f9cd343502feaea58111833450b52a7e3",
+      "timestamp_seconds": 0.0,
+      "tracklet_id": "tracklet_000014"
+    },
+    {
+      "bbox_xyxy": [
+        8.26331615447998,
+        435.2397155761719,
+        44.529441833496094,
+        528.1717529296875
+      ],
+      "frame_index": 72,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000014/middle-f000072.jpg",
+      "sha256": "8accf5c9ec648d17e2e24d5a591e12d1ad528f7d6a73f998d46e9c8505010e8c",
+      "timestamp_seconds": 2.4024,
+      "tracklet_id": "tracklet_000014"
+    },
+    {
+      "bbox_xyxy": [
+        0.0,
+        274.37841796875,
+        36.831974029541016,
+        382.9285888671875
+      ],
+      "frame_index": 150,
+      "label": "late",
+      "relative_path": "crops/tracklet_000014/late-f000150.jpg",
+      "sha256": "9a158b53622c726b231fb0c50abbb333d221d114e740eed9d02db32dbb2f89ee",
+      "timestamp_seconds": 5.005,
+      "tracklet_id": "tracklet_000014"
+    },
+    {
+      "bbox_xyxy": [
+        598.7549438476562,
+        1265.05859375,
+        622.3412475585938,
+        1279.8056640625
+      ],
+      "frame_index": 0,
+      "label": "early",
+      "relative_path": "crops/tracklet_000015/early-f000000.jpg",
+      "sha256": "39c420d039693ba43faab8b9ca838601cf1403de62c808959be84a0bec435547",
+      "timestamp_seconds": 0.0,
+      "tracklet_id": "tracklet_000015"
+    },
+    {
+      "bbox_xyxy": [
+        591.3468627929688,
+        1191.789794921875,
+        678.8447265625,
+        1279.696044921875
+      ],
+      "frame_index": 138,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000015/middle-f000138.jpg",
+      "sha256": "ef5d31a1aab78eb0f558cfb57f28615660597e8f5b7cee07cd5c924c053f85c9",
+      "timestamp_seconds": 4.6046000000000005,
+      "tracklet_id": "tracklet_000015"
+    },
+    {
+      "bbox_xyxy": [
+        640.04833984375,
+        1255.30517578125,
+        653.8954467773438,
+        1279.7366943359375
+      ],
+      "frame_index": 282,
+      "label": "late",
+      "relative_path": "crops/tracklet_000015/late-f000282.jpg",
+      "sha256": "00af6131879030282f3159a4c13c95d0c2f59dde9cc8b34f9fbc653e586f8e36",
+      "timestamp_seconds": 9.4094,
+      "tracklet_id": "tracklet_000015"
+    },
+    {
+      "bbox_xyxy": [
+        649.576904296875,
+        1267.008056640625,
+        675.9717407226562,
+        1279.7535400390625
+      ],
+      "frame_index": 30,
+      "label": "early",
+      "relative_path": "crops/tracklet_000016/early-f000030.jpg",
+      "sha256": "da137b38897a628cd214f350b0157b519272af26ad0f90912db4464b27b6fe99",
+      "timestamp_seconds": 1.0010000000000001,
+      "tracklet_id": "tracklet_000016"
+    },
+    {
+      "bbox_xyxy": [
+        661.0968017578125,
+        1264.9931640625,
+        691.2265014648438,
+        1279.841552734375
+      ],
+      "frame_index": 90,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000016/middle-f000090.jpg",
+      "sha256": "f689baee59e66d6d8f5403c4fa4757906ad4b7699f270cc241816269e406d078",
+      "timestamp_seconds": 3.003,
+      "tracklet_id": "tracklet_000016"
+    },
+    {
+      "bbox_xyxy": [
+        633.1051025390625,
+        1199.4140625,
+        720.0,
+        1279.8448486328125
+      ],
+      "frame_index": 144,
+      "label": "late",
+      "relative_path": "crops/tracklet_000016/late-f000144.jpg",
+      "sha256": "90b47df6e04bf2b35c9cac1c459f83780693eaa3f8ada238a11d48e48415648c",
+      "timestamp_seconds": 4.8048,
+      "tracklet_id": "tracklet_000016"
+    },
+    {
+      "bbox_xyxy": [
+        5.957119941711426,
+        0.5822708010673523,
+        16.89236068725586,
+        77.67887878417969
+      ],
+      "frame_index": 120,
+      "label": "early",
+      "relative_path": "crops/tracklet_000019/early-f000120.jpg",
+      "sha256": "86b8d25eec0d06713e8f0bd5093a4df2d5ab7fca0cce683b57b85d7e31c0e6e7",
+      "timestamp_seconds": 4.0040000000000004,
+      "tracklet_id": "tracklet_000019"
+    },
+    {
+      "bbox_xyxy": [
+        11.205431938171387,
+        0.20092017948627472,
+        21.778396606445312,
+        71.57788848876953
+      ],
+      "frame_index": 126,
+      "label": "late",
+      "relative_path": "crops/tracklet_000019/late-f000126.jpg",
+      "sha256": "57006a6d24e73738cac59f99312dee49c1706f98e16d06630857cdae60e36744",
+      "timestamp_seconds": 4.2042,
+      "tracklet_id": "tracklet_000019"
+    },
+    {
+      "bbox_xyxy": [
+        13.318923950195312,
+        0.075017549097538,
+        62.73225784301758,
+        53.287147521972656
+      ],
+      "frame_index": 138,
+      "label": "early",
+      "relative_path": "crops/tracklet_000021/early-f000138.jpg",
+      "sha256": "8ed901f77a4ab9fff77c0d9a5b2f7660c416f2a3ff3bb55b032a47c62452e650",
+      "timestamp_seconds": 4.6046000000000005,
+      "tracklet_id": "tracklet_000021"
+    },
+    {
+      "bbox_xyxy": [
+        12.87542724609375,
+        0.10282572358846664,
+        53.33530807495117,
+        43.895320892333984
+      ],
+      "frame_index": 144,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000021/middle-f000144.jpg",
+      "sha256": "3fd035a609d5061f8840dd03ac685ab31caeebaa80cc9f82eaa50d392f9fda8f",
+      "timestamp_seconds": 4.8048,
+      "tracklet_id": "tracklet_000021"
+    },
+    {
+      "bbox_xyxy": [
+        14.767562866210938,
+        0.042501892894506454,
+        36.08069610595703,
+        22.486854553222656
+      ],
+      "frame_index": 156,
+      "label": "late",
+      "relative_path": "crops/tracklet_000021/late-f000156.jpg",
+      "sha256": "ca0a73583547a4aad73f9c606f4ef6fc949321033134fb7c3c1e5f465c81b0bd",
+      "timestamp_seconds": 5.2052000000000005,
+      "tracklet_id": "tracklet_000021"
+    },
+    {
+      "bbox_xyxy": [
+        695.946044921875,
+        1138.5556640625,
+        720.0,
+        1279.087646484375
+      ],
+      "frame_index": 150,
+      "label": "early",
+      "relative_path": "crops/tracklet_000024/early-f000150.jpg",
+      "sha256": "c7901b34c99981ad5106fbd35cf1cbf97ae0a0a2d7712f481fa34f51abb24075",
+      "timestamp_seconds": 5.005,
+      "tracklet_id": "tracklet_000024"
+    },
+    {
+      "bbox_xyxy": [
+        696.8601684570312,
+        1132.048828125,
+        720.0,
+        1279.2838134765625
+      ],
+      "frame_index": 156,
+      "label": "late",
+      "relative_path": "crops/tracklet_000024/late-f000156.jpg",
+      "sha256": "9d0bb5b95c27e5544a68bc36cb5a4dcdf523462aad474a2cca1248d5e78331f9",
+      "timestamp_seconds": 5.2052000000000005,
+      "tracklet_id": "tracklet_000024"
+    },
+    {
+      "bbox_xyxy": [
+        4.17318058013916,
+        242.69114685058594,
+        31.095996856689453,
+        339.94244384765625
+      ],
+      "frame_index": 210,
+      "label": "early",
+      "relative_path": "crops/tracklet_000033/early-f000210.jpg",
+      "sha256": "030c868a46a0d1d1402e3aa1cc04f3f17516e57a754f24a88fffcfa2ee901a02",
+      "timestamp_seconds": 7.007000000000001,
+      "tracklet_id": "tracklet_000033"
+    },
+    {
+      "bbox_xyxy": [
+        37.52382278442383,
+        383.12860107421875,
+        83.17869567871094,
+        497.8367004394531
+      ],
+      "frame_index": 276,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000033/middle-f000276.jpg",
+      "sha256": "fda05ada916223a8e69d43710481dc9dd7c6825924300b7e8a08b2acff5c32c9",
+      "timestamp_seconds": 9.209200000000001,
+      "tracklet_id": "tracklet_000033"
+    },
+    {
+      "bbox_xyxy": [
+        198.94024658203125,
+        625.1156616210938,
+        259.89276123046875,
+        747.8680419921875
+      ],
+      "frame_index": 360,
+      "label": "late",
+      "relative_path": "crops/tracklet_000033/late-f000360.jpg",
+      "sha256": "bf3abe5cb57be001d99ff1628848f0d2d6efc62996021c21b9222da1a6dc37c7",
+      "timestamp_seconds": 12.012,
+      "tracklet_id": "tracklet_000033"
+    },
+    {
+      "bbox_xyxy": [
+        428.04376220703125,
+        374.91278076171875,
+        472.90313720703125,
+        516.4609375
+      ],
+      "frame_index": 222,
+      "label": "early",
+      "relative_path": "crops/tracklet_000034/early-f000222.jpg",
+      "sha256": "9d1becc686982b49a44a5d41d0b76664680df191a360837ef0de8072fe065927",
+      "timestamp_seconds": 7.4074,
+      "tracklet_id": "tracklet_000034"
+    },
+    {
+      "bbox_xyxy": [
+        373.84503173828125,
+        403.0335693359375,
+        419.2783508300781,
+        535.634521484375
+      ],
+      "frame_index": 258,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000034/middle-f000258.jpg",
+      "sha256": "58111e902303b21490543233b59ee4b7b8719e2774705293648611a3df016d7f",
+      "timestamp_seconds": 8.608600000000001,
+      "tracklet_id": "tracklet_000034"
+    },
+    {
+      "bbox_xyxy": [
+        302.83636474609375,
+        712.3101806640625,
+        353.816650390625,
+        838.3482666015625
+      ],
+      "frame_index": 480,
+      "label": "late",
+      "relative_path": "crops/tracklet_000034/late-f000480.jpg",
+      "sha256": "47e40d4126cd4e08838e1c286cbce2fd23aabe2bba3552974c8bd5272fcdb078",
+      "timestamp_seconds": 16.016000000000002,
+      "tracklet_id": "tracklet_000034"
+    },
+    {
+      "bbox_xyxy": [
+        1.0687140226364136,
+        344.7503662109375,
+        17.068387985229492,
+        457.783935546875
+      ],
+      "frame_index": 222,
+      "label": "early",
+      "relative_path": "crops/tracklet_000035/early-f000222.jpg",
+      "sha256": "8f5bc3d8b148ac5129a9d3650574446bcbd7881886a62e41e770b7530b3ea40a",
+      "timestamp_seconds": 7.4074,
+      "tracklet_id": "tracklet_000035"
+    },
+    {
+      "bbox_xyxy": [
+        77.79032135009766,
+        651.3440551757812,
+        128.12838745117188,
+        800.4496459960938
+      ],
+      "frame_index": 372,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000035/middle-f000372.jpg",
+      "sha256": "1c81947b291228a67d44845eb78e626546de83e75f5ee13fa2f3d0b78f4e3dd6",
+      "timestamp_seconds": 12.4124,
+      "tracklet_id": "tracklet_000035"
+    },
+    {
+      "bbox_xyxy": [
+        263.21441650390625,
+        761.4993286132812,
+        340.20074462890625,
+        900.7235717773438
+      ],
+      "frame_index": 474,
+      "label": "late",
+      "relative_path": "crops/tracklet_000035/late-f000474.jpg",
+      "sha256": "6cb15eb91f03cda351b387d97e0fe43b99009043e99cf0ea74e442c789cc091d",
+      "timestamp_seconds": 15.8158,
+      "tracklet_id": "tracklet_000035"
+    },
+    {
+      "bbox_xyxy": [
+        444.04241943359375,
+        497.4511413574219,
+        505.8604736328125,
+        637.853271484375
+      ],
+      "frame_index": 282,
+      "label": "early",
+      "relative_path": "crops/tracklet_000043/early-f000282.jpg",
+      "sha256": "6774790678ea7bbeadcb4e8faf15942b51655c7051a8a0bb1b22caf435903648",
+      "timestamp_seconds": 9.4094,
+      "tracklet_id": "tracklet_000043"
+    },
+    {
+      "bbox_xyxy": [
+        463.0003662109375,
+        653.215576171875,
+        530.8601684570312,
+        805.8755493164062
+      ],
+      "frame_index": 324,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000043/middle-f000324.jpg",
+      "sha256": "aedc824ba84fd958d9c266b9b2b18e37e14179c407f4d227ac995f48229ceaf0",
+      "timestamp_seconds": 10.8108,
+      "tracklet_id": "tracklet_000043"
+    },
+    {
+      "bbox_xyxy": [
+        662.6881713867188,
+        741.2098388671875,
+        720.0,
+        892.623291015625
+      ],
+      "frame_index": 366,
+      "label": "late",
+      "relative_path": "crops/tracklet_000043/late-f000366.jpg",
+      "sha256": "92dc6117adf27fa85decddb9621c4f9a840085afe56b5646bc91a531e95a17d9",
+      "timestamp_seconds": 12.212200000000001,
+      "tracklet_id": "tracklet_000043"
+    },
+    {
+      "bbox_xyxy": [
+        207.17431640625,
+        1261.5418701171875,
+        227.81253051757812,
+        1279.75146484375
+      ],
+      "frame_index": 312,
+      "label": "early",
+      "relative_path": "crops/tracklet_000049/early-f000312.jpg",
+      "sha256": "5f5a5d3fc0b81a94287a1e67b0ecd42ab86b7bd4af9c89adce3c4981198acfae",
+      "timestamp_seconds": 10.410400000000001,
+      "tracklet_id": "tracklet_000049"
+    },
+    {
+      "bbox_xyxy": [
+        175.0512237548828,
+        516.07177734375,
+        246.65489196777344,
+        621.0528564453125
+      ],
+      "frame_index": 324,
+      "label": "early",
+      "relative_path": "crops/tracklet_000052/early-f000324.jpg",
+      "sha256": "3c68d1a8c6d6669c299cbadf3e2f8b8e986fcc9cbc95cd441d3d41cf93c43b24",
+      "timestamp_seconds": 10.8108,
+      "tracklet_id": "tracklet_000052"
+    },
+    {
+      "bbox_xyxy": [
+        494.6092224121094,
+        635.2655639648438,
+        557.3494873046875,
+        738.314453125
+      ],
+      "frame_index": 396,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000052/middle-f000396.jpg",
+      "sha256": "c928175426e3a629c7d2586f8f4116e6af91d38628244198bccce26965d31858",
+      "timestamp_seconds": 13.2132,
+      "tracklet_id": "tracklet_000052"
+    },
+    {
+      "bbox_xyxy": [
+        686.9784545898438,
+        725.2474365234375,
+        720.0,
+        819.4486083984375
+      ],
+      "frame_index": 474,
+      "label": "late",
+      "relative_path": "crops/tracklet_000052/late-f000474.jpg",
+      "sha256": "2b0e9d6484a2c56fd9449079c943a4406f5e407e1c9c17a636cb9a80e85ae13b",
+      "timestamp_seconds": 15.8158,
+      "tracklet_id": "tracklet_000052"
+    },
+    {
+      "bbox_xyxy": [
+        527.81396484375,
+        611.0704956054688,
+        607.1220092773438,
+        738.7382202148438
+      ],
+      "frame_index": 324,
+      "label": "early",
+      "relative_path": "crops/tracklet_000053/early-f000324.jpg",
+      "sha256": "bd3486b0d1a4248a71576ab78da872404356133fed3c40ea22c92e7af64ca8cb",
+      "timestamp_seconds": 10.8108,
+      "tracklet_id": "tracklet_000053"
+    },
+    {
+      "bbox_xyxy": [
+        551.483154296875,
+        677.36767578125,
+        630.7252197265625,
+        810.505859375
+      ],
+      "frame_index": 372,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000053/middle-f000372.jpg",
+      "sha256": "0795538f3f812649915b73de2059f25427bf28e6202131336580eb4d7ad069ae",
+      "timestamp_seconds": 12.4124,
+      "tracklet_id": "tracklet_000053"
+    },
+    {
+      "bbox_xyxy": [
+        669.2081298828125,
+        705.7772827148438,
+        720.0,
+        833.79541015625
+      ],
+      "frame_index": 402,
+      "label": "late",
+      "relative_path": "crops/tracklet_000053/late-f000402.jpg",
+      "sha256": "e2675b286637b756f0632e2519c51c5bbc5ee9b0cf04f4f6878b02efc5b672ff",
+      "timestamp_seconds": 13.413400000000001,
+      "tracklet_id": "tracklet_000053"
+    },
+    {
+      "bbox_xyxy": [
+        79.69210052490234,
+        486.35894775390625,
+        129.11135864257812,
+        608.0625
+      ],
+      "frame_index": 330,
+      "label": "early",
+      "relative_path": "crops/tracklet_000056/early-f000330.jpg",
+      "sha256": "3f961664d1cac2289f3a524e679240dff5f0e7fd35c147cdd798a67988f7a468",
+      "timestamp_seconds": 11.011000000000001,
+      "tracklet_id": "tracklet_000056"
+    },
+    {
+      "bbox_xyxy": [
+        447.3349304199219,
+        602.3896484375,
+        498.3612365722656,
+        731.2211303710938
+      ],
+      "frame_index": 426,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000056/middle-f000426.jpg",
+      "sha256": "43446c042a6a4a4abc07031400842db7ff368422af1f32a7ff082b80499b5cf3",
+      "timestamp_seconds": 14.2142,
+      "tracklet_id": "tracklet_000056"
+    },
+    {
+      "bbox_xyxy": [
+        687.1906127929688,
+        875.0018310546875,
+        720.0,
+        1010.9096069335938
+      ],
+      "frame_index": 522,
+      "label": "late",
+      "relative_path": "crops/tracklet_000056/late-f000522.jpg",
+      "sha256": "e74ba464977b204e2c292d58af745fcddbff6f79ea3c90d2e40b2096108feca2",
+      "timestamp_seconds": 17.4174,
+      "tracklet_id": "tracklet_000056"
+    },
+    {
+      "bbox_xyxy": [
+        187.39500427246094,
+        576.7724609375,
+        269.2422790527344,
+        701.5537719726562
+      ],
+      "frame_index": 342,
+      "label": "early",
+      "relative_path": "crops/tracklet_000061/early-f000342.jpg",
+      "sha256": "99c00fcd53754a317bf29cad8b1724b9fa60719df1a44ae7318680b295549b02",
+      "timestamp_seconds": 11.4114,
+      "tracklet_id": "tracklet_000061"
+    },
+    {
+      "bbox_xyxy": [
+        216.5286407470703,
+        630.5985717773438,
+        292.8070983886719,
+        754.6009521484375
+      ],
+      "frame_index": 390,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000061/middle-f000390.jpg",
+      "sha256": "4ae63b80ce39da300f6216f7eef3130f47630db812324396e07ce950737cf670",
+      "timestamp_seconds": 13.013,
+      "tracklet_id": "tracklet_000061"
+    },
+    {
+      "bbox_xyxy": [
+        326.0217590332031,
+        740.74951171875,
+        405.5262145996094,
+        874.7841186523438
+      ],
+      "frame_index": 486,
+      "label": "late",
+      "relative_path": "crops/tracklet_000061/late-f000486.jpg",
+      "sha256": "3e32222daab6e08da439aa653a04de2e97df12c33d63b383b2170249d28e3f81",
+      "timestamp_seconds": 16.2162,
+      "tracklet_id": "tracklet_000061"
+    },
+    {
+      "bbox_xyxy": [
+        394.6876220703125,
+        651.0382080078125,
+        443.854736328125,
+        780.0799560546875
+      ],
+      "frame_index": 378,
+      "label": "early",
+      "relative_path": "crops/tracklet_000074/early-f000378.jpg",
+      "sha256": "d06e036848cce3f3bd681ed380fea4cc44bc5bbac0fe94073ecf61b5d5ee6c36",
+      "timestamp_seconds": 12.6126,
+      "tracklet_id": "tracklet_000074"
+    },
+    {
+      "bbox_xyxy": [
+        552.0881958007812,
+        691.7107543945312,
+        596.9033203125,
+        820.3323974609375
+      ],
+      "frame_index": 444,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000074/middle-f000444.jpg",
+      "sha256": "3a95180e65e52f3924417b46bd0b8c82991a6c0802ccff79a3c953fd4c3dd9a6",
+      "timestamp_seconds": 14.8148,
+      "tracklet_id": "tracklet_000074"
+    },
+    {
+      "bbox_xyxy": [
+        678.0804443359375,
+        913.8775024414062,
+        720.0,
+        1044.0567626953125
+      ],
+      "frame_index": 510,
+      "label": "late",
+      "relative_path": "crops/tracklet_000074/late-f000510.jpg",
+      "sha256": "eca69b8b54600899562a71b952422d44efadd4f7e7ec4a2f585ca08e551484d2",
+      "timestamp_seconds": 17.017,
+      "tracklet_id": "tracklet_000074"
+    },
+    {
+      "bbox_xyxy": [
+        92.47806549072266,
+        513.6754150390625,
+        140.48011779785156,
+        633.338134765625
+      ],
+      "frame_index": 384,
+      "label": "early",
+      "relative_path": "crops/tracklet_000079/early-f000384.jpg",
+      "sha256": "99d8dbfe95e0786561eab3a278d3cae6f01e94b529f36295086f4a9a03eaea71",
+      "timestamp_seconds": 12.812800000000001,
+      "tracklet_id": "tracklet_000079"
+    },
+    {
+      "bbox_xyxy": [
+        115.27127838134766,
+        512.9952392578125,
+        163.8451385498047,
+        634.0270385742188
+      ],
+      "frame_index": 390,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000079/middle-f000390.jpg",
+      "sha256": "6b2d81b670d656f6e8ae04b94c1133a29841213aae58ef88eec71821d901ca61",
+      "timestamp_seconds": 13.013,
+      "tracklet_id": "tracklet_000079"
+    },
+    {
+      "bbox_xyxy": [
+        382.6234436035156,
+        549.1867065429688,
+        420.3981018066406,
+        649.5494995117188
+      ],
+      "frame_index": 546,
+      "label": "late",
+      "relative_path": "crops/tracklet_000079/late-f000546.jpg",
+      "sha256": "af2950c883aba4634d1e53aca91e907380778cd801be0d71002b612f01258116",
+      "timestamp_seconds": 18.2182,
+      "tracklet_id": "tracklet_000079"
+    },
+    {
+      "bbox_xyxy": [
+        143.82269287109375,
+        534.5775146484375,
+        194.82196044921875,
+        661.2818603515625
+      ],
+      "frame_index": 390,
+      "label": "early",
+      "relative_path": "crops/tracklet_000082/early-f000390.jpg",
+      "sha256": "bf3a30ef456f2dde05d171b9d6116bc03fc5bda8673d303be17a4c19e65f3675",
+      "timestamp_seconds": 13.013,
+      "tracklet_id": "tracklet_000082"
+    },
+    {
+      "bbox_xyxy": [
+        288.1423034667969,
+        568.167236328125,
+        338.570068359375,
+        693.8433227539062
+      ],
+      "frame_index": 438,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000082/middle-f000438.jpg",
+      "sha256": "f319ffbfca9c8ca1c8f2353f13d8564830a8c4b21dbf9cd44c1f25f243f38045",
+      "timestamp_seconds": 14.614600000000001,
+      "tracklet_id": "tracklet_000082"
+    },
+    {
+      "bbox_xyxy": [
+        468.9478454589844,
+        696.816162109375,
+        516.2753295898438,
+        819.9828491210938
+      ],
+      "frame_index": 492,
+      "label": "late",
+      "relative_path": "crops/tracklet_000082/late-f000492.jpg",
+      "sha256": "fcbafad07cf48b91c8e2082a062364923248dae4edd559264dc27bb07c5d8620",
+      "timestamp_seconds": 16.4164,
+      "tracklet_id": "tracklet_000082"
+    },
+    {
+      "bbox_xyxy": [
+        54.83915328979492,
+        591.6482543945312,
+        96.97822570800781,
+        722.8782348632812
+      ],
+      "frame_index": 390,
+      "label": "early",
+      "relative_path": "crops/tracklet_000083/early-f000390.jpg",
+      "sha256": "71f00c3c926e015fadf5bd8513707a402f0b3935773654e369fe3fa765593a22",
+      "timestamp_seconds": 13.013,
+      "tracklet_id": "tracklet_000083"
+    },
+    {
+      "bbox_xyxy": [
+        147.708740234375,
+        631.376220703125,
+        194.15090942382812,
+        760.1836547851562
+      ],
+      "frame_index": 432,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000083/middle-f000432.jpg",
+      "sha256": "e5ef9a69cf1e93dbc6795a80c4e6c8dbc3a2607e7fc9b7a0df446301b2e93d77",
+      "timestamp_seconds": 14.4144,
+      "tracklet_id": "tracklet_000083"
+    },
+    {
+      "bbox_xyxy": [
+        261.4904479980469,
+        686.3541259765625,
+        312.39166259765625,
+        815.3795166015625
+      ],
+      "frame_index": 474,
+      "label": "late",
+      "relative_path": "crops/tracklet_000083/late-f000474.jpg",
+      "sha256": "a829cf8d759aa92db14e1124fb009d2be0bfcf21cfdd214801e25fe6da04322d",
+      "timestamp_seconds": 15.8158,
+      "tracklet_id": "tracklet_000083"
+    },
+    {
+      "bbox_xyxy": [
+        326.0054016113281,
+        535.2461547851562,
+        389.15118408203125,
+        652.4140625
+      ],
+      "frame_index": 426,
+      "label": "early",
+      "relative_path": "crops/tracklet_000101/early-f000426.jpg",
+      "sha256": "1dd530c9b0e4f5be8ce5f5dfb34779801e0b816de31a9d0b6dcb4d1531ef1e47",
+      "timestamp_seconds": 14.2142,
+      "tracklet_id": "tracklet_000101"
+    },
+    {
+      "bbox_xyxy": [
+        315.29266357421875,
+        500.5636291503906,
+        366.4949035644531,
+        602.1535034179688
+      ],
+      "frame_index": 522,
+      "label": "late",
+      "relative_path": "crops/tracklet_000101/late-f000522.jpg",
+      "sha256": "623af67b7287ba595c9914b335e8780754ba5a253197e6651a18f148e4e9beb9",
+      "timestamp_seconds": 17.4174,
+      "tracklet_id": "tracklet_000101"
+    },
+    {
+      "bbox_xyxy": [
+        3.421088695526123,
+        235.0712890625,
+        15.708306312561035,
+        337.8236999511719
+      ],
+      "frame_index": 426,
+      "label": "early",
+      "relative_path": "crops/tracklet_000102/early-f000426.jpg",
+      "sha256": "9f27e5b6b2f4c145dfe0d938bce6c1c22851f9c1aad16c53619576a2851cccd8",
+      "timestamp_seconds": 14.2142,
+      "tracklet_id": "tracklet_000102"
+    },
+    {
+      "bbox_xyxy": [
+        31.07936668395996,
+        256.8256530761719,
+        46.473907470703125,
+        361.9316711425781
+      ],
+      "frame_index": 450,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000102/middle-f000450.jpg",
+      "sha256": "d89ac5b9c09e55fae6107de0c87f25102a9fe2ee7ad62492431895bf8336725d",
+      "timestamp_seconds": 15.015,
+      "tracklet_id": "tracklet_000102"
+    },
+    {
+      "bbox_xyxy": [
+        131.7229461669922,
+        363.7453918457031,
+        151.35882568359375,
+        463.3442687988281
+      ],
+      "frame_index": 486,
+      "label": "late",
+      "relative_path": "crops/tracklet_000102/late-f000486.jpg",
+      "sha256": "5b8adc39a4cdc8c28343e46ab4f2a9bcdb7c84e99d06caa3f60587be7a494bee",
+      "timestamp_seconds": 16.2162,
+      "tracklet_id": "tracklet_000102"
+    },
+    {
+      "bbox_xyxy": [
+        519.2180786132812,
+        886.1937255859375,
+        612.853515625,
+        1033.6895751953125
+      ],
+      "frame_index": 510,
+      "label": "early",
+      "relative_path": "crops/tracklet_000220/early-f000510.jpg",
+      "sha256": "406cdd5556f7fcd47512a3f5d2fc3948ccf71a26dca826715f5530877f98f28c",
+      "timestamp_seconds": 17.017,
+      "tracklet_id": "tracklet_000220"
+    },
+    {
+      "bbox_xyxy": [
+        633.542236328125,
+        832.0614013671875,
+        684.121826171875,
+        953.2117309570312
+      ],
+      "frame_index": 528,
+      "label": "early",
+      "relative_path": "crops/tracklet_000253/early-f000528.jpg",
+      "sha256": "187b24b4c2a63159e137f192bc232e71f06d2736db925d60ace22c75fd3c976a",
+      "timestamp_seconds": 17.6176,
+      "tracklet_id": "tracklet_000253"
+    },
+    {
+      "bbox_xyxy": [
+        645.4339599609375,
+        841.7998657226562,
+        698.1429443359375,
+        968.5679321289062
+      ],
+      "frame_index": 534,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000253/middle-f000534.jpg",
+      "sha256": "c9a1e81e4e6e25fad279873de872084a4bef6be7a3e2f053f3330ecef51b00ae",
+      "timestamp_seconds": 17.817800000000002,
+      "tracklet_id": "tracklet_000253"
+    },
+    {
+      "bbox_xyxy": [
+        666.0328979492188,
+        858.9432983398438,
+        718.3306884765625,
+        985.4998168945312
+      ],
+      "frame_index": 546,
+      "label": "late",
+      "relative_path": "crops/tracklet_000253/late-f000546.jpg",
+      "sha256": "075ca029b3cb366f6255073378b3fae16ab60e388a204f5d33c7bf4018542959",
+      "timestamp_seconds": 18.2182,
+      "tracklet_id": "tracklet_000253"
+    },
+    {
+      "bbox_xyxy": [
+        646.7297973632812,
+        954.360595703125,
+        698.19189453125,
+        1102.534912109375
+      ],
+      "frame_index": 534,
+      "label": "early",
+      "relative_path": "crops/tracklet_000264/early-f000534.jpg",
+      "sha256": "3afbd347fb82ebefcfa6f873b7d099f794b142dbd756115c7244641138870c28",
+      "timestamp_seconds": 17.817800000000002,
+      "tracklet_id": "tracklet_000264"
+    },
+    {
+      "bbox_xyxy": [
+        659.138427734375,
+        964.205810546875,
+        709.8670654296875,
+        1109.543701171875
+      ],
+      "frame_index": 540,
+      "label": "middle",
+      "relative_path": "crops/tracklet_000264/middle-f000540.jpg",
+      "sha256": "5c372ddf4c0452edb61360b8a6a07751339289f31c48293042d39db2bb5c7559",
+      "timestamp_seconds": 18.018,
+      "tracklet_id": "tracklet_000264"
+    },
+    {
+      "bbox_xyxy": [
+        668.542236328125,
+        977.2718505859375,
+        717.2752075195312,
+        1116.5303955078125
+      ],
+      "frame_index": 546,
+      "label": "late",
+      "relative_path": "crops/tracklet_000264/late-f000546.jpg",
+      "sha256": "6d7147a760049fa02cd1a22e979591fc649351b3bc6a8ec540bf90f44d7eb4f6",
+      "timestamp_seconds": 18.2182,
+      "tracklet_id": "tracklet_000264"
+    },
+    {
+      "bbox_xyxy": [
+        296.4727478027344,
+        573.139404296875,
+        331.0712890625,
+        683.3544921875
+      ],
+      "frame_index": 540,
+      "label": "early",
+      "relative_path": "crops/tracklet_000272/early-f000540.jpg",
+      "sha256": "bbae5216a9af28336065502c611c1e85e32f39aa3fbff62456faeb0023ff5ae6",
+      "timestamp_seconds": 18.018,
+      "tracklet_id": "tracklet_000272"
+    },
+    {
+      "bbox_xyxy": [
+        306.29412841796875,
+        580.741943359375,
+        340.97674560546875,
+        691.1320190429688
+      ],
+      "frame_index": 546,
+      "label": "late",
+      "relative_path": "crops/tracklet_000272/late-f000546.jpg",
+      "sha256": "c7f69065833becfd53946423738a73bcfbfc4a1738edefe20d820d2b4bda569f",
+      "timestamp_seconds": 18.2182,
+      "tracklet_id": "tracklet_000272"
+    },
+    {
+      "bbox_xyxy": [
+        72.90280151367188,
+        494.0711975097656,
+        103.69154357910156,
+        596.5567016601562
+      ],
+      "frame_index": 540,
+      "label": "early",
+      "relative_path": "crops/tracklet_000273/early-f000540.jpg",
+      "sha256": "854c68ac6b3638a0b9683b58ade526c344100cb501d80d45e1e587e7eca86998",
+      "timestamp_seconds": 18.018,
+      "tracklet_id": "tracklet_000273"
+    },
+    {
+      "bbox_xyxy": [
+        80.52959442138672,
+        501.99676513671875,
+        111.04820251464844,
+        603.8464965820312
+      ],
+      "frame_index": 546,
+      "label": "late",
+      "relative_path": "crops/tracklet_000273/late-f000546.jpg",
+      "sha256": "b0980b848b29365e2d20b80aa529cbd7d05e5c06d9a7350992a8b8f95e262db6",
+      "timestamp_seconds": 18.2182,
+      "tracklet_id": "tracklet_000273"
+    }
+  ],
+  "schema": "footballai.tracklet-review-samples/v1",
+  "source": {
+    "detections_sha256": "d8b5df0845936d457fde57cda4084dc55c16bd4fb14ef01fd75fb0ea8c3156ca",
+    "duration_seconds": 18.551866666666665,
+    "source_id": "ai1-bounded-18s-validation",
+    "tracklets_sha256": "44fa5cdfe69fc9e096ee3e5d7e1c36b4ea78ce317fd17d147f592ede0be7e7ca",
+    "video_sha256": "f74349e5a9bfa57cab87f1a233f20f91e8a84ba9dfcf2ab37b6b86750f6ffe98"
+  }
+}
