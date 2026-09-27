@@ -381,6 +381,12 @@ In the browser you should see:
 
 ## Data sources
 
+The V2 identity-evaluation path now includes AI2B's bounded appearance
+benchmark. See
+[`docs/v2/AI2B_APPEARANCE_IDENTITY_BENCHMARK.md`](docs/v2/AI2B_APPEARANCE_IDENTITY_BENCHMARK.md).
+It reports experimental candidate same-player associations only; it does not
+publish verified player identities.
+
 Any publicly available full-match football video works.
 Options with open licensing:
 - [SoccerNet](https://www.soccer-net.org/) — annotated broadcast matches
