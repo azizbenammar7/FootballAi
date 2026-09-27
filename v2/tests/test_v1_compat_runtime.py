@@ -129,12 +129,31 @@ def test_adapter_isolates_outputs_propagates_model_and_handles_empty_detection(t
     ready = V1CompatReadiness("ready", (), (), {"device": "mps"}, config)
     monkeypatch.setattr("footballai_v2.execution.adapters.v1_compat_pipeline.check_v1_compat_readiness", lambda: ready)
     monkeypatch.setattr("footballai_v2.execution.adapters.v1_compat_pipeline.configured_model_path", lambda: model)
-    seen: dict = {}
+    seen: dict = {"commands": []}
 
     def fake_run(command, cwd, log, timeout, cancellation_requested, environment, selected_device):
-        seen.update(command=command, cwd=cwd, environment=environment, device=selected_device)
+        seen["commands"].append(command)
+        seen.update(cwd=cwd, environment=environment, device=selected_device)
         processed = cwd / "data" / "processed"
-        (processed / "tracking_summary.json").write_text(json.dumps({"frames_processed": 2, "detection_rows": 0, "tracked_ids": 0, "max_track_observations": 0, "empty_after_v1_filters": True}))
+        (processed / "detections.parquet").write_bytes(b"detections")
+        (processed / "tracklets.parquet").write_bytes(b"tracklets")
+        (processed / "detection_summary.json").write_text(json.dumps({
+            "frames_processed": 2, "detection_count": 0,
+            "video_decoding_detection_seconds": .1,
+            "detections_byte_size": 10, "detections_sha256": "d" * 64,
+        }))
+        (processed / "tracking_summary.json").write_text(json.dumps({
+            "frames_processed": 2, "detection_rows": 0, "tracked_ids": 0,
+            "max_track_observations": 0, "empty_after_v1_filters": True,
+            "total_detections": 0, "total_tracklets": 0, "tracking_seconds": .01,
+            "diagnostic_computation_seconds": .001, "tracklets_byte_size": 9,
+            "tracklets_sha256": "e" * 64,
+        }))
+        (processed / "fragmentation_diagnostics.json").write_text(json.dumps({
+            "observed_metrics": {"total_tracklets": 0},
+            "interpretation": {"status": "descriptive_only"},
+            "ground_truth_metrics": {"status": "not_measured"},
+        }))
 
     monkeypatch.setattr(V1CompatPipeline, "_run", staticmethod(fake_run))
     protected = Path(__file__).resolve().parents[2] / "data" / "processed"
@@ -142,12 +161,17 @@ def test_adapter_isolates_outputs_propagates_model_and_handles_empty_detection(t
     artifacts = V1CompatPipeline().build_artifacts(run, 2, input_path)
     after = {path: path.stat().st_mtime_ns for path in protected.glob("*")}
     assert before == after
-    assert seen["command"][0] == __import__("sys").executable
-    assert seen["command"][seen["command"].index("--model") + 1] == str(model)
+    assert seen["commands"][0][0] == __import__("sys").executable
+    assert seen["commands"][0][seen["commands"][0].index("--model") + 1] == str(model)
+    assert "--detections" in seen["commands"][1]
+    assert "--model" not in seen["commands"][1]
     assert seen["environment"]["YOLO_OFFLINE"] == "true"
     assert seen["device"] == "mps"
     assert artifacts["analysis-diagnostics"]["output_count"] == 0
+    assert artifacts["analysis-diagnostics"]["schema"] == "footballai.analysis-diagnostics/v2"
     assert artifacts["analysis-diagnostics"]["provenance"]["selected_device"] == "mps"
+    assert artifacts["detections"].schema_version == "footballai.detections/v1"
+    assert artifacts["tracklets"].schema_version == "footballai.tracklets/v1"
     assert all(str(run_dir) in str(path) for path in (seen["cwd"],))
 
 
@@ -188,11 +212,15 @@ def test_subprocess_uses_argument_list_shell_false_and_supports_cancellation(tmp
 
 def test_worker_tracking_source_has_no_model_or_package_auto_download():
     root = Path(__file__).resolve().parents[2]
+    detection = (root / "v2" / "src" / "footballai_v2" / "execution" / "adapters" / "v1_compat_detection.py").read_text()
     tracking = (root / "v2" / "src" / "footballai_v2" / "execution" / "adapters" / "v1_compat_tracking.py").read_text()
     adapter = (root / "v2" / "src" / "footballai_v2" / "execution" / "adapters" / "v1_compat_pipeline.py").read_text()
-    assert "YOLO(str(model_path))" in tracking
-    assert "YOLO(\"yolov8m.pt\")" not in tracking
-    assert "pip install" not in tracking + adapter
+    detector = (root / "v2" / "src" / "footballai_v2" / "execution" / "ai1" / "detector.py").read_text()
+    assert "model.predict(" in detector
+    assert "--model" in detection
+    assert "YOLO" not in tracking
+    assert "--model" not in tracking
+    assert "pip install" not in detection + tracking + adapter
     assert '"YOLO_OFFLINE": "true"' in adapter
 
 

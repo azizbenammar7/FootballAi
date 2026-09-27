@@ -180,7 +180,9 @@ class AnalysisCoordinator:
             models = (ModelReference("yolov8m.pt", "ultralytics-yolov8m", readiness.config.model_sha256),)
         run = AnalysisRun.new(
             data_origin=origin, input=InputReference(f"run-input://source{extension}", checksum, MEDIA_TYPES[extension]),
-            code=self.code_reference(), pipeline_version=f"{profile}/1.0.0", parameters=parameters,
+            code=self.code_reference(),
+            pipeline_version="v1_compat/2.0.0" if profile == "v1_compat" else f"{profile}/1.0.0",
+            parameters=parameters,
             models=models,
             stages=self._queued_stages(1, profile),
         )

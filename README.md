@@ -34,8 +34,11 @@ make v2-demo-v1-compat
 ```
 
 See [`docs/v2/V1_COMPAT_SETUP.md`](docs/v2/V1_COMPAT_SETUP.md). `v1_compat`
-is a preserved-algorithm compatibility profile. It is not the future
-detector-neutral V2 production engine.
+now caches versioned detections, reruns ByteTrack independently, and publishes
+ground-truth-safe fragmentation diagnostics. See
+[`docs/v2/AI1_DETECTION_TRACKING.md`](docs/v2/AI1_DETECTION_TRACKING.md).
+Tracklets remain temporary tracking identities; AI1 does not implement
+persistent player identity.
 
 Production Platform status: **P1 containerized service boundaries are
 implemented and locally validated** for the compiled React frontend, FastAPI

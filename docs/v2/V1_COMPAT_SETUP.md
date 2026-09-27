@@ -3,8 +3,9 @@
 `v1_compat` is a preserved-algorithm compatibility profile. It is not the
 future detector-neutral V2 production engine.
 
-It executes the historical YOLOv8m + ByteTrack algorithm family for a newly
-uploaded V2 input, then uses the preserved V1 statistics and fatigue stages
+It executes the historical YOLOv8m detector once, stores a versioned detection
+cache, runs ByteTrack independently from that cache, and then uses the preserved
+V1 statistics and fatigue stages
 when enough tracking data exists. V1 source and committed outputs remain
 unchanged. Inputs, intermediate files, caches, logs, and artifacts stay below
 the current V2 run directory.
@@ -83,6 +84,13 @@ the run fails with an actionable error and is not silently restarted on CPU.
 All effective settings, selected device, model name, and model checksum are
 recorded in run provenance.
 
+AI1 publishes `footballai.detections/v1` and `footballai.tracklets/v1` Parquet
+artifacts plus `footballai.analysis-diagnostics/v2`. The tracking subprocess has
+no video or model input, so another ByteTrack configuration can consume the
+same cached detections without executing YOLO again. See
+[`AI1_DETECTION_TRACKING.md`](AI1_DETECTION_TRACKING.md) for the supported
+rerun command and schema/provenance details.
+
 ## Start and short smoke test
 
 Run a genuine bounded environment test and then start the dashboard:
@@ -108,7 +116,8 @@ documented by V1 for YOLOv8m at 1280 pixels.
 ## Scientific and operational limits
 
 The profile preserves the V1 algorithm family; it does not scientifically
-correct it. ByteTrack identities are unverified and can switch. Pixel movement
+correct it. A ByteTrack tracklet is not a player identity and temporary IDs can
+switch. Pixel movement
 is not homography calibrated. Broadcast pan/zoom and sparse tracks make
 absolute distance approximate. Fatigue/workload outputs are heuristic,
 advisory only, and are not diagnosis or clinical advice. Empty or short clips
