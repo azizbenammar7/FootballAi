@@ -30,6 +30,15 @@ data/processed/raw_tracks_checkpoint.csv
 data/runs/
 data/job-queue/
 
+# AI2A review pixels are regenerated locally from licensed, gitignored video.
+# Versioned JSON labels/manifests/evaluation summaries remain commit-eligible.
+evaluation/ai2a/**/crops/
+evaluation/ai2a/**/contact-sheet-*.png
+evaluation/ai2a/**/review.html
+evaluation/ai2a/**/source.mp4
+evaluation/ai2a/**/detections.parquet
+evaluation/ai2a/**/tracklets.parquet
+
 # V2 dashboard dependencies and generated test/build outputs
 v2/dashboard/node_modules/
 v2/dashboard/dist/

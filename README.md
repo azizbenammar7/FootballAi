@@ -40,6 +40,12 @@ ground-truth-safe fragmentation diagnostics. See
 Tracklets remain temporary tracking identities; AI1 does not implement
 persistent player identity.
 
+AI2A adds a bounded, developer-facing identity evaluation layer: pseudonymous
+manual ground truth, deterministic representative crops, weak jersey-colour
+team evidence, temporal cannot-link constraints, a candidate-pair graph, and
+label-supported metrics. It does **not** resolve persistent identities. See
+[`docs/v2/AI2A_IDENTITY_EVALUATION.md`](docs/v2/AI2A_IDENTITY_EVALUATION.md).
+
 Production Platform status: **P1 containerized service boundaries are
 implemented and locally validated** for the compiled React frontend, FastAPI
 API, and long-lived worker. Start the local stack with `make p1-build && make

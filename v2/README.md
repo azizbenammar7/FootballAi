@@ -105,6 +105,16 @@ See [`../docs/v2/AI1_DETECTION_TRACKING.md`](../docs/v2/AI1_DETECTION_TRACKING.m
 Tracklets are not persistent player identities; identity resolution remains a
 future stage.
 
+AI2A consumes those immutable AI1 artifacts only for evaluation. It publishes
+`footballai.identity-ground-truth/v1`,
+`footballai.tracklet-review-samples/v1`, and
+`footballai.identity-evaluation/v1` evaluation artifacts. Its manual review
+CLI, candidate graph, temporal cannot-links, weak team-colour baseline, and
+supported metrics are documented in
+[`../docs/v2/AI2A_IDENTITY_EVALUATION.md`](../docs/v2/AI2A_IDENTITY_EVALUATION.md).
+AI2A does not publish `footballai.player-identity/v1` and does not implement a
+persistent identity resolver.
+
 ## Configurable local storage
 
 `LocalAnalysisRunStore` always receives its root from the caller:
