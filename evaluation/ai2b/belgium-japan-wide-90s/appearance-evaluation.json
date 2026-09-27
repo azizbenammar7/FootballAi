@@ -1,0 +1,335 @@
+{
+  "appearance_cache": {
+    "crop_embeddings": 687,
+    "rejected_crops": 508,
+    "schema": "footballai.appearance-embeddings/v1",
+    "tracklet_embeddings": 313
+  },
+  "appearance_model": {
+    "device": "cpu",
+    "embedding_dimension": 576,
+    "license": "BSD-3-Clause library; ImageNet-1K dataset terms apply to pretrained weights",
+    "model_name": "torchvision.mobilenet_v3_small.features",
+    "model_sha256": "047dcff4addef86ea5bc2eff13c9614dc11f47ab1160d0a71a25e7db994f4e1f",
+    "model_version": "torchvision-0.28.0/IMAGENET1K_V1",
+    "preprocessing_version": "rgb-center-crop-224/v1",
+    "purpose": "experimental general visual embedding control; not football-ReID-specific"
+  },
+  "association_comparison": {
+    "A_temporal_only": {
+      "f1": 0.4059405940594059,
+      "false_negative": 0,
+      "false_positive": 120,
+      "negative_support": 130,
+      "positive_support": 41,
+      "precision": 0.2546583850931677,
+      "recall": 1.0,
+      "true_positive": 41
+    },
+    "B_temporal_team": {
+      "f1": 0.41206030150753764,
+      "false_negative": 0,
+      "false_positive": 117,
+      "negative_support": 130,
+      "positive_support": 41,
+      "precision": 0.25949367088607594,
+      "recall": 1.0,
+      "true_positive": 41
+    },
+    "C_temporal_team_appearance": {
+      "f1": 0.45161290322580644,
+      "false_negative": 20,
+      "false_positive": 31,
+      "negative_support": 130,
+      "positive_support": 41,
+      "precision": 0.40384615384615385,
+      "recall": 0.5121951219512195,
+      "true_positive": 21
+    }
+  },
+  "cached_pipeline": {
+    "detections_sha256": "12993fa98d4c2c02005fad9c904a2b9fcba5980ac855e41a40b6b2a857f506de",
+    "detector_executions": 1,
+    "tracklets_sha256": "8c8cf6975a17217e522019371f2693c3061ac8873f6fc70f007da0d7fc78d040"
+  },
+  "candidate_pair_recall": {
+    "available_positive_pairs": 32,
+    "recall": 0.7804878048780488,
+    "support": 41
+  },
+  "dataset": {
+    "annotated_tracklets": 48,
+    "annotation_effort_minutes": 5.0,
+    "gate": "PASS",
+    "known_identities": 8,
+    "negative_pair_support": 693,
+    "positive_pair_support": 87,
+    "team_a_identities": 4,
+    "team_b_identities": 4,
+    "tracklets": 448,
+    "uncertain": 0,
+    "unknown": 8,
+    "video_duration_seconds": 90.0
+  },
+  "error_review": {
+    "false_negatives": [
+      {
+        "appearance_similarity": 0.744994923331,
+        "left": "tracklet_000087",
+        "left_crops": [
+          "crops/tracklet_000087/early-f000120.jpg",
+          "crops/tracklet_000087/middle-f000132.jpg",
+          "crops/tracklet_000087/late-f000432.jpg"
+        ],
+        "right": "tracklet_001332",
+        "right_crops": [
+          "crops/tracklet_001332/early-f000930.jpg",
+          "crops/tracklet_001332/middle-f000936.jpg",
+          "crops/tracklet_001332/late-f000942.jpg"
+        ],
+        "team_compatible": true,
+        "temporal_compatible": true
+      },
+      {
+        "appearance_similarity": 0.731276872284,
+        "left": "tracklet_000087",
+        "left_crops": [
+          "crops/tracklet_000087/early-f000120.jpg",
+          "crops/tracklet_000087/middle-f000132.jpg",
+          "crops/tracklet_000087/late-f000432.jpg"
+        ],
+        "right": "tracklet_004079",
+        "right_crops": [
+          "crops/tracklet_004079/early-f002616.jpg"
+        ],
+        "team_compatible": true,
+        "temporal_compatible": true
+      },
+      {
+        "appearance_similarity": 0.766837048949,
+        "left": "tracklet_000422",
+        "left_crops": [
+          "crops/tracklet_000422/early-f000474.jpg",
+          "crops/tracklet_000422/middle-f000522.jpg",
+          "crops/tracklet_000422/late-f000576.jpg"
+        ],
+        "right": "tracklet_004079",
+        "right_crops": [
+          "crops/tracklet_004079/early-f002616.jpg"
+        ],
+        "team_compatible": true,
+        "temporal_compatible": true
+      },
+      {
+        "appearance_similarity": null,
+        "left": "tracklet_000434",
+        "left_crops": [
+          "crops/tracklet_000434/early-f000480.jpg",
+          "crops/tracklet_000434/late-f000486.jpg"
+        ],
+        "right": "tracklet_001744",
+        "right_crops": [
+          "crops/tracklet_001744/early-f001098.jpg",
+          "crops/tracklet_001744/middle-f001104.jpg",
+          "crops/tracklet_001744/late-f001110.jpg"
+        ],
+        "team_compatible": true,
+        "temporal_compatible": true
+      },
+      {
+        "appearance_similarity": null,
+        "left": "tracklet_000434",
+        "left_crops": [
+          "crops/tracklet_000434/early-f000480.jpg",
+          "crops/tracklet_000434/late-f000486.jpg"
+        ],
+        "right": "tracklet_002130",
+        "right_crops": [
+          "crops/tracklet_002130/early-f001278.jpg",
+          "crops/tracklet_002130/middle-f001284.jpg",
+          "crops/tracklet_002130/late-f001296.jpg"
+        ],
+        "team_compatible": true,
+        "temporal_compatible": true
+      }
+    ],
+    "false_positives": [
+      {
+        "appearance_similarity": 0.860394967966,
+        "left": "tracklet_000087",
+        "left_crops": [
+          "crops/tracklet_000087/early-f000120.jpg",
+          "crops/tracklet_000087/middle-f000132.jpg",
+          "crops/tracklet_000087/late-f000432.jpg"
+        ],
+        "right": "tracklet_000659",
+        "right_crops": [
+          "crops/tracklet_000659/early-f000636.jpg",
+          "crops/tracklet_000659/middle-f000642.jpg",
+          "crops/tracklet_000659/late-f000654.jpg"
+        ],
+        "team_compatible": true,
+        "temporal_compatible": true
+      },
+      {
+        "appearance_similarity": 0.815402004677,
+        "left": "tracklet_000087",
+        "left_crops": [
+          "crops/tracklet_000087/early-f000120.jpg",
+          "crops/tracklet_000087/middle-f000132.jpg",
+          "crops/tracklet_000087/late-f000432.jpg"
+        ],
+        "right": "tracklet_001895",
+        "right_crops": [
+          "crops/tracklet_001895/early-f001164.jpg",
+          "crops/tracklet_001895/middle-f001194.jpg",
+          "crops/tracklet_001895/late-f001224.jpg"
+        ],
+        "team_compatible": true,
+        "temporal_compatible": true
+      },
+      {
+        "appearance_similarity": 0.797201788408,
+        "left": "tracklet_000087",
+        "left_crops": [
+          "crops/tracklet_000087/early-f000120.jpg",
+          "crops/tracklet_000087/middle-f000132.jpg",
+          "crops/tracklet_000087/late-f000432.jpg"
+        ],
+        "right": "tracklet_002139",
+        "right_crops": [
+          "crops/tracklet_002139/early-f001284.jpg",
+          "crops/tracklet_002139/middle-f001290.jpg",
+          "crops/tracklet_002139/late-f001296.jpg"
+        ],
+        "team_compatible": true,
+        "temporal_compatible": true
+      },
+      {
+        "appearance_similarity": 0.898302447002,
+        "left": "tracklet_000422",
+        "left_crops": [
+          "crops/tracklet_000422/early-f000474.jpg",
+          "crops/tracklet_000422/middle-f000522.jpg",
+          "crops/tracklet_000422/late-f000576.jpg"
+        ],
+        "right": "tracklet_000659",
+        "right_crops": [
+          "crops/tracklet_000659/early-f000636.jpg",
+          "crops/tracklet_000659/middle-f000642.jpg",
+          "crops/tracklet_000659/late-f000654.jpg"
+        ],
+        "team_compatible": true,
+        "temporal_compatible": true
+      },
+      {
+        "appearance_similarity": 0.804515740012,
+        "left": "tracklet_000422",
+        "left_crops": [
+          "crops/tracklet_000422/early-f000474.jpg",
+          "crops/tracklet_000422/middle-f000522.jpg",
+          "crops/tracklet_000422/late-f000576.jpg"
+        ],
+        "right": "tracklet_001895",
+        "right_crops": [
+          "crops/tracklet_001895/early-f001164.jpg",
+          "crops/tracklet_001895/middle-f001194.jpg",
+          "crops/tracklet_001895/late-f001224.jpg"
+        ],
+        "team_compatible": true,
+        "temporal_compatible": true
+      }
+    ]
+  },
+  "performance": {
+    "artifact_size_bytes": 17808279,
+    "crop_embeddings": 687,
+    "crop_extraction_seconds": 60.005,
+    "device": "cpu",
+    "embedding_dimension": 576,
+    "embedding_inference_seconds": 20.80217,
+    "embeddings_per_second": 33.025401,
+    "pair_scoring_evaluation_seconds": 0.045018,
+    "rejected_crops": 508
+  },
+  "schema": "footballai.appearance-identity-evaluation/v1",
+  "scope": {
+    "appearance_similarity_is_identity": false,
+    "persistent_identity_resolver": false,
+    "purpose": "bounded appearance identity benchmark",
+    "results_are_exploratory": true
+  },
+  "similarity_distributions": {
+    "negative": {
+      "median": 0.690834213894,
+      "p10": 0.6052177295871,
+      "p90": 0.8655192236701,
+      "support": 104
+    },
+    "positive": {
+      "median": 0.8316434557804999,
+      "p10": 0.7367927030691,
+      "p90": 0.9021394986993,
+      "support": 32
+    }
+  },
+  "source": {
+    "detections_sha256": "12993fa98d4c2c02005fad9c904a2b9fcba5980ac855e41a40b6b2a857f506de",
+    "duration_seconds": 90.0,
+    "source_id": "belgium-japan-wide-90s",
+    "tracklets_sha256": "8c8cf6975a17217e522019371f2693c3061ac8873f6fc70f007da0d7fc78d040",
+    "video_sha256": "c8cd2f7a36e4a577e8dbadb57b61aab0afaf0c6e1958a03e636a95ea5a45ab0b"
+  },
+  "split": {
+    "development_identities": [
+      "TEAM_A_01",
+      "TEAM_A_03",
+      "TEAM_B_01",
+      "TEAM_B_03"
+    ],
+    "development_pairs": 210,
+    "evaluation_identities": [
+      "TEAM_A_02",
+      "TEAM_A_04",
+      "TEAM_B_02",
+      "TEAM_B_04"
+    ],
+    "evaluation_pairs": 171,
+    "method": "deterministic identity-disjoint alternating split/v1",
+    "threshold": 0.796524403934,
+    "threshold_selection_metrics": {
+      "f1": 0.6837606837606837,
+      "false_negative": 4,
+      "false_positive": 33,
+      "negative_support": 138,
+      "positive_support": 44,
+      "precision": 0.547945205479452,
+      "recall": 0.9090909090909091,
+      "true_positive": 40
+    }
+  },
+  "team_evidence": {
+    "confidence_guard_threshold": 0.8,
+    "method": "central_upper_body_hsv_nearest_manual_anchor/v1",
+    "metrics": {
+      "TEAM_A": {
+        "precision": 0.9545454545454546,
+        "predicted": 22,
+        "recall": 0.9130434782608695,
+        "support": 23
+      },
+      "TEAM_B": {
+        "precision": 0.8181818181818182,
+        "predicted": 22,
+        "recall": 0.8571428571428571,
+        "support": 21
+      },
+      "UNKNOWN": {
+        "overall_prediction_rate": 0.08333333333333333,
+        "rejected": 0,
+        "rejection_rate": 0.0,
+        "support": 4
+      }
+    }
+  }
+}

@@ -115,6 +115,14 @@ supported metrics are documented in
 AI2A does not publish `footballai.player-identity/v1` and does not implement a
 persistent identity resolver.
 
+AI2B adds the versioned `footballai.appearance-embeddings/v1` cache and an
+identity-disjoint evaluation of temporal-only, temporal+team, and
+temporal+team+appearance candidate association. The bounded benchmark and its
+limitations are documented in
+[`../docs/v2/AI2B_APPEARANCE_IDENTITY_BENCHMARK.md`](../docs/v2/AI2B_APPEARANCE_IDENTITY_BENCHMARK.md).
+It remains developer/evaluation-only: appearance similarity is not identity,
+and persistent identity resolution is deferred to a future AI2C.
+
 ## Configurable local storage
 
 `LocalAnalysisRunStore` always receives its root from the caller:
