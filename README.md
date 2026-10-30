@@ -90,12 +90,13 @@ stable-FQDN smoke. See
 
 **AI Phase 1 — evidence-grounded "Explain This Run" copilot is implemented.**
 A small, read-only feature explains a completed run from integrity-verified
-evidence: status, pipeline profile, whether the output is real or synthetic,
-provenance, registered artifacts, and AI1 tracking diagnostics — with
-deterministic, fail-closed citations and explicit limitations. It never invents
-player identities, passes, possession, tactics, verified distances, or injury
-risk. The default provider is an offline deterministic fake (an optional real
-model is disabled by default and never used in CI), and the endpoint is a
+evidence: status, pipeline profile, whether the output is synthetic, verified
+real, or unverified, provenance, registered artifacts, and AI1 tracking
+diagnostics — with deterministic, fail-closed citations and explicit limitations.
+Factual text is server-authored from validated evidence, and questions outside
+that evidence abstain without calling a model. The default provider is an offline
+deterministic fake (an optional real model, which only selects approved claims,
+is disabled by default and never used in CI), and the endpoint is a
 development-only, default-disabled feature gate — it is not exposed in hosted
 environments that lack authorization controls. This is not an autonomous agent:
 no tool calling, memory, or RAG. See

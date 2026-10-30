@@ -1,6 +1,6 @@
 # ADR-003: Evidence-grounded "Explain This Run" copilot (Phase 1)
 
-**Status:** Accepted
+**Status:** Accepted, amended by Phase 1.1 (see [Amendment](#amendment-phase-11-server-rendered-claims))
 **Date:** 2026-10-30
 **Deciders:** FootballAI V2 maintainers
 
@@ -56,6 +56,9 @@ depends only on the `v1` contracts and the two storage ports. It contains:
    when the dev-only feature gate is enabled.
 
 The React dashboard gains one `ExplanationPanel` on the existing Run Detail page.
+
+> Items 2–4 above describe the original Phase 1 design. The Amendment below
+> supersedes how the provider, grounding, and service interact.
 
 ## Options Considered
 
@@ -118,4 +121,85 @@ absent. This keeps the default install, and CI, entirely LLM-free.
 3. [x] Add the React `ExplanationPanel` to the Run Detail page.
 4. [x] Deterministic test suite covering real, synthetic, missing, corrupt,
        oversized, cross-run, forged-citation, and abstention cases.
-5. [ ] (Phase 2 prerequisite) Real authentication/authorization + quotas.
+5. [x] Phase 1.1: server-rendered claim catalog, deterministic abstention,
+       output-nature classification, bounded structured prompt, finite-number
+       validation, and a fail-closed gate (see Amendment).
+6. [ ] Validate the real provider against the live API. It has only been
+       exercised against a local SDK stub.
+7. [ ] (Phase 2 prerequisite) Real authentication/authorization + quotas.
+
+## Amendment: Phase 1.1 server-rendered claims
+
+**Date:** 2026-10-30
+
+### Context
+
+Review of the Phase 1 design found that it did not ground real-model answers:
+
+- Model free text was returned as `support_level: supported` with citations built
+  from the evidence, not from what the text said. A reproduction against the
+  original code returned `supported`, with 8 valid citations, for the answer
+  "Player 7 ran 10.5 km and scored twice."
+- The provider was called, and billed, before an unsupported question abstained.
+- A word deny-list could not enumerate unsupported questions ("How far did player
+  7 run?" was treated as a general question).
+- Prompts were truncated by slicing serialized JSON, which produced invalid JSON
+  and could remove `is_synthetic`.
+
+A valid citation only proves that a field exists. It says nothing about the
+sentence next to it.
+
+### Decision
+
+The model no longer writes anything the user reads as fact.
+
+```
+ValidatedRunEvidence
+   │  question router (closed vocabulary) ── no route ──▶ abstain, no provider call
+   ▼
+evidence-claim catalog (server-authored text, per-claim citations)
+   │  claims eligible for the question ───── none ─────▶ abstain, no provider call
+   ▼
+provider selects claim ids (fake: all eligible; real: relevance and order)
+   │  unknown or ineligible id ──────────────────────▶ rejected (422)
+   │  no claim on the question's topic ──────────────▶ unavailable
+   ▼
+server renders claim text; output-nature claim always first
+   ▼
+citations of the rendered claims only ─ validate_citations ─▶ ExplanationResponse
+```
+
+### Options considered
+
+| Option | Stops invented facts? | Model usefulness | Complexity | Decision |
+|---|---|---|---|---|
+| **A. Claim selection, server rendering** | Yes, by construction: no model text is published | Limited to relevance and ordering | Low | **Chosen** |
+| B. Free text plus keyword or number filtering | No: filters only catch patterns someone anticipated | Highest | Medium, with permanent filter upkeep | Rejected |
+| C. Free text plus entailment checking against evidence | Probabilistic, and needs an evaluation set that does not exist | High | High | Deferred until an evaluation exists |
+| D. Remove the LLM entirely | Yes | None | Lowest | Rejected: leaves no path to validate a real model |
+
+### Trade-offs
+
+**Safety over fluency.** Answers read as a list of verified statements rather
+than natural prose. That cost is deliberate.
+
+**The model's role is small, and stated plainly.** It decides which verified
+facts answer a question, and in what order. It does not explain, interpret, or
+summarize. Because the closed-vocabulary router handles scope, the value of the
+real model over the deterministic fake is unproven; that is what the real-model
+evaluation has to measure. If it adds nothing, option D is the honest outcome. A
+richer role, such as clearly labelled unverified commentary, needs its own
+decision and evaluation.
+
+**Over-abstention over false confidence.** Any unknown word abstains, so some
+reasonable questions are refused. The vocabulary is extended deliberately.
+
+### Consequences
+
+- **Easier:** The grounding guarantee is structural and testable without a model.
+- **Harder:** Every new fact needs a claim template, citations, and vocabulary.
+- **Not solved:** Claims are as accurate as the CV output behind them. Integrity
+  checks prove bytes match the manifest, not that the content is true. Relevance
+  of a model's selection is not validated.
+- **Revisit:** The default model is unchanged and has not been validated with this
+  structured-output request. Choose and validate it during real-model evaluation.

@@ -20,10 +20,24 @@ class SupportLevel(StrEnum):
 
 
 class ModelMode(StrEnum):
-    """Which generator produced the prose. Never mislabel the fake as real."""
+    """Which selector chose the claims. Never mislabel the fake as real."""
 
     OFFLINE_DEMO_FAKE = "offline_demo_fake"
     REAL_MODEL = "real_model"
+    NOT_INVOKED = "not_invoked"  # deterministic abstention: no provider ran
+
+
+class OutputNature(StrEnum):
+    """Provenance of the run's output, derived only from evidence.
+
+    ``VERIFIED_REAL`` is asserted *only* when integrity-verified real diagnostics
+    corroborate that inference executed. A real uploaded video or a non-demo
+    profile is never, by itself, enough: that case is ``UNVERIFIED_OR_PARTIAL``.
+    """
+
+    SYNTHETIC = "synthetic"
+    VERIFIED_REAL = "verified_real"
+    UNVERIFIED_OR_PARTIAL = "unverified_or_partial"
 
 
 class ExplainRequest(CopilotModel):
@@ -48,6 +62,7 @@ class ExplanationResponse(CopilotModel):
     run_id: str
     answer: str
     support_level: SupportLevel
+    output_nature: OutputNature
     model_mode: ModelMode
     citations: list[Citation]
     limitations: list[str]

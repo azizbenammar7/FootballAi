@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError, explainRun, useApi } from '../api'
 import { AnalysisWarning, ErrorState, LoadingState, OriginBadge, Panel, StatusBadge, formatDate, shortId } from '../components/ui'
-import type { ArtifactListResponse, ExplanationResponse, ModelMode, RunDetail, SupportLevel } from '../types'
+import type { ArtifactListResponse, ExplanationResponse, ModelMode, OutputNature, RunDetail, SupportLevel } from '../types'
 
 const SUPPORT_LABEL: Record<SupportLevel, string> = {
   supported: 'Supported by evidence',
@@ -13,7 +13,23 @@ const SUPPORT_LABEL: Record<SupportLevel, string> = {
 
 const MODE_LABEL: Record<ModelMode, string> = {
   offline_demo_fake: 'Offline deterministic demo — not a language model',
-  real_model: 'Real model',
+  real_model: 'Language model — selected verified claims only',
+  not_invoked: 'No model invoked — deterministic response',
+}
+
+const NATURE_LABEL: Record<OutputNature, string> = {
+  synthetic: 'Synthetic output',
+  verified_real: 'Real inference — execution verified',
+  unverified_or_partial: 'Real inference not verified',
+}
+
+const REASON_LABEL: Record<string, string> = {
+  unsupported_question: 'FootballAI does not measure this, or the question is outside the run\u2019s evidence.',
+  evidence_not_available: 'This run\u2019s verified evidence does not include this information.',
+  no_relevant_claim: 'No verified evidence claim answers this question.',
+  provider_unavailable: 'The explanation model is unavailable.',
+  provider_timeout: 'The explanation model timed out.',
+  prompt_budget_exceeded: 'The evidence for this run exceeds the safe prompt size.',
 }
 
 function ExplanationPanel({ runId, status }: { runId: string; status: RunDetail['status'] }) {
@@ -34,7 +50,7 @@ function ExplanationPanel({ runId, status }: { runId: string; status: RunDetail[
   return (
     <Panel>
       <div className="panel-head"><div><span className="eyebrow">AI copilot</span><h2>AI Analysis Explanation</h2></div><Sparkles /></div>
-      <p className="explain-intro">An evidence-grounded summary of this run — its status, profile, whether the output is real or synthetic, provenance, registered artifacts, and tracking diagnostics. It never invents player identities, passes, possession, tactics, verified distances, or injury risk.</p>
+      <p className="explain-intro">An evidence-grounded summary of this run — its status, profile, whether the output is synthetic, verified real, or unverified, provenance, registered artifacts, and tracking diagnostics. It never invents player identities, passes, possession, tactics, verified distances, or injury risk.</p>
       {state.phase === 'idle' && (
         <div className="explain-actions">
           <button className="button button--primary" onClick={run} disabled={!eligible} aria-disabled={!eligible}>Explain this run</button>
@@ -55,10 +71,11 @@ function ExplanationResult({ data }: { data: ExplanationResponse }) {
     <div className="explain-result">
       <div className="explain-badges">
         <span className={`explain-support explain-support--${data.support_level}`}>{SUPPORT_LABEL[data.support_level]}</span>
+        <span className={`explain-nature explain-nature--${data.output_nature}`}>{NATURE_LABEL[data.output_nature]}</span>
         <span className={`explain-mode explain-mode--${data.model_mode}`}>{MODE_LABEL[data.model_mode]}</span>
       </div>
       <p className="explain-answer">{data.answer}</p>
-      {data.unavailable_reason && <p className="explain-reason">{data.unavailable_reason}</p>}
+      {data.unavailable_reason && <p className="explain-reason">{REASON_LABEL[data.unavailable_reason] ?? data.unavailable_reason}</p>}
       {data.citations.length > 0 && (
         <div className="explain-section">
           <h3>Evidence citations</h3>

@@ -135,7 +135,8 @@ export interface PlayerListResponse {
 export interface TimelinePoint { block_index: number; minute: number; value: number }
 
 export type SupportLevel = 'supported' | 'partial' | 'unavailable'
-export type ModelMode = 'offline_demo_fake' | 'real_model'
+export type ModelMode = 'offline_demo_fake' | 'real_model' | 'not_invoked'
+export type OutputNature = 'synthetic' | 'verified_real' | 'unverified_or_partial'
 
 export interface Citation {
   run_id: string
@@ -149,6 +150,7 @@ export interface ExplanationResponse {
   run_id: string
   answer: string
   support_level: SupportLevel
+  output_nature: OutputNature
   model_mode: ModelMode
   citations: Citation[]
   limitations: string[]

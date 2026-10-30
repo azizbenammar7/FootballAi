@@ -1,8 +1,9 @@
 """Deterministic tests for the evidence-grounded "Explain This Run" copilot.
 
 These tests never make a real LLM API call: the default provider is the
-deterministic offline fake, and the real provider is exercised only through
-typed failure stubs. They cover artifact validation (real/synthetic, missing,
+deterministic offline fake, and the real provider appears here only as typed
+failure stubs (see test_copilot_grounding_regressions.py for its SDK stand-in).
+They cover artifact validation (real/synthetic, missing,
 corrupt, bad checksum, unexpected schema, oversized, cross-run), citation
 fail-closed behaviour, abstention, the feature gate, and that no secret fields
 reach the model input.
@@ -38,7 +39,7 @@ from footballai_v2.copilot.errors import (
 from footballai_v2.copilot.evidence import DIAGNOSTICS_ARTIFACT_ID, RunEvidenceService
 from footballai_v2.copilot.grounding import (
     QuestionScope,
-    build_citations,
+    build_claim_catalog,
     build_system_instructions,
     classify_question,
     validate_citations,
@@ -450,8 +451,11 @@ def test_unsupported_questions_abstain(question):
 
 
 def test_general_question_is_not_abstained():
-    assert classify_question("What is the status of this run?") is QuestionScope.GENERAL
+    # In-domain metadata questions are answerable (SUPPORTED); no question is a
+    # GENERAL run explanation. Neither is abstained.
+    assert classify_question("What is the status of this run?") is QuestionScope.SUPPORTED
     assert classify_question(None) is QuestionScope.GENERAL
+    assert classify_question("What is the status of this run?") is not QuestionScope.UNSUPPORTED
 
 
 # -- 13. forged citation rejected -------------------------------------------
@@ -485,7 +489,7 @@ def test_forged_artifact_checksum_is_rejected():
 def test_built_citations_all_resolve_to_supplied_evidence():
     repository, storage, run = real_run_env()
     evidence = RunEvidenceService(repository, storage).build(run.run_id)
-    citations = build_citations(evidence)
+    citations = [citation for claim in build_claim_catalog(evidence) for citation in claim.citations]
     validate_citations(citations, evidence, run.run_id)  # must not raise
     for citation in citations:
         assert citation.field_path in evidence.field_paths()

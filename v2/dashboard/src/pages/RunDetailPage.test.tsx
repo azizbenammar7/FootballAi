@@ -18,7 +18,7 @@ const detail = {
 const artifacts = { run_id: RUN, artifacts: [{ artifact_id: 'analysis-diagnostics', name: 'Analysis Diagnostics', category: 'other', relative_path: 'artifacts/analysis-diagnostics.json', media_type: 'application/json', size_bytes: 400, sha256: 'a'.repeat(64), schema_version: 'footballai.analysis-diagnostics/v2', integrity_state: 'verified' }] }
 const explanation = {
   run_id: RUN, answer: 'Analysis run aaaaaaaa has status succeeded, produced by the v1_compat profile.',
-  support_level: 'supported', model_mode: 'offline_demo_fake',
+  support_level: 'supported', output_nature: 'verified_real', model_mode: 'offline_demo_fake',
   citations: [{ run_id: RUN, field_path: 'diagnostics.observed_metrics.total_tracklets', artifact_id: 'analysis-diagnostics', schema_version: 'footballai.analysis-diagnostics/v2', source_sha256: 'a'.repeat(64) }],
   limitations: ['Track identifiers are temporary tracklets, not verified persistent player identities.'],
   unavailable_reason: null,
@@ -63,6 +63,60 @@ describe('run detail explanation panel', () => {
     expect(screen.getByText(/Offline deterministic demo/)).toBeInTheDocument()
     expect(screen.getByText('diagnostics.observed_metrics.total_tracklets')).toBeInTheDocument()
     expect(screen.getByText(/temporary tracklets/)).toBeInTheDocument()
+  })
+
+  it.each([
+    ['synthetic', 'Synthetic output'],
+    ['verified_real', 'Real inference — execution verified'],
+    ['unverified_or_partial', 'Real inference not verified'],
+  ])('labels %s output distinctly', async (output_nature, label) => {
+    mock(() => json({ ...explanation, output_nature }))
+    route()
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Explain this run' }))
+    expect(await screen.findByText(label)).toBeInTheDocument()
+  })
+
+  it('never presents the offline demo as a language model', async () => {
+    mock(() => json(explanation))
+    route()
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Explain this run' }))
+    expect(await screen.findByText(/not a language model/)).toBeInTheDocument()
+    expect(screen.queryByText(/selected verified claims only/)).not.toBeInTheDocument()
+  })
+
+  it('labels a real model as selecting claims, not as a source of facts', async () => {
+    mock(() => json({ ...explanation, model_mode: 'real_model' }))
+    route()
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Explain this run' }))
+    expect(await screen.findByText('Language model — selected verified claims only')).toBeInTheDocument()
+  })
+
+  it('shows a deterministic abstention with no citations and no model', async () => {
+    mock(() => json({
+      ...explanation, answer: "I can't answer that from verified evidence.", support_level: 'unavailable',
+      output_nature: 'verified_real', model_mode: 'not_invoked', citations: [], unavailable_reason: 'unsupported_question',
+    }))
+    route()
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Explain this run' }))
+    expect(await screen.findByText('Not answerable from evidence')).toBeInTheDocument()
+    expect(screen.getByText('No model invoked — deterministic response')).toBeInTheDocument()
+    expect(screen.getByText(/does not measure this/)).toBeInTheDocument()
+    expect(screen.queryByText('unsupported_question')).not.toBeInTheDocument()
+    expect(screen.queryByText('Evidence citations')).not.toBeInTheDocument()
+  })
+
+  it('shows an error state when the explanation fails', async () => {
+    mock(() => json({ detail: { error_code: 'evidence_validation_failed', message: 'Evidence citation validation failed.' } }, 422))
+    route()
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Explain this run' }))
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Explain this run' })).not.toBeInTheDocument())
+    expect(screen.queryByText('Supported by evidence')).not.toBeInTheDocument()
+    expect(screen.queryByText(/disabled in this environment/)).not.toBeInTheDocument()
   })
 
   it('shows a disabled notice when the endpoint is not enabled', async () => {

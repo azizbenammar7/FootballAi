@@ -1,4 +1,11 @@
-"""Orchestrate evidence -> provider -> validation -> typed grounded response."""
+"""Orchestrate evidence -> routing -> provider -> validation -> typed response.
+
+Order matters for safety. A question FootballAI cannot answer, or that this run's
+evidence cannot answer, is abstained before a provider is called, so it never
+spends a token. When a question is answerable, the provider only selects
+approved claim ids; the server renders the answer and its citations from the
+catalog, never from model text.
+"""
 
 from __future__ import annotations
 
@@ -7,18 +14,23 @@ from footballai_v2.copilot.errors import ProviderTimeoutError, ProviderUnavailab
 from footballai_v2.copilot.evidence import RunEvidenceService, ValidatedRunEvidence
 from footballai_v2.copilot.grounding import (
     QuestionScope,
-    build_citations,
+    build_claim_catalog,
     build_system_instructions,
-    classify_question,
+    can_answer,
+    eligible_claims,
     render_abstention,
+    render_from_selection,
+    route_question,
     validate_citations,
 )
-from footballai_v2.copilot.models import ExplanationResponse, ModelMode, SupportLevel
+from footballai_v2.copilot.models import ExplanationResponse, ModelMode, OutputNature, SupportLevel
 from footballai_v2.copilot.provider import GenerationRequest, LLMProvider
 from footballai_v2.storage.ports import AnalysisRepository, ObjectStorage
 
 
-_MAX_ANSWER_CHARS = 4000
+_UNSUPPORTED_REASON = "unsupported_question"
+_NO_EVIDENCE_REASON = "evidence_not_available"
+_NO_CLAIM_REASON = "no_relevant_claim"
 
 
 class ExplanationService:
@@ -37,45 +49,57 @@ class ExplanationService:
 
     def explain(self, run_id: str, question: str | None = None) -> ExplanationResponse:
         evidence = self._evidence_service.build(run_id)
-        scope = classify_question(question)
+        route = route_question(question)
+
+        # Fail closed BEFORE the provider: neither of these spends a token.
+        if route.scope is QuestionScope.UNSUPPORTED:
+            return self._unavailable(evidence, _UNSUPPORTED_REASON, ModelMode.NOT_INVOKED, render_abstention())
+        catalog = eligible_claims(build_claim_catalog(evidence), route)
+        if not can_answer(catalog, route):
+            return self._unavailable(
+                evidence,
+                _NO_EVIDENCE_REASON,
+                ModelMode.NOT_INVOKED,
+                "This run's verified evidence does not contain what the question asks for.",
+            )
+
         request = GenerationRequest(
             evidence=evidence,
-            scope=scope,
             question=question,
             system_instructions=build_system_instructions(),
+            catalog=catalog,
             max_output_tokens=self._settings.max_output_tokens,
             timeout_seconds=self._settings.timeout_seconds,
         )
-
         try:
             result = self._provider.generate(request)
         except (ProviderTimeoutError, ProviderUnavailableError) as exc:
-            return self._provider_unavailable_response(evidence, exc)
-
-        answer = result.text.strip()[:_MAX_ANSWER_CHARS]
-
-        if scope is QuestionScope.UNSUPPORTED:
-            return ExplanationResponse(
-                run_id=evidence.run_id,
-                answer=answer or render_abstention(question),
-                support_level=SupportLevel.UNAVAILABLE,
-                model_mode=result.mode,
-                citations=[],
-                limitations=list(evidence.limitations),
-                unavailable_reason=(
-                    "The question asks for information FootballAI does not measure for this run "
-                    "(for example passes, possession, player identities, or clinical risk)."
-                ),
+            return self._unavailable(
+                evidence,
+                exc.code,
+                self._provider.mode,
+                "The explanation model is currently unavailable, so no explanation could be "
+                "produced. The run's verified evidence remains visible on this page.",
             )
 
-        citations = build_citations(evidence)
-        # Fail closed: defence in depth even though citations are evidence-derived.
+        # Server-controlled rendering: unknown/forged ids raise here.
+        rendered = render_from_selection(catalog, result.claim_ids, route)
+        if rendered is None:
+            return self._unavailable(
+                evidence,
+                _NO_CLAIM_REASON,
+                result.mode,
+                "No verified evidence claim answers that question for this run.",
+            )
+        answer, citations = rendered
+        # Defence in depth even though citations are catalog-derived.
         validate_citations(citations, evidence, evidence.run_id)
-        support_level = self._support_level(evidence)
+
         return ExplanationResponse(
             run_id=evidence.run_id,
             answer=answer,
-            support_level=support_level,
+            support_level=self._support_level(evidence),
+            output_nature=evidence.output_nature,
             model_mode=result.mode,
             citations=citations,
             limitations=list(evidence.limitations),
@@ -83,22 +107,23 @@ class ExplanationService:
         )
 
     def _support_level(self, evidence: ValidatedRunEvidence) -> SupportLevel:
-        if not evidence.is_synthetic and evidence.diagnostics is None:
-            return SupportLevel.PARTIAL
-        return SupportLevel.SUPPORTED
+        degraded = (
+            evidence.output_nature is OutputNature.UNVERIFIED_OR_PARTIAL
+            or bool(evidence.missing_evidence)
+            or any(item.integrity_state != "verified" for item in evidence.artifacts)
+        )
+        return SupportLevel.PARTIAL if degraded else SupportLevel.SUPPORTED
 
-    def _provider_unavailable_response(
-        self, evidence: ValidatedRunEvidence, exc: Exception
+    def _unavailable(
+        self, evidence: ValidatedRunEvidence, reason: str, mode: ModelMode, answer: str
     ) -> ExplanationResponse:
         return ExplanationResponse(
             run_id=evidence.run_id,
-            answer=(
-                "The explanation model is currently unavailable, so no generated explanation "
-                "could be produced. The run's verified evidence remains visible on this page."
-            ),
+            answer=answer,
             support_level=SupportLevel.UNAVAILABLE,
-            model_mode=getattr(self._provider, "mode", ModelMode.REAL_MODEL),
+            output_nature=evidence.output_nature,
+            model_mode=mode,
             citations=[],
             limitations=list(evidence.limitations),
-            unavailable_reason=getattr(exc, "code", "provider_unavailable"),
+            unavailable_reason=reason,
         )

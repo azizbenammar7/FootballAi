@@ -10,6 +10,7 @@ from footballai_v2.copilot.errors import (
     CopilotError,
     FeatureDisabledError,
     ForgedCitationError,
+    PromptBudgetExceededError,
     ProviderTimeoutError,
     ProviderUnavailableError,
     RunNotEligibleError,
@@ -23,6 +24,7 @@ from footballai_v2.copilot.models import (
     ExplainRequest,
     ExplanationResponse,
     ModelMode,
+    OutputNature,
     SupportLevel,
 )
 from footballai_v2.copilot.provider import (
@@ -46,6 +48,8 @@ __all__ = [
     "ForgedCitationError",
     "LLMProvider",
     "ModelMode",
+    "OutputNature",
+    "PromptBudgetExceededError",
     "ProviderTimeoutError",
     "ProviderUnavailableError",
     "RunEvidenceService",

@@ -96,7 +96,9 @@ def test_explain_unknown_run_is_404(settings):
     assert response.status_code == 404
 
 
-def test_endpoint_absent_when_gate_disabled(settings):
+def test_endpoint_absent_when_gate_disabled(settings, monkeypatch):
+    monkeypatch.delenv("FOOTBALLAI_COPILOT_ENABLED", raising=False)
+    monkeypatch.delenv("FOOTBALLAI_ENVIRONMENT", raising=False)
     client = TestClient(create_app(settings.run_root, settings=settings))  # gate from env -> disabled
     run_id = upload(client)
     execute(client, settings)

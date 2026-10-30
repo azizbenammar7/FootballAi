@@ -27,6 +27,12 @@ class ProviderUnavailableError(CopilotError):
     code = "provider_unavailable"
 
 
+class PromptBudgetExceededError(ProviderUnavailableError):
+    """Raised, before any model call, when the safe evidence does not fit the budget."""
+
+    code = "prompt_budget_exceeded"
+
+
 class ProviderTimeoutError(CopilotError):
     """Raised when provider generation exceeds the configured timeout."""
 

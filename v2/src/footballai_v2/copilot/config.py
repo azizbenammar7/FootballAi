@@ -26,7 +26,7 @@ class CopilotSettings:
     """Explicit, bounded configuration for the explanation feature."""
 
     enabled: bool = False
-    environment: str = "local"
+    environment: str = ""  # never assumed: must be explicit before the gate can open
     provider_mode: str = "fake"
     real_provider_enabled: bool = False
     model_name: str = "claude-opus-4-8"
@@ -40,6 +40,8 @@ class CopilotSettings:
     provider_retries: int = 0
 
     def __post_init__(self) -> None:
+        if self.enabled and self.environment not in _LOCAL_ENVIRONMENTS:
+            raise ValueError("the copilot can only be enabled in a local or test environment")
         if self.provider_mode not in _PROVIDER_MODES:
             raise ValueError("provider_mode must be 'fake' or 'real'")
         for name in ("max_artifact_bytes", "max_evidence_bytes", "max_prompt_chars", "max_output_tokens"):
@@ -57,10 +59,12 @@ class CopilotSettings:
 
     @classmethod
     def from_environment(cls) -> "CopilotSettings":
-        environment = os.getenv("FOOTBALLAI_ENVIRONMENT", "local").strip().lower()
+        # Fail closed: an absent/empty/unknown environment is NOT assumed to be
+        # local. Explicit development/test configuration is required before the
+        # gate can open, and it can never open in a hosted environment that lacks
+        # verified authorization controls.
+        environment = os.getenv("FOOTBALLAI_ENVIRONMENT", "").strip().lower()
         requested = _flag("FOOTBALLAI_COPILOT_ENABLED")
-        # Fail closed: the gate can only open in a local/dev environment, never in
-        # a hosted environment that lacks verified authorization controls.
         enabled = requested and environment in _LOCAL_ENVIRONMENTS
         provider_mode = os.getenv("FOOTBALLAI_COPILOT_PROVIDER", "fake").strip().lower()
         if provider_mode not in _PROVIDER_MODES:

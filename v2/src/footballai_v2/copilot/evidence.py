@@ -14,11 +14,13 @@ synthetic regardless of input origin, and that is surfaced explicitly.
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass, field
 from typing import Any, Mapping
 
 from footballai_v2.contracts.v1 import AnalysisRun
 from footballai_v2.copilot.config import CopilotSettings
+from footballai_v2.copilot.models import OutputNature
 from footballai_v2.storage.ports import AnalysisRepository, ObjectStorage
 
 
@@ -30,30 +32,59 @@ APPROVED_DIAGNOSTICS_SCHEMAS = frozenset({REAL_DIAGNOSTICS_SCHEMA, SYNTHETIC_DIA
 
 # Pipeline profiles whose output is synthetic regardless of the uploaded input.
 SYNTHETIC_PROFILES = frozenset({"demo_fast"})
+# The only profiles able to corroborate real inference. Unknown profiles fail closed.
+REAL_PROFILES = frozenset({"v1_compat"})
+# Real pipelines stamp "unverified": accuracy is unvalidated, not execution.
+_REAL_DATA_QUALITIES = frozenset({None, "unverified"})
 
 _DISTRIBUTION_KEYS = ("min", "median", "mean", "p90", "p95", "max")
 _ACTIVE_KEYS = ("median", "mean", "p95", "max")
 
 
 class _NonFiniteNumber(ValueError):
-    """Raised while parsing JSON that contains NaN/Infinity."""
+    """Raised while parsing JSON that contains a non-finite number."""
 
 
 def _reject_non_finite(_token: str) -> float:
-    raise _NonFiniteNumber("artifact contains a non-finite number")
+    # Catches the non-standard constants NaN / Infinity / -Infinity.
+    raise _NonFiniteNumber("artifact contains a non-finite constant")
+
+
+def _finite_float(token: str) -> float:
+    # Catches finite-looking tokens that overflow to +/-inf, e.g. ``1e999``.
+    value = float(token)
+    if not math.isfinite(value):
+        raise _NonFiniteNumber("artifact contains a non-finite number")
+    return value
 
 
 def _parse_finite_json(data: bytes) -> Any:
-    """Parse JSON, rejecting NaN/Infinity so only finite numbers survive."""
-    return json.loads(data.decode("utf-8"), parse_constant=_reject_non_finite)
+    """Parse JSON, rejecting every non-finite number (NaN, Infinity, 1e999)."""
+    return json.loads(
+        data.decode("utf-8"),
+        parse_constant=_reject_non_finite,
+        parse_float=_finite_float,
+    )
 
 
 def _number(value: Any) -> int | float | None:
-    if isinstance(value, bool):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
         return None
-    if isinstance(value, (int, float)):
-        return value
-    return None
+    try:
+        # Defence in depth: never surface a non-finite float as evidence.
+        return value if math.isfinite(value) else None
+    except OverflowError:  # an int too large to compare as a float
+        return None
+
+
+def _metric(value: Any) -> int | float | None:
+    number = _number(value)
+    return number if number is not None and number >= 0 else None
+
+
+def _count(value: Any) -> int | None:
+    number = _metric(value)
+    return number if isinstance(number, int) else None
 
 
 def _text(value: Any, *, limit: int = 400) -> str | None:
@@ -102,6 +133,7 @@ class ValidatedRunEvidence:
     started_at: str | None
     completed_at: str | None
     is_synthetic: bool
+    output_nature: OutputNature
     synthetic_explanation: str
     source_video: Mapping[str, Any]
     models: tuple[Mapping[str, Any], ...]
@@ -132,6 +164,7 @@ class ValidatedRunEvidence:
                 "completed_at": self.completed_at,
             },
             "output_nature": {
+                "classification": self.output_nature.value,
                 "is_synthetic": self.is_synthetic,
                 "explanation": self.synthetic_explanation,
             },
@@ -189,19 +222,45 @@ class RunEvidenceService:
         return self.build_from_run(run)
 
     def build_from_run(self, run: AnalysisRun) -> ValidatedRunEvidence:
-        profile = str(run.parameters.get("pipeline_profile", "")) or run.pipeline_version.split("/")[0]
+        version_profile = run.pipeline_version.split("/")[0]
+        profile = str(run.parameters.get("pipeline_profile", "")) or version_profile
         diagnostics, schema, diag_artifact_id, diag_sha256, missing = self._load_diagnostics(run)
 
-        synthetic_by_data = bool(
-            diagnostics is not None and diagnostics.get("data_quality") == "synthetic"
+        data_quality = diagnostics.get("data_quality") if diagnostics is not None else None
+        is_synthetic = (
+            profile in SYNTHETIC_PROFILES
+            or version_profile in SYNTHETIC_PROFILES
+            or data_quality == "synthetic"
         )
-        is_synthetic = profile in SYNTHETIC_PROFILES or synthetic_by_data
-        synthetic_explanation = (
-            "This run used the synthetic 'demo_fast' profile; its values are deterministic "
-            "placeholders and no ML model was executed, regardless of the uploaded input."
-            if is_synthetic
-            else "This run used a real analysis profile; outputs derive from executed inference."
+        # Real execution is only VERIFIED when a known real profile is corroborated
+        # by integrity-checked real diagnostics with their core metrics. A non-demo
+        # profile (or a real uploaded video) is never, by itself, proof that
+        # inference ran: that stays UNVERIFIED_OR_PARTIAL.
+        verified_real = (
+            not is_synthetic
+            and profile in REAL_PROFILES
+            and version_profile in REAL_PROFILES
+            and schema == REAL_DIAGNOSTICS_SCHEMA
+            and data_quality in _REAL_DATA_QUALITIES
         )
+        if is_synthetic:
+            output_nature = OutputNature.SYNTHETIC
+            synthetic_explanation = (
+                "This run's output is synthetic: its values are deterministic placeholders "
+                "and no ML model was executed, regardless of the uploaded input."
+            )
+        elif verified_real:
+            output_nature = OutputNature.VERIFIED_REAL
+            synthetic_explanation = (
+                "This run used a real analysis profile, and its execution is corroborated by "
+                "integrity-verified tracking diagnostics; this does not validate accuracy."
+            )
+        else:
+            output_nature = OutputNature.UNVERIFIED_OR_PARTIAL
+            synthetic_explanation = (
+                "This run's available evidence does not confirm that real inference executed; "
+                "treat the output as unverified and partial."
+            )
 
         source_video: dict[str, Any] = {
             "sha256": run.input.sha256,
@@ -242,6 +301,7 @@ class RunEvidenceService:
             started_at=_iso(run.started_at),
             completed_at=_iso(run.completed_at),
             is_synthetic=is_synthetic,
+            output_nature=output_nature,
             synthetic_explanation=synthetic_explanation,
             source_video=source_video,
             models=tuple(
@@ -308,7 +368,7 @@ class RunEvidenceService:
 
         try:
             payload = _parse_finite_json(data)
-        except (_NonFiniteNumber, ValueError, UnicodeDecodeError):
+        except (_NonFiniteNumber, ValueError, UnicodeDecodeError, RecursionError):
             missing.append("The diagnostics artifact is not valid finite JSON.")
             return None, None, None, None, missing
 
@@ -316,8 +376,12 @@ class RunEvidenceService:
             missing.append("The diagnostics artifact is not a JSON object.")
             return None, None, None, None, missing
 
+        if payload.get("run_id", run.run_id) != run.run_id:
+            missing.append("The diagnostics artifact belongs to a different run.")
+            return None, None, None, None, missing
+
         schema = payload.get("schema")
-        if schema not in APPROVED_DIAGNOSTICS_SCHEMAS:
+        if not isinstance(schema, str) or schema not in APPROVED_DIAGNOSTICS_SCHEMAS:
             missing.append("The diagnostics artifact uses an unrecognized schema.")
             return None, None, None, None, missing
 
@@ -341,47 +405,56 @@ class RunEvidenceService:
         observed = payload.get("observed_metrics")
         if not isinstance(observed, Mapping):
             return None
+        total_detections = _count(observed.get("total_detections"))
+        total_tracklets = _count(observed.get("total_tracklets"))
+        if total_detections is None or total_tracklets is None:
+            return None  # the core metrics are required: nothing is inferred without them
         result: dict[str, Any] = {"schema": payload["schema"], "observed_metrics": {}}
+        if payload.get("data_quality") is not None:
+            data_quality = _text(payload["data_quality"], limit=40)
+            if data_quality is None:
+                return None  # a malformed label must not read as an absent one
+            result["data_quality"] = data_quality
         om = result["observed_metrics"]
+        om["total_detections"] = total_detections
+        om["total_tracklets"] = total_tracklets
         for key in (
-            "total_detections",
-            "total_tracklets",
             "tracklets_per_video_minute",
             "track_start_rate_per_minute",
             "track_end_rate_per_minute",
             "detection_assignment_fraction",
         ):
-            value = _number(observed.get(key))
+            value = _metric(observed.get(key))
             if value is not None:
                 om[key] = value
         dist = observed.get("tracklet_duration_seconds")
         if isinstance(dist, Mapping):
             om["tracklet_duration_seconds"] = {
-                k: _number(dist.get(k)) for k in _DISTRIBUTION_KEYS if _number(dist.get(k)) is not None
+                k: _metric(dist.get(k)) for k in _DISTRIBUTION_KEYS if _metric(dist.get(k)) is not None
             }
         opt = observed.get("observations_per_tracklet")
         if isinstance(opt, Mapping):
             om["observations_per_tracklet"] = {
-                k: _number(opt.get(k)) for k in ("median", "mean") if _number(opt.get(k)) is not None
+                k: _metric(opt.get(k)) for k in ("median", "mean") if _metric(opt.get(k)) is not None
             }
         insufficient = observed.get("insufficient_tracklets")
         if isinstance(insufficient, Mapping):
             om["insufficient_tracklets"] = {
                 "criterion": _text(insufficient.get("criterion")),
-                "count": _number(insufficient.get("count")),
-                "percentage": _number(insufficient.get("percentage")),
+                "count": _count(insufficient.get("count")),
+                "percentage": _metric(insufficient.get("percentage")),
             }
         active = observed.get("active_simultaneous_tracklets")
         if isinstance(active, Mapping):
             om["active_simultaneous_tracklets"] = {
-                k: _number(active.get(k)) for k in _ACTIVE_KEYS if _number(active.get(k)) is not None
+                k: _metric(active.get(k)) for k in _ACTIVE_KEYS if _metric(active.get(k)) is not None
             }
         short = observed.get("short_tracklets")
         if isinstance(short, Mapping):
             om["short_tracklets"] = {
                 str(threshold): {
-                    "count": _number(block.get("count")),
-                    "percentage": _number(block.get("percentage")),
+                    "count": _count(block.get("count")),
+                    "percentage": _metric(block.get("percentage")),
                 }
                 for threshold, block in short.items()
                 if isinstance(block, Mapping)
@@ -401,7 +474,7 @@ class RunEvidenceService:
                 "status": _text(ground_truth.get("status")),
                 "reason": _text(ground_truth.get("reason"), limit=600),
             }
-        return result if om else None
+        return result
 
     def _approved_synthetic_diagnostics(self, payload: Mapping[str, Any]) -> dict[str, Any]:
         approved: dict[str, Any] = {"schema": payload["schema"]}
