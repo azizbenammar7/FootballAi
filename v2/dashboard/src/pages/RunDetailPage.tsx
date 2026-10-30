@@ -1,8 +1,86 @@
-import { Box, CheckCircle2, ChevronRight, Clock3, FileCheck2, GitBranch, ShieldAlert } from 'lucide-react'
+import { AlertTriangle, Box, CheckCircle2, ChevronRight, Clock3, FileCheck2, GitBranch, ShieldAlert, Sparkles } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { useApi } from '../api'
+import { ApiError, explainRun, useApi } from '../api'
 import { AnalysisWarning, ErrorState, LoadingState, OriginBadge, Panel, StatusBadge, formatDate, shortId } from '../components/ui'
-import type { ArtifactListResponse, RunDetail } from '../types'
+import type { ArtifactListResponse, ExplanationResponse, ModelMode, RunDetail, SupportLevel } from '../types'
+
+const SUPPORT_LABEL: Record<SupportLevel, string> = {
+  supported: 'Supported by evidence',
+  partial: 'Partially supported',
+  unavailable: 'Not answerable from evidence',
+}
+
+const MODE_LABEL: Record<ModelMode, string> = {
+  offline_demo_fake: 'Offline deterministic demo — not a language model',
+  real_model: 'Real model',
+}
+
+function ExplanationPanel({ runId, status }: { runId: string; status: RunDetail['status'] }) {
+  const eligible = status === 'succeeded' || status === 'partial'
+  const [state, setState] = useState<{ phase: 'idle' | 'loading' | 'done' | 'error'; data?: ExplanationResponse; error?: string; disabled?: boolean }>({ phase: 'idle' })
+
+  async function run() {
+    setState({ phase: 'loading' })
+    try {
+      const data = await explainRun<ExplanationResponse>(runId)
+      setState({ phase: 'done', data })
+    } catch (reason) {
+      const notFound = reason instanceof ApiError && reason.status === 404
+      setState({ phase: 'error', disabled: notFound, error: reason instanceof Error ? reason.message : 'The explanation could not be generated.' })
+    }
+  }
+
+  return (
+    <Panel>
+      <div className="panel-head"><div><span className="eyebrow">AI copilot</span><h2>AI Analysis Explanation</h2></div><Sparkles /></div>
+      <p className="explain-intro">An evidence-grounded summary of this run — its status, profile, whether the output is real or synthetic, provenance, registered artifacts, and tracking diagnostics. It never invents player identities, passes, possession, tactics, verified distances, or injury risk.</p>
+      {state.phase === 'idle' && (
+        <div className="explain-actions">
+          <button className="button button--primary" onClick={run} disabled={!eligible} aria-disabled={!eligible}>Explain this run</button>
+          {!eligible && <small>Only completed (succeeded or partial) runs can be explained.</small>}
+        </div>
+      )}
+      {state.phase === 'loading' && <LoadingState label="Generating grounded explanation…" />}
+      {state.phase === 'error' && (state.disabled
+        ? <p className="explain-disabled" role="status"><AlertTriangle /> The explanation copilot is disabled in this environment. It is a development-only feature and is not exposed where access controls are not yet in place.</p>
+        : <ErrorState message={state.error ?? 'The explanation could not be generated.'} />)}
+      {state.phase === 'done' && state.data && <ExplanationResult data={state.data} />}
+    </Panel>
+  )
+}
+
+function ExplanationResult({ data }: { data: ExplanationResponse }) {
+  return (
+    <div className="explain-result">
+      <div className="explain-badges">
+        <span className={`explain-support explain-support--${data.support_level}`}>{SUPPORT_LABEL[data.support_level]}</span>
+        <span className={`explain-mode explain-mode--${data.model_mode}`}>{MODE_LABEL[data.model_mode]}</span>
+      </div>
+      <p className="explain-answer">{data.answer}</p>
+      {data.unavailable_reason && <p className="explain-reason">{data.unavailable_reason}</p>}
+      {data.citations.length > 0 && (
+        <div className="explain-section">
+          <h3>Evidence citations</h3>
+          <ul className="explain-citations">
+            {data.citations.map((citation, index) => (
+              <li key={`${citation.field_path}-${index}`}>
+                <code>{citation.field_path}</code>
+                {citation.artifact_id && <span> · {citation.artifact_id}{citation.schema_version ? ` (${citation.schema_version})` : ''}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {data.limitations.length > 0 && (
+        <div className="explain-section">
+          <h3>Important limitations</h3>
+          <ul className="explain-limitations">{data.limitations.map((item, index) => <li key={index}>{item}</li>)}</ul>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function RunDetailPage() {
   const { runId } = useParams()
@@ -57,6 +135,7 @@ export default function RunDetailPage() {
         {artifacts.error && <ErrorState message={artifacts.error} />}
         <div className="artifact-grid">{artifacts.data?.artifacts.map((item) => <article key={item.artifact_id}><div><span className={`integrity integrity--${item.integrity_state}`}>{item.integrity_state}</span><small>{item.category.replaceAll('_', ' ')}</small></div><h3>{item.name}</h3><p>{item.relative_path}</p><span>{(item.size_bytes / 1024).toFixed(1)} KB · SHA-256 {shortId(item.sha256)}</span></article>)}</div>
       </Panel>
+      <ExplanationPanel runId={run.run_id} status={run.status} />
     </div>
   )
 }

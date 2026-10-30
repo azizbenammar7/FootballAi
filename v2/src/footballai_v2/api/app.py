@@ -47,6 +47,15 @@ from footballai_v2.contracts.v1 import (
     DataOrigin,
     InvalidStatusTransition,
 )
+from footballai_v2.copilot import (
+    CopilotSettings,
+    ExplainRequest,
+    ExplanationResponse,
+    ExplanationService,
+    ForgedCitationError,
+    LLMProvider,
+    build_provider,
+)
 from footballai_v2.execution.adapters import profile_catalog
 from footballai_v2.execution.coordinator import AnalysisCoordinator, ExecutionSettings, UploadValidationError
 from footballai_v2.execution.progress import active_stage, overall_progress
@@ -138,6 +147,8 @@ def create_app(
     allowed_origins: Sequence[str] = ("http://localhost:5173",),
     settings: ExecutionSettings | None = None,
     upload_service: DirectUploadService | None = None,
+    copilot_settings: CopilotSettings | None = None,
+    copilot_provider: LLMProvider | None = None,
 ) -> FastAPI:
     """Create a local, read-oriented API bound to one configured run root."""
     execution_settings = settings or ExecutionSettings.from_environment(run_root, queue_root)
@@ -533,6 +544,38 @@ def create_app(
             return adapter(run).player_detail(player_id)
         except RunNotFoundError as exc:
             raise HTTPException(status_code=404, detail="Player track not found") from exc
+
+    # Evidence-grounded explanation copilot. The route is a development-only
+    # capability and is registered ONLY when the feature gate is enabled, so it is
+    # invisible (404) in any hosted environment that lacks authorization controls.
+    gate = copilot_settings or CopilotSettings.from_environment()
+    if gate.enabled:
+        provider = copilot_provider or build_provider(gate)
+        explanation_service = ExplanationService(repository, object_storage, provider, gate)
+
+        @app.post(
+            "/api/v1/runs/{run_id}/explain",
+            response_model=ExplanationResponse,
+            summary="Explain one completed run from integrity-verified evidence",
+        )
+        def explain(run_id: UUID4, request: ExplainRequest) -> ExplanationResponse:
+            run = load_run(run_id)
+            if run.status not in {AnalysisRunStatus.SUCCEEDED, AnalysisRunStatus.PARTIAL}:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "error_code": "run_not_eligible",
+                        "message": "Only completed (succeeded or partial) runs can be explained.",
+                    },
+                )
+            try:
+                return explanation_service.explain(str(run_id), request.question)
+            except ForgedCitationError as exc:
+                # Fail closed: never return an answer with an unverifiable citation.
+                raise HTTPException(
+                    status_code=422,
+                    detail={"error_code": "evidence_validation_failed", "message": "Evidence citation validation failed."},
+                ) from exc
 
     return app
 

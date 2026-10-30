@@ -128,6 +128,23 @@ export function uploadAnalysis(form: FormData, onProgress: (percent: number) => 
   return UPLOAD_MODE === 'direct' ? directUpload(form, onProgress) : multipartUpload(form, onProgress)
 }
 
+// Request an evidence-grounded explanation. The endpoint is a development-only,
+// default-disabled capability, so a 404 means it is not enabled in this
+// environment rather than a missing run.
+export async function explainRun<T>(runId: string, question: string | null = null): Promise<T> {
+  const response = await fetch(`${API_BASE}/api/v1/runs/${runId}/explain`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ question }),
+  })
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({})) as { detail?: string | { message?: string } }
+    const detail = typeof payload.detail === 'string' ? payload.detail : payload.detail?.message
+    throw new ApiError(detail ?? `Request failed (${response.status})`, response.status)
+  }
+  return response.json() as Promise<T>
+}
+
 export function useApi<T>(path: string | null) {
   const [state, setState] = useState<{ path: string | null; data: T | null; error: string | null }>({
     path: null,

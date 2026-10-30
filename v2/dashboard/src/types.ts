@@ -134,6 +134,27 @@ export interface PlayerListResponse {
 
 export interface TimelinePoint { block_index: number; minute: number; value: number }
 
+export type SupportLevel = 'supported' | 'partial' | 'unavailable'
+export type ModelMode = 'offline_demo_fake' | 'real_model'
+
+export interface Citation {
+  run_id: string
+  field_path: string
+  artifact_id: string | null
+  schema_version: string | null
+  source_sha256: string | null
+}
+
+export interface ExplanationResponse {
+  run_id: string
+  answer: string
+  support_level: SupportLevel
+  model_mode: ModelMode
+  citations: Citation[]
+  limitations: string[]
+  unavailable_reason: string | null
+}
+
 export interface PlayerDetail {
   run_id: string
   player_id: string

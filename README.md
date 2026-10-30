@@ -88,6 +88,20 @@ then separates safety-gated planning from reviewer-gated apply, migration and a
 stable-FQDN smoke. See
 [`docs/v2/devsecops-cicd.md`](docs/v2/devsecops-cicd.md).
 
+**AI Phase 1 — evidence-grounded "Explain This Run" copilot is implemented.**
+A small, read-only feature explains a completed run from integrity-verified
+evidence: status, pipeline profile, whether the output is real or synthetic,
+provenance, registered artifacts, and AI1 tracking diagnostics — with
+deterministic, fail-closed citations and explicit limitations. It never invents
+player identities, passes, possession, tactics, verified distances, or injury
+risk. The default provider is an offline deterministic fake (an optional real
+model is disabled by default and never used in CI), and the endpoint is a
+development-only, default-disabled feature gate — it is not exposed in hosted
+environments that lack authorization controls. This is not an autonomous agent:
+no tool calling, memory, or RAG. See
+[`docs/v2/COPILOT_EXPLANATION.md`](docs/v2/COPILOT_EXPLANATION.md) and
+[`docs/v2/ADR-003-grounded-explanation-copilot.md`](docs/v2/ADR-003-grounded-explanation-copilot.md).
+
 The remaining README is the preserved V1 technical-test documentation.
 
 End-to-end pipeline: detect & track players in a full 90-minute match →
