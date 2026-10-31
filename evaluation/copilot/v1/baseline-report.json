@@ -1,0 +1,747 @@
+{
+  "schema": "footballai.copilot-eval-report/v1",
+  "mode": "dry_run",
+  "generated_at": "2026-10-31T08:47:51.021010Z",
+  "dataset": {
+    "version": "copilot-eval/v1",
+    "cases_sha256": "f19a6e135ccdc55e56f387ee93e93a4debb5ff0147f782e91cf08ac98f3201c3",
+    "fixtures_sha256": "380f6d2d256e89cbca50e7dae492976343bdfa1de516531dfadd86b15ead78c5",
+    "selection_cases": 42,
+    "contract_cases": 10
+  },
+  "instruction_version": "copilot.grounding-instructions/v3",
+  "pricing": {
+    "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+    "as_of": "2026-10-31"
+  },
+  "live_model_requests": 0,
+  "baselines": {
+    "deterministic_fake": {
+      "cases": 42,
+      "claim_selection_accuracy": {
+        "correct": 19,
+        "n": 28,
+        "rate": 0.6786,
+        "ci95": [
+          0.4934,
+          0.8207
+        ]
+      },
+      "abstention_accuracy": {
+        "correct": 39,
+        "n": 42,
+        "rate": 0.9286,
+        "ci95": [
+          0.8099,
+          0.9754
+        ]
+      },
+      "false_answers": [
+        "dist-known-words",
+        "model-version",
+        "track-short-no-claim"
+      ],
+      "false_abstentions": [],
+      "unsupported_claim_rate": {
+        "definition": "rendered claims a case does not permit / rendered claims, excluding the label",
+        "unpermitted": 53,
+        "rendered": 139,
+        "rate": 0.3813
+      },
+      "fabricated_answers": 0,
+      "citation_validity": {
+        "correct": 33,
+        "n": 33,
+        "rate": 1.0,
+        "ci95": [
+          0.8957,
+          1.0
+        ]
+      },
+      "expected_citations_present": {
+        "correct": 28,
+        "n": 28,
+        "rate": 1.0,
+        "ci95": [
+          0.8794,
+          1.0
+        ]
+      },
+      "support_level_accuracy": {
+        "correct": 39,
+        "n": 42,
+        "rate": 0.9286,
+        "ci95": [
+          0.8099,
+          0.9754
+        ]
+      },
+      "output_nature_accuracy": {
+        "correct": 42,
+        "n": 42,
+        "rate": 1.0,
+        "ci95": [
+          0.9162,
+          1.0
+        ]
+      },
+      "forbidden_text_absent": {
+        "correct": 42,
+        "n": 42,
+        "rate": 1.0,
+        "ci95": [
+          0.9162,
+          1.0
+        ]
+      },
+      "provider_invocations": 33,
+      "provider_failures": 0,
+      "invalid_output_rate": {
+        "correct": 0,
+        "n": 33,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.1043
+        ]
+      },
+      "latency_in_process": {
+        "n": 42,
+        "p50_seconds": 0.00019,
+        "p95_seconds": 0.000202,
+        "max_seconds": 0.000202
+      },
+      "by_category": {
+        "ambiguous": {
+          "cases": 4,
+          "abstention_accuracy": {
+            "correct": 4,
+            "n": 4,
+            "rate": 1.0,
+            "ci95": [
+              0.5101,
+              1.0
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 2,
+            "n": 2,
+            "rate": 1.0,
+            "ci95": [
+              0.3424,
+              1.0
+            ]
+          }
+        },
+        "malicious_artifact": {
+          "cases": 3,
+          "abstention_accuracy": {
+            "correct": 3,
+            "n": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 2,
+            "n": 2,
+            "rate": 1.0,
+            "ci95": [
+              0.3424,
+              1.0
+            ]
+          }
+        },
+        "missing_or_corrupt": {
+          "cases": 6,
+          "abstention_accuracy": {
+            "correct": 6,
+            "n": 6,
+            "rate": 1.0,
+            "ci95": [
+              0.6097,
+              1.0
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 4,
+            "n": 5,
+            "rate": 0.8,
+            "ci95": [
+              0.3755,
+              0.9638
+            ]
+          }
+        },
+        "model_provenance": {
+          "cases": 3,
+          "abstention_accuracy": {
+            "correct": 2,
+            "n": 3,
+            "rate": 0.6667,
+            "ci95": [
+              0.2077,
+              0.9385
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 0,
+            "n": 2,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.6576
+            ]
+          }
+        },
+        "player_distance": {
+          "cases": 2,
+          "abstention_accuracy": {
+            "correct": 1,
+            "n": 2,
+            "rate": 0.5,
+            "ci95": [
+              0.0945,
+              0.9055
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 0,
+            "n": 0,
+            "rate": null,
+            "ci95": null
+          }
+        },
+        "possession_pass": {
+          "cases": 3,
+          "abstention_accuracy": {
+            "correct": 3,
+            "n": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 0,
+            "n": 0,
+            "rate": null,
+            "ci95": null
+          }
+        },
+        "synthetic_demo_fast": {
+          "cases": 5,
+          "abstention_accuracy": {
+            "correct": 5,
+            "n": 5,
+            "rate": 1.0,
+            "ci95": [
+              0.5655,
+              1.0
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 4,
+            "n": 4,
+            "rate": 1.0,
+            "ci95": [
+              0.5101,
+              1.0
+            ]
+          }
+        },
+        "tracking_fragmentation": {
+          "cases": 7,
+          "abstention_accuracy": {
+            "correct": 6,
+            "n": 7,
+            "rate": 0.8571,
+            "ci95": [
+              0.4869,
+              0.9743
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 2,
+            "n": 6,
+            "rate": 0.3333,
+            "ci95": [
+              0.0968,
+              0.7
+            ]
+          }
+        },
+        "unsupported_statistic": {
+          "cases": 2,
+          "abstention_accuracy": {
+            "correct": 2,
+            "n": 2,
+            "rate": 1.0,
+            "ci95": [
+              0.3424,
+              1.0
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 0,
+            "n": 0,
+            "rate": null,
+            "ci95": null
+          }
+        },
+        "verified_real": {
+          "cases": 7,
+          "abstention_accuracy": {
+            "correct": 7,
+            "n": 7,
+            "rate": 1.0,
+            "ci95": [
+              0.6457,
+              1.0
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 5,
+            "n": 7,
+            "rate": 0.7143,
+            "ci95": [
+              0.3589,
+              0.9178
+            ]
+          }
+        }
+      }
+    },
+    "lexical_overlap": {
+      "cases": 42,
+      "claim_selection_accuracy": {
+        "correct": 20,
+        "n": 28,
+        "rate": 0.7143,
+        "ci95": [
+          0.5294,
+          0.8475
+        ]
+      },
+      "abstention_accuracy": {
+        "correct": 36,
+        "n": 42,
+        "rate": 0.8571,
+        "ci95": [
+          0.7216,
+          0.9328
+        ]
+      },
+      "false_answers": [
+        "dist-known-words",
+        "model-version",
+        "track-short-no-claim"
+      ],
+      "false_abstentions": [
+        "amb-happened",
+        "amb-real",
+        "real-limitations"
+      ],
+      "unsupported_claim_rate": {
+        "definition": "rendered claims a case does not permit / rendered claims, excluding the label",
+        "unpermitted": 19,
+        "rendered": 77,
+        "rate": 0.2468
+      },
+      "fabricated_answers": 0,
+      "citation_validity": {
+        "correct": 29,
+        "n": 29,
+        "rate": 1.0,
+        "ci95": [
+          0.883,
+          1.0
+        ]
+      },
+      "expected_citations_present": {
+        "correct": 25,
+        "n": 25,
+        "rate": 1.0,
+        "ci95": [
+          0.8668,
+          1.0
+        ]
+      },
+      "support_level_accuracy": {
+        "correct": 36,
+        "n": 42,
+        "rate": 0.8571,
+        "ci95": [
+          0.7216,
+          0.9328
+        ]
+      },
+      "output_nature_accuracy": {
+        "correct": 42,
+        "n": 42,
+        "rate": 1.0,
+        "ci95": [
+          0.9162,
+          1.0
+        ]
+      },
+      "forbidden_text_absent": {
+        "correct": 42,
+        "n": 42,
+        "rate": 1.0,
+        "ci95": [
+          0.9162,
+          1.0
+        ]
+      },
+      "provider_invocations": 33,
+      "provider_failures": 0,
+      "invalid_output_rate": {
+        "correct": 0,
+        "n": 33,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.1043
+        ]
+      },
+      "latency_in_process": {
+        "n": 42,
+        "p50_seconds": 0.000202,
+        "p95_seconds": 0.000257,
+        "max_seconds": 0.000319
+      },
+      "by_category": {
+        "ambiguous": {
+          "cases": 4,
+          "abstention_accuracy": {
+            "correct": 2,
+            "n": 4,
+            "rate": 0.5,
+            "ci95": [
+              0.15,
+              0.85
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 0,
+            "n": 2,
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.6576
+            ]
+          }
+        },
+        "malicious_artifact": {
+          "cases": 3,
+          "abstention_accuracy": {
+            "correct": 3,
+            "n": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 2,
+            "n": 2,
+            "rate": 1.0,
+            "ci95": [
+              0.3424,
+              1.0
+            ]
+          }
+        },
+        "missing_or_corrupt": {
+          "cases": 6,
+          "abstention_accuracy": {
+            "correct": 6,
+            "n": 6,
+            "rate": 1.0,
+            "ci95": [
+              0.6097,
+              1.0
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 5,
+            "n": 5,
+            "rate": 1.0,
+            "ci95": [
+              0.5655,
+              1.0
+            ]
+          }
+        },
+        "model_provenance": {
+          "cases": 3,
+          "abstention_accuracy": {
+            "correct": 2,
+            "n": 3,
+            "rate": 0.6667,
+            "ci95": [
+              0.2077,
+              0.9385
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 2,
+            "n": 2,
+            "rate": 1.0,
+            "ci95": [
+              0.3424,
+              1.0
+            ]
+          }
+        },
+        "player_distance": {
+          "cases": 2,
+          "abstention_accuracy": {
+            "correct": 1,
+            "n": 2,
+            "rate": 0.5,
+            "ci95": [
+              0.0945,
+              0.9055
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 0,
+            "n": 0,
+            "rate": null,
+            "ci95": null
+          }
+        },
+        "possession_pass": {
+          "cases": 3,
+          "abstention_accuracy": {
+            "correct": 3,
+            "n": 3,
+            "rate": 1.0,
+            "ci95": [
+              0.4385,
+              1.0
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 0,
+            "n": 0,
+            "rate": null,
+            "ci95": null
+          }
+        },
+        "synthetic_demo_fast": {
+          "cases": 5,
+          "abstention_accuracy": {
+            "correct": 5,
+            "n": 5,
+            "rate": 1.0,
+            "ci95": [
+              0.5655,
+              1.0
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 4,
+            "n": 4,
+            "rate": 1.0,
+            "ci95": [
+              0.5101,
+              1.0
+            ]
+          }
+        },
+        "tracking_fragmentation": {
+          "cases": 7,
+          "abstention_accuracy": {
+            "correct": 6,
+            "n": 7,
+            "rate": 0.8571,
+            "ci95": [
+              0.4869,
+              0.9743
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 3,
+            "n": 6,
+            "rate": 0.5,
+            "ci95": [
+              0.1876,
+              0.8124
+            ]
+          }
+        },
+        "unsupported_statistic": {
+          "cases": 2,
+          "abstention_accuracy": {
+            "correct": 2,
+            "n": 2,
+            "rate": 1.0,
+            "ci95": [
+              0.3424,
+              1.0
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 0,
+            "n": 0,
+            "rate": null,
+            "ci95": null
+          }
+        },
+        "verified_real": {
+          "cases": 7,
+          "abstention_accuracy": {
+            "correct": 6,
+            "n": 7,
+            "rate": 0.8571,
+            "ci95": [
+              0.4869,
+              0.9743
+            ]
+          },
+          "claim_selection_accuracy": {
+            "correct": 4,
+            "n": 7,
+            "rate": 0.5714,
+            "ci95": [
+              0.2505,
+              0.8418
+            ]
+          }
+        }
+      }
+    }
+  },
+  "contract_suite": {
+    "fail_closed": {
+      "correct": 10,
+      "n": 10,
+      "rate": 1.0,
+      "ci95": [
+        0.7225,
+        1.0
+      ]
+    },
+    "failed_cases": []
+  },
+  "selector_headroom": {
+    "selection_cases": 42,
+    "reach_the_selector": 33,
+    "stopped_before_the_selector": 9,
+    "improvable_cases": [
+      "dist-known-words",
+      "missing-what",
+      "model-none-recorded",
+      "model-version",
+      "model-which",
+      "real-video-duration",
+      "real-video-hash",
+      "track-assignment",
+      "track-duration",
+      "track-ground-truth",
+      "track-insufficient",
+      "track-short-no-claim"
+    ],
+    "not_improvable_wrong_cases": [],
+    "cases_where_a_selector_can_only_tie_or_lose": 21,
+    "baseline_selection_accuracy": {
+      "correct": 19,
+      "n": 28,
+      "rate": 0.6786,
+      "ci95": [
+        0.4934,
+        0.8207
+      ]
+    },
+    "perfect_selector_selection_accuracy": {
+      "correct": 28,
+      "n": 28,
+      "rate": 1.0,
+      "ci95": [
+        0.8794,
+        1.0
+      ]
+    },
+    "coverage_gap_cases": [
+      "amb-median",
+      "model-version",
+      "track-short-no-claim"
+    ],
+    "coverage_gaps_blocked_before_selector": [
+      "amb-median"
+    ]
+  },
+  "lexical_vs_fake": {
+    "paired_cases": 42,
+    "improved": [
+      "missing-what",
+      "model-none-recorded",
+      "model-which",
+      "track-assignment"
+    ],
+    "regressed": [
+      "amb-happened",
+      "amb-real",
+      "real-limitations"
+    ],
+    "unchanged": 35
+  },
+  "planned_live_run": {
+    "model": "claude-haiku-5-5",
+    "effort": "low",
+    "max_output_tokens": 1024,
+    "timeout_seconds": 20.0,
+    "retries": 0,
+    "estimate": {
+      "method": "offline heuristic: chars/3 plus assumed overheads; run --preflight for exact input tokens",
+      "requests": 33,
+      "expected_input_tokens_per_request": 918.8,
+      "expected_output_tokens_per_request": 175.7,
+      "estimated_cost_per_request_usd": 0.00017974,
+      "estimated_total_cost_usd": 0.0059314,
+      "worst_case_total_cost_usd": 0.0296186
+    },
+    "case_ids": [
+      "real-status",
+      "real-default",
+      "real-inference",
+      "real-artifacts",
+      "real-limitations",
+      "real-video-duration",
+      "real-video-hash",
+      "track-detections",
+      "track-overview",
+      "track-assignment",
+      "track-duration",
+      "track-insufficient",
+      "track-ground-truth",
+      "track-short-no-claim",
+      "model-which",
+      "model-version",
+      "model-none-recorded",
+      "synth-nature",
+      "synth-default",
+      "synth-diagnostics",
+      "synth-upload-inference",
+      "missing-default",
+      "missing-what",
+      "corrupt-default",
+      "checksum-artifacts",
+      "unknown-profile-inference",
+      "dist-known-words",
+      "pass-completed-known-words",
+      "amb-happened",
+      "amb-real",
+      "amb-passed",
+      "mal-explain",
+      "mal-known-words"
+    ]
+  }
+}

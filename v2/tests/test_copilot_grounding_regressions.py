@@ -495,6 +495,10 @@ def test_nested_overflow_in_a_distribution_rejects_the_artifact():
 # -- real provider, with the SDK replaced by a local stub (no network, no billing) --
 
 
+class _StubTimeoutError(Exception):
+    pass
+
+
 class _StubSDK:
     """Stands in for the anthropic module and records exactly what would be sent."""
 
@@ -515,6 +519,7 @@ class _StubSDK:
                 self.messages = types.SimpleNamespace(create=stub.create)
 
         module.Anthropic = Anthropic
+        module.APITimeoutError = _StubTimeoutError
         return module
 
     def create(self, **kwargs):
@@ -552,7 +557,8 @@ def test_real_provider_request_is_bounded_and_schema_constrained(real_provider):
     service_for(repository, storage, provider=provider).explain(run.run_id, "What is the status of this run?")
     assert stub.client_kwargs["max_retries"] == 0
     assert stub.client_kwargs["timeout"] == 20.0
-    assert stub.create_kwargs["max_tokens"] == 700
+    assert stub.create_kwargs["max_tokens"] == 1024
+    assert stub.create_kwargs["output_config"]["effort"] == "low"
     schema = stub.create_kwargs["output_config"]["format"]["schema"]
     assert schema["additionalProperties"] is False
     assert set(schema["properties"]["claim_ids"]["items"]["enum"]) == {"output_nature", "run_status"}
@@ -662,11 +668,8 @@ def test_sdk_error_text_is_not_exposed(real_provider):
 
 
 def test_sdk_timeout_is_typed(real_provider):
-    class APITimeoutError(Exception):
-        pass
-
     repository, storage, run = real_run_env()
-    provider, _ = real_provider("", error=APITimeoutError())
+    provider, _ = real_provider("", error=_StubTimeoutError())
     response = service_for(repository, storage, provider=provider).explain(run.run_id)
     assert response.unavailable_reason == "provider_timeout"
 

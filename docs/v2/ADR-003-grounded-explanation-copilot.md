@@ -44,7 +44,7 @@ depends only on the `v1` contracts and the two storage ports. It contains:
 2. **`LLMProvider` protocol** with two implementations: a default
    `DeterministicFakeProvider` (offline, deterministic, labelled as a demo) and an
    opt-in `AnthropicTextProvider` (disabled by default, server-side creds,
-   bounded tokens/timeout, lazily imported so CI never touches the SDK).
+   bounded tokens/timeout, lazily imported so the default install never needs it).
 3. **Grounding + citation validation** — a versioned instruction block, a bounded
    evidence payload, and deterministic fail-closed validation of every citation
    (must belong to the requested run, resolve to a supplied field path, and match
@@ -99,7 +99,8 @@ citation validator be tested in isolation from both FastAPI and real storage.
 A second trade-off is **real-model optionality vs. dependency weight**. Rather
 than adding `anthropic` as a production dependency, the real provider imports the
 SDK lazily and reports `provider_unavailable` when the package or credentials are
-absent. This keeps the default install, and CI, entirely LLM-free.
+absent. This keeps the default install LLM-free. Since Phase 1.2, CI installs the
+SDK to run contract tests against a local server; it sends nothing to a provider.
 
 ## Consequences
 
@@ -124,8 +125,9 @@ absent. This keeps the default install, and CI, entirely LLM-free.
 5. [x] Phase 1.1: server-rendered claim catalog, deterministic abstention,
        output-nature classification, bounded structured prompt, finite-number
        validation, and a fail-closed gate (see Amendment).
-6. [ ] Validate the real provider against the live API. It has only been
-       exercised against a local SDK stub.
+6. [ ] Validate the real provider against the live API. It has been exercised
+       against the real SDK and a local server, not the live API. The evaluation
+       harness is ready: see [COPILOT_LLM_EVALUATION.md](COPILOT_LLM_EVALUATION.md).
 7. [ ] (Phase 2 prerequisite) Real authentication/authorization + quotas.
 
 ## Amendment: Phase 1.1 server-rendered claims
@@ -201,5 +203,6 @@ reasonable questions are refused. The vocabulary is extended deliberately.
 - **Not solved:** Claims are as accurate as the CV output behind them. Integrity
   checks prove bytes match the manifest, not that the content is true. Relevance
   of a model's selection is not validated.
-- **Revisit:** The default model is unchanged and has not been validated with this
-  structured-output request. Choose and validate it during real-model evaluation.
+- **Revisit:** The default model is now `claude-haiku-5-5`, chosen from documentation
+  in Phase 1.2. It has not been validated with this structured-output request on the
+  live API.
