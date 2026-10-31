@@ -2,13 +2,65 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 
 
 class CopilotModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
+
+
+# Far above any catalog; a longer list is not a selection.
+_MAX_SELECTED_CLAIMS = 64
+
+
+class ClaimSelection(CopilotModel):
+    """The only reply a model may give: approved claim ids, most relevant first.
+
+    Structured outputs cannot express ``uniqueItems``, so duplicates are rejected
+    here. Whether an id is approved is decided later, against the eligible claims.
+    """
+
+    claim_ids: list[StrictStr] = Field(max_length=_MAX_SELECTED_CLAIMS)
+
+    @field_validator("claim_ids")
+    @classmethod
+    def _reject_duplicates(cls, value: list[str]) -> list[str]:
+        if len(set(value)) != len(value):
+            raise ValueError("claim_ids must not repeat an id")
+        return value
+
+
+@dataclass(frozen=True, slots=True)
+class TokenUsage:
+    """Tokens reported by the provider for one request."""
+
+    input_tokens: int
+    output_tokens: int
+    cache_creation_input_tokens: int = 0
+    cache_read_input_tokens: int = 0
+
+    @property
+    def prompt_tokens(self) -> int:
+        # ``input_tokens`` excludes cached tokens, which are billed separately.
+        return self.input_tokens + self.cache_creation_input_tokens + self.cache_read_input_tokens
+
+
+@dataclass(frozen=True, slots=True)
+class ProviderTelemetry:
+    """Operational facts about one provider request. Never shown to API clients.
+
+    ``usage`` is ``None`` when the provider reported none, or reported it
+    malformed; cost accounting must then assume the worst case.
+    """
+
+    model: str
+    latency_seconds: float
+    request_id: str | None = None
+    stop_reason: str | None = None
+    usage: TokenUsage | None = None
 
 
 class SupportLevel(StrEnum):

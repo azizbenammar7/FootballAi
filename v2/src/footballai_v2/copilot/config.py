@@ -15,6 +15,9 @@ from dataclasses import dataclass
 # Environments in which the dev-only gate may be turned on at all.
 _LOCAL_ENVIRONMENTS = frozenset({"local", "test"})
 _PROVIDER_MODES = frozenset({"fake", "real"})
+_EFFORT_LEVELS = frozenset({"low", "medium", "high"})
+# Claim selection is a small classification task; see docs/v2/COPILOT_LLM_EVALUATION.md.
+DEFAULT_MODEL = "claude-haiku-5-5"
 
 
 def _flag(name: str) -> bool:
@@ -29,13 +32,14 @@ class CopilotSettings:
     environment: str = ""  # never assumed: must be explicit before the gate can open
     provider_mode: str = "fake"
     real_provider_enabled: bool = False
-    model_name: str = "claude-opus-4-8"
+    model_name: str = DEFAULT_MODEL
+    effort: str = "low"
     # Budgets. Deliberately small: one short grounded paragraph over a bounded
     # evidence snapshot, never a long reasoning chain.
     max_artifact_bytes: int = 1 * 1024 * 1024
     max_evidence_bytes: int = 32 * 1024
     max_prompt_chars: int = 24 * 1024
-    max_output_tokens: int = 700
+    max_output_tokens: int = 1024  # includes any thinking the model does first
     timeout_seconds: float = 20.0
     provider_retries: int = 0
 
@@ -44,6 +48,8 @@ class CopilotSettings:
             raise ValueError("the copilot can only be enabled in a local or test environment")
         if self.provider_mode not in _PROVIDER_MODES:
             raise ValueError("provider_mode must be 'fake' or 'real'")
+        if self.effort not in _EFFORT_LEVELS:
+            raise ValueError("effort must be 'low', 'medium' or 'high'")
         for name in ("max_artifact_bytes", "max_evidence_bytes", "max_prompt_chars", "max_output_tokens"):
             if getattr(self, name) < 1:
                 raise ValueError(f"{name} must be a positive integer")
@@ -74,5 +80,5 @@ class CopilotSettings:
             environment=environment,
             provider_mode=provider_mode,
             real_provider_enabled=_flag("FOOTBALLAI_COPILOT_REAL_PROVIDER_ENABLED"),
-            model_name=os.getenv("FOOTBALLAI_COPILOT_MODEL", "claude-opus-4-8").strip() or "claude-opus-4-8",
+            model_name=os.getenv("FOOTBALLAI_COPILOT_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL,
         )

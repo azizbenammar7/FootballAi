@@ -82,6 +82,7 @@ jobs:
             -r requirements-test.txt \
             -r v2/requirements-postgres.txt \
             -r v2/requirements-azure.txt \
+            -r v2/requirements-copilot-eval.txt \
             httpx==0.28.1
       - name: Start Azurite (Blob) with API-version check skipped
         # A GitHub `services:` block cannot override the container command, and

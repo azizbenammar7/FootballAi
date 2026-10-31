@@ -156,7 +156,9 @@ returns `422` rather than an answer.
 - **`AnthropicTextProvider`** (opt-in) — disabled unless both
   `FOOTBALLAI_COPILOT_PROVIDER=real` and
   `FOOTBALLAI_COPILOT_REAL_PROVIDER_ENABLED=1` are set and `ANTHROPIC_API_KEY` is
-  present. It imports the SDK lazily, so the default install and CI never touch it.
+  present. It imports the SDK lazily, so the default install never needs it, and
+  its default model is `claude-haiku-5-5`. It has never been run against the live
+  API: see [COPILOT_LLM_EVALUATION.md](COPILOT_LLM_EVALUATION.md).
 
 ### What the real model does
 
@@ -184,7 +186,7 @@ makes at most one model call.
 
 Budgets (`CopilotSettings`): `max_artifact_bytes` 1 MiB, `max_evidence_bytes`
 32 KiB, `max_prompt_chars` 24 KiB (including the system prompt),
-`max_output_tokens` 700, `timeout_seconds` 20, `provider_retries` 0.
+`max_output_tokens` 1024, `timeout_seconds` 20, `provider_retries` 0.
 
 ## Feature gate (development only)
 
