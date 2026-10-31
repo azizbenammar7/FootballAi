@@ -14,8 +14,11 @@ AI2A (this phase)
 tracklets -> manual labels + review crops + team/temporal/appearance evidence
           -> candidate pairs + evaluation metrics
 
-AI2B (future)
-tracklets + evaluated appearance/team/temporal evidence -> identity resolver
+AI2B
+tracklets -> appearance embeddings + evaluated candidate associations
+
+AI2C (future)
+candidate graph -> persistent identity resolver
 ```
 
 AI2A contains no pretrained person-ReID framework, pitch calibration,

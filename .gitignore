@@ -39,6 +39,17 @@ evaluation/ai2a/**/source.mp4
 evaluation/ai2a/**/detections.parquet
 evaluation/ai2a/**/tracklets.parquet
 
+# AI2B licensed video pixels, AI1 caches, model weights, and the large local
+# embedding cache are reproducible local evidence. Commit only labels,
+# crop-reference metadata, and bounded evaluation summaries.
+evaluation/ai2b/**/crops/
+evaluation/ai2b/**/contact-sheet-*.png
+evaluation/ai2b/**/review.html
+evaluation/ai2b/**/source.mp4
+evaluation/ai2b/**/detections.parquet
+evaluation/ai2b/**/tracklets.parquet
+evaluation/ai2b/**/appearance-embeddings.json
+
 # V2 dashboard dependencies and generated test/build outputs
 v2/dashboard/node_modules/
 v2/dashboard/dist/

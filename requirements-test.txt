@@ -1,4 +1,5 @@
 numpy==2.2.6
+opencv-python-headless==5.0.0.93
 pandas==2.2.3
 pyarrow==25.0.0
 pytest==8.4.1
