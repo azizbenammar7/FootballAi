@@ -278,10 +278,10 @@ quotas remain a prerequisite for any hosted use.
 
 A provider failure is never a correct abstention, even where abstaining was expected.
 
-## Proposed decision rule
+## Decision rule
 
-Fixed before any model run, so the result cannot choose its own bar. These thresholds
-are a proposal for you to accept or change.
+Accepted by the project owner on 2026-10-31, before any model run, so the result
+cannot choose its own bar. Changing it after a paid run needs a recorded reason.
 
 Adopt a real selector only if, on the same cases, against the better deterministic rule:
 
