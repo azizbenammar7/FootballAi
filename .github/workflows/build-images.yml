@@ -2,7 +2,10 @@
 # psycopg/libpq runtime (the defect that escaped P4 preflight), scans them, and
 # pushes them to ACR tagged with the full Git SHA — authenticated purely via the
 # GitHub OIDC build identity (AcrPush). No ACR admin, no docker password, no
-# `latest`. An image is pushed only after it passes the regression + scan.
+# `latest`. Phase A verifies all three images; Phase B pushes only if all pass.
+# Publishing is sequential, not transactional: a network or registry failure
+# during Phase B can leave only some images in ACR for a SHA. deploy-staging.yml
+# refuses to deploy such a SHA.
 name: Build images
 
 on:
@@ -51,33 +54,19 @@ jobs:
             | sh -s -- -b "$RUNNER_TEMP/bin" "v${TRIVY_VERSION}"
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
 
-      - name: Azure login via OIDC (build identity)
-        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3.0.1
-        with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-
-      - name: ACR login via AAD token (no admin user, no password)
-        run: az acr login --name "${{ vars.ACR_NAME }}"
-
-      - name: Build (linux/amd64), prove psycopg/libpq, scan, then push
+      - name: "Phase A: build, prove, scan and SBOM every image (no push)"
         run: |
           set -euo pipefail
           mkdir -p sbom
           declare -A DOCKERFILE=( [frontend]=docker/frontend.Dockerfile [api]=docker/api.Dockerfile [worker]=docker/worker.Dockerfile )
           declare -A MODULE=( [api]=footballai_v2.api.server [worker]=footballai_v2.worker )
-          echo "## Image build provenance" >> "$GITHUB_STEP_SUMMARY"
-          echo "| image | platform | digest |" >> "$GITHUB_STEP_SUMMARY"
-          echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
 
-          for name in frontend api worker; do
-            IMG="$ACR_LOGIN_SERVER/footballai-$name:$SHA"
-            echo "::group::build footballai-$name"
+          verify_image() {
+            local name=$1
+            local IMG="$ACR_LOGIN_SERVER/footballai-$name:$SHA"
             docker buildx build \
               --platform linux/amd64 --pull --load \
               -f "${DOCKERFILE[$name]}" -t "$IMG" .
-            echo "::endgroup::"
 
             # Confirm the image really is linux/amd64.
             arch=$(docker image inspect "$IMG" --format '{{.Os}}/{{.Architecture}}')
@@ -100,20 +89,32 @@ jobs:
 
             # Fail on FIXABLE CRITICAL vulns; full HIGH/CRITICAL table is
             # reported (non-blocking) for visibility and archived via SBOM.
-            echo "::group::trivy scan $name"
             trivy image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --no-progress "$IMG" || true
             trivy image --scanners vuln --severity CRITICAL --ignore-unfixed --exit-code 1 --no-progress "$IMG"
-            echo "::endgroup::"
 
             # CycloneDX SBOM for the image.
             trivy image --format cyclonedx --output "sbom/footballai-$name.$SHA.cdx.json" --no-progress "$IMG"
+          }
 
-            # Only now — after all gates pass — push the immutable image.
-            docker push "$IMG"
-            digest=$(docker image inspect "$IMG" --format '{{index .RepoDigests 0}}')
-            echo "footballai-$name -> $digest"
-            echo "| footballai-$name | linux/amd64 | \`${digest##*@}\` |" >> "$GITHUB_STEP_SUMMARY"
+          # Attempt every image so one failure cannot hide another. Phase B
+          # never starts unless this whole step succeeds.
+          failed=()
+          for name in frontend api worker; do
+            echo "::group::verify footballai-$name"
+            set +e
+            ( set -e; verify_image "$name" )
+            status=$?
+            set -e
+            echo "::endgroup::"
+            if [[ "$status" -ne 0 ]]; then
+              echo "::error::footballai-$name failed verification"
+              failed+=("$name")
+            fi
           done
+          if [[ "${#failed[@]}" -ne 0 ]]; then
+            echo "::error::nothing was pushed; failed images: ${failed[*]}"
+            exit 1
+          fi
 
       - name: Upload SBOMs
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -121,3 +122,28 @@ jobs:
           name: sbom-${{ github.sha }}
           path: sbom/
           retention-days: 30
+
+      - name: Azure login via OIDC (build identity)
+        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3.0.1
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: ACR login via AAD token (no admin user, no password)
+        run: az acr login --name "${{ vars.ACR_NAME }}"
+
+      - name: "Phase B: push the verified SHA-tagged images"
+        run: |
+          set -euo pipefail
+          echo "## Image build provenance" >> "$GITHUB_STEP_SUMMARY"
+          echo "| image | platform | digest |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+
+          for name in frontend api worker; do
+            IMG="$ACR_LOGIN_SERVER/footballai-$name:$SHA"
+            docker push "$IMG"
+            digest=$(docker image inspect "$IMG" --format '{{index .RepoDigests 0}}')
+            echo "footballai-$name -> $digest"
+            echo "| footballai-$name | linux/amd64 | \`${digest##*@}\` |" >> "$GITHUB_STEP_SUMMARY"
+          done

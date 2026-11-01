@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -81,6 +82,24 @@ def test_docker_build_files_copy_only_required_application_inputs():
         content = (repository / "docker" / dockerfile).read_text(encoding="utf-8")
         assert "USER " in content
         assert "COPY . " not in content
+
+
+def test_worker_image_locks_agree_on_every_shared_pin():
+    # The worker image installs one wheel directory built from all of these
+    # locks, so two versions of one package make pip fail with ResolutionImpossible.
+    v2_root = Path(__file__).resolve().parents[1]
+    dockerfile = (v2_root.parent / "docker" / "worker.Dockerfile").read_text(encoding="utf-8")
+    locks = re.findall(r"^COPY v2/(requirements-[a-z0-9-]+\.txt) ", dockerfile, re.MULTILINE)
+    assert len(locks) == 4
+    versions: dict[str, dict[str, str]] = {}
+    for lock in locks:
+        for line in (v2_root / lock).read_text(encoding="utf-8").splitlines():
+            match = re.match(r"([A-Za-z0-9._-]+)==(\S+)", line)
+            if match:
+                name = re.sub(r"[-_.]+", "-", match[1]).lower()
+                versions.setdefault(name, {})[lock] = match[2]
+    conflicts = {name: pins for name, pins in versions.items() if len(set(pins.values())) > 1}
+    assert conflicts == {}
 
 
 def test_production_requirement_files_are_fully_pinned():

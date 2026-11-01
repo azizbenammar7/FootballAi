@@ -8,7 +8,11 @@ RUN npm run build
 
 FROM nginxinc/nginx-unprivileged:1.29.5-alpine3.23 AS runtime
 
-RUN rm /etc/nginx/conf.d/default.conf
+# No published nginx-unprivileged image carries the CVE-2026-111497 fix yet, so
+# patch that one package from Alpine; the build fails if the fix is unavailable.
+USER root
+RUN apk add --no-cache --upgrade 'brotli-libs>=1.2.1-r0' \
+ && rm /etc/nginx/conf.d/default.conf
 COPY --chown=nginx:nginx docker/frontend.nginx.conf /etc/nginx/footballai-nginx.conf.template
 COPY --chown=nginx:nginx docker/40-footballai-runtime-config.sh /docker-entrypoint.d/40-footballai-runtime-config.sh
 COPY --chown=nginx:nginx --from=build /build/dist /usr/share/nginx/html

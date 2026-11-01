@@ -33,7 +33,7 @@ No client secret participates anywhere in this path.
 |---|---|---|
 | `ci.yml` | PR, push to main | backend unit+contract, split-plane integration (PostgreSQL 16 + Azurite), frontend typecheck/lint/test/build, terraform fmt+validate |
 | `security.yml` | PR, push, weekly cron | Gitleaks (full history), Semgrep SAST, pip-audit, npm audit, Trivy IaC |
-| `build-images.yml` | push to main, manual | build+prove+scan+push 3 images to ACR via OIDC |
+| `build-images.yml` | push to main, manual | build+prove+scan all 3 images, then push them to ACR via OIDC |
 | `deploy-staging.yml` | manual (`image_sha`) | plan → approval → apply → migrate → smoke |
 
 All third-party actions are pinned to full commit SHAs (with a `# vX.Y.Z`
@@ -88,6 +88,17 @@ could never approve a deployment; the manual approval gate itself is retained.
 
 Non-secret identifiers are GitHub **variables** (repo-level + per-environment
 `AZURE_CLIENT_ID`); see `AZURE_*`, `ACR_*`, `TF_STATE_*`.
+
+## Image publishing order
+
+`build-images.yml` runs in two phases. Phase A builds, proves, scans and generates
+SBOMs for all three images, attempting each one so that a failure cannot hide
+another, and has no Azure session. Phase B logs in through OIDC and pushes only if
+every image passed.
+
+Phase B is sequential, not transactional. A network or registry failure can leave
+only some images in ACR for a SHA. `deploy-staging.yml` checks that all three
+exist and refuses to deploy a SHA with any image missing.
 
 ## PostgreSQL regression protection (the P4 defect)
 
