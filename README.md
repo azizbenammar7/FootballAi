@@ -103,6 +103,10 @@ no tool calling, memory, or RAG. See
 [`docs/v2/COPILOT_EXPLANATION.md`](docs/v2/COPILOT_EXPLANATION.md) and
 [`docs/v2/ADR-003-grounded-explanation-copilot.md`](docs/v2/ADR-003-grounded-explanation-copilot.md).
 
+**Portfolio roadmap:** planned AI engineering work and the demo release are tracked
+in [`docs/portfolio/AI_ENGINEERING_ROADMAP.md`](docs/portfolio/AI_ENGINEERING_ROADMAP.md).
+Everything there is a plan unless it is marked as verified.
+
 The remaining README is the preserved V1 technical-test documentation.
 
 End-to-end pipeline: detect & track players in a full 90-minute match →
