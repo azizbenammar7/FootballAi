@@ -6,7 +6,7 @@ RUN npm ci --ignore-scripts --no-audit --no-fund
 COPY v2/dashboard/ ./
 RUN npm run build
 
-FROM nginxinc/nginx-unprivileged:1.29.5-alpine3.23 AS runtime
+FROM nginxinc/nginx-unprivileged:1.31.2-alpine3.23 AS runtime
 
 # No published nginx-unprivileged image carries the CVE-2026-111497 fix yet, so
 # patch that one package from Alpine; the build fails if the fix is unavailable.
