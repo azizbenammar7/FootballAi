@@ -47,6 +47,32 @@ The combined demo refuses to start until readiness is `ready`, preserves
 user-provided run/queue/model/device overrides, and prints device, model, API,
 and dashboard information. See [V1_COMPAT_SETUP.md](V1_COMPAT_SETUP.md).
 
+## Copilot question flow
+
+The copilot is off by default, and `make v2-demo` does not enable it. Bind to
+`127.0.0.1` only: the application has no authentication.
+
+```bash
+FOOTBALLAI_COPILOT_ENABLED=1 FOOTBALLAI_ENVIRONMENT=local PYTHONPATH=v2/src .venv-test/bin/python -m uvicorn footballai_v2.api.main:app --host 127.0.0.1 --port 8000
+```
+
+```bash
+cd v2/dashboard && npm run dev
+```
+
+Open a completed run under **Analysis runs**, then ask these in the panel:
+
+| Ask | `demo_fast` run | Local `v1_compat/1.0.0` run | A future `v1_compat/2.0.0` run |
+|---|---|---|---|
+| "Explain this analysis run." | Answered, labelled synthetic | Answered, partial | Answered |
+| "What do the tracking diagnostics tell us?" | Says nothing was measured | Track ID and detection counts, partial | Full fragmentation diagnostics |
+| "How many successful passes did player 7 make?" | Not answerable | Not answerable | Not answerable |
+
+Local `v1_compat` runs correctly show **Real inference not verified**, because they
+predate `/v2` diagnostics. Do not edit run metadata to change that. A
+`verified_real` answer needs a fresh licensed run (M0). The badge shows the offline
+deterministic mode unless a real model was explicitly enabled.
+
 Complete validation:
 
 ```bash

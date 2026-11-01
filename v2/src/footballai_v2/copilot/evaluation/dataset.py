@@ -15,6 +15,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from footballai_v2.copilot.evaluation.routers import routing_for
 from footballai_v2.copilot.grounding import OUTPUT_NATURE_CLAIM_ID
 from footballai_v2.copilot.models import OutputNature, SupportLevel
 
@@ -151,6 +152,7 @@ def load_dataset(directory: Path) -> EvaluationDataset:
     case_set = CaseSet.model_validate_json(cases_bytes)
     fixture_set = FixtureSet.model_validate_json(fixtures_bytes)
 
+    routing_for(case_set.dataset_version)  # a dataset must name the routing it was labelled for
     identifiers = [case.case_id for case in case_set.cases]
     if len(set(identifiers)) != len(identifiers):
         raise ValueError("case_id values must be unique")

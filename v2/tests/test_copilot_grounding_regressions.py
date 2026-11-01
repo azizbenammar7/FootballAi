@@ -25,6 +25,7 @@ from footballai_v2.copilot.grounding import (
     QuestionScope,
     build_claim_catalog,
     classify_question,
+    eligible_claims,
     render_from_selection,
     route_question,
     validate_citations,
@@ -260,7 +261,7 @@ def test_citation_gate_rejects_a_foreign_citation_even_from_the_catalog(monkeypa
 def test_citations_are_exactly_those_of_the_rendered_claims():
     repository, storage, run = real_run_env()
     provider = Spy(("diag_duration",))
-    response = service_for(repository, storage, provider=provider).explain(run.run_id, "Explain this run.")
+    response = service_for(repository, storage, provider=provider).explain(run.run_id, "Tell me about the tracking diagnostics")
     paths = {c.field_path for c in response.citations}
     assert paths == {
         "output_nature.classification",
@@ -578,7 +579,7 @@ def test_prompt_over_budget_fails_closed_without_calling_the_model(real_provider
 def test_budget_counts_the_system_prompt_too(real_provider):
     repository, storage, run = real_run_env()
     evidence = evidence_for(repository, storage, run)
-    catalog = build_claim_catalog(evidence)
+    catalog = eligible_claims(build_claim_catalog(evidence), route_question(None))
     user = json.dumps(build_provider_payload(evidence, catalog, None), sort_keys=True, separators=(",", ":"))
     settings = CopilotSettings(provider_mode="real", real_provider_enabled=True, max_prompt_chars=len(user) + 1)
     provider, stub = real_provider('{"claim_ids": ["run_status"]}', settings=settings)

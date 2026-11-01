@@ -6,6 +6,7 @@ import math
 from typing import Any, Callable, Iterable
 
 from footballai_v2.copilot.errors import ProviderFailureKind
+from footballai_v2.copilot.evaluation.dataset import EvaluationCase, EvaluationDataset
 from footballai_v2.copilot.evaluation.harness import ANSWERED, CaseResult
 
 
@@ -133,6 +134,57 @@ def headroom(baseline: tuple[CaseResult, ...]) -> dict[str, Any]:
     }
 
 
+def _labelled_identically(
+    before: EvaluationCase, after: EvaluationCase, previous: EvaluationDataset, current: EvaluationDataset
+) -> bool:
+    """Same question, same fixture content, same labels. Notes do not change a label."""
+    return (
+        before.question == after.question
+        and before.fixture == after.fixture
+        and before.expected == after.expected
+        and previous.fixtures.fixtures[before.fixture] == current.fixtures.fixtures[after.fixture]
+        and _payload(previous, before.fixture) == _payload(current, after.fixture)
+    )
+
+
+def _payload(dataset: EvaluationDataset, fixture: str) -> dict[str, Any] | None:
+    diagnostics = dataset.fixtures.fixtures[fixture].diagnostics
+    return dataset.fixtures.payloads.get(diagnostics.payload) if diagnostics and diagnostics.payload else None
+
+
+def compare_dataset_versions(
+    previous: EvaluationDataset,
+    previous_results: tuple[CaseResult, ...],
+    current: EvaluationDataset,
+    current_results: tuple[CaseResult, ...],
+) -> dict[str, Any]:
+    """Compare only what was labelled identically in both dataset versions.
+
+    Headline scores from two versions are different experiments. A case that was
+    relabelled or added is reported by name and carries no evidence of improvement.
+    """
+    before = {case.case_id: case for case in previous.cases}
+    after = {case.case_id: case for case in current.cases}
+    shared = {
+        case_id
+        for case_id, case in before.items()
+        if case_id in after and _labelled_identically(case, after[case_id], previous, current)
+    }
+    paired = shared & {result.case_id for result in current_results}
+    return {
+        "previous_version": previous.version,
+        "current_version": current.version,
+        "same_label_cases": len(paired),
+        "same_label_comparison": compare(
+            tuple(r for r in previous_results if r.case_id in paired),
+            tuple(r for r in current_results if r.case_id in paired),
+        ),
+        "relabelled_cases": sorted(before.keys() & after.keys() - shared),
+        "added_cases": sorted(after.keys() - before.keys()),
+        "removed_cases": sorted(before.keys() - after.keys()),
+    }
+
+
 def compare(reference: tuple[CaseResult, ...], candidate: tuple[CaseResult, ...]) -> dict[str, Any]:
     """Paired comparison on the same cases. Only discordant cases carry evidence."""
     by_id = {result.case_id: result for result in reference}
@@ -154,4 +206,4 @@ def compare(reference: tuple[CaseResult, ...], candidate: tuple[CaseResult, ...]
     }
 
 
-__all__ = ["compare", "contract_metrics", "headroom", "latency_summary", "selection_metrics"]
+__all__ = ["compare", "compare_dataset_versions", "contract_metrics", "headroom", "latency_summary", "selection_metrics"]

@@ -2,6 +2,8 @@
 
 Default          baselines plus a cost plan. No SDK, key, or network.
 --preflight      verifies the model and counts input tokens. Needs a key. Not billed.
+--compare-with   compares against an older dataset version, on identically labelled
+                 cases only. No SDK, key, or network.
 --allow-paid-calls  sends real requests. Needs --model, --max-requests, and
                  --max-cost-usd, and refuses to run in CI.
 """
@@ -32,11 +34,13 @@ from footballai_v2.copilot.evaluation.live import (
 )
 from footballai_v2.copilot.evaluation.metrics import (
     compare,
+    compare_dataset_versions,
     contract_metrics,
     headroom,
     latency_summary,
     selection_metrics,
 )
+from footballai_v2.copilot.evaluation.routers import routing_for
 from footballai_v2.copilot.evaluation.selectors import LexicalOverlapProvider, ScriptedProvider
 from footballai_v2.copilot.grounding import INSTRUCTION_VERSION
 from footballai_v2.copilot.models import ProviderTelemetry
@@ -44,6 +48,7 @@ from footballai_v2.copilot.provider import DeterministicFakeProvider
 
 
 REPORT_SCHEMA = "footballai.copilot-eval-report/v1"
+COMPARISON_SCHEMA = "footballai.copilot-eval-comparison/v1"
 EXIT_OK = 0
 EXIT_REFUSED = 2
 EXIT_PREFLIGHT_FAILED = 3
@@ -59,6 +64,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--output", type=Path, help="also write the report to this JSON file")
     parser.add_argument("--model", help=f"model id (default for planning: {DEFAULT_MODEL})")
     parser.add_argument("--sample", type=int, help="stratified sample of planned requests")
+    parser.add_argument("--compare-with", type=Path, help="older dataset version to compare against, offline")
     parser.add_argument("--preflight", action="store_true", help="verify the model; sends no billed request")
     parser.add_argument("--allow-paid-calls", action="store_true", help="send real, billed requests")
     parser.add_argument("--max-requests", type=int, help="hard request limit for a paid run")
@@ -73,6 +79,10 @@ def _refusal(args: argparse.Namespace) -> str | None:
         return f"no documented price is configured for {model!r}"
     if args.sample is not None and args.sample < 1:
         return "--sample must be positive"
+    if args.compare_with is not None and (args.allow_paid_calls or args.preflight):
+        return "--compare-with is offline, so it cannot be combined with a model request"
+    if args.compare_with is not None and (args.sample is not None or args.model is not None):
+        return "--compare-with covers every same-label case, so --sample and --model do not apply"
     if not args.allow_paid_calls:
         if args.max_requests is not None or args.max_cost_usd is not None:
             return "--max-requests and --max-cost-usd only apply with --allow-paid-calls"
@@ -113,6 +123,7 @@ def _report_base(dataset: EvaluationDataset, mode: str) -> dict[str, Any]:
             "contract_cases": len(dataset.suite(Suite.CONTRACT)),
         },
         "instruction_version": INSTRUCTION_VERSION,
+        "routing_version": routing_for(dataset.version)[0],
         "pricing": {"source": PRICING_SOURCE, "as_of": PRICING_AS_OF},
     }
 
@@ -137,6 +148,26 @@ def _offline_report(dataset: EvaluationDataset, plan: tuple[PlannedRequest, ...]
             "estimate": estimate_plan(plan, MODEL_PRICES[model], settings.max_output_tokens),
             "case_ids": [item.case.case_id for item in plan],
         },
+    }
+
+
+def _comparison_report(previous: EvaluationDataset, current: EvaluationDataset) -> dict[str, Any]:
+    selection = {
+        dataset.version: run_cases(dataset.suite(Suite.SELECTION), dataset, lambda _case: DeterministicFakeProvider())
+        for dataset in (previous, current)
+    }
+    return {
+        "schema": COMPARISON_SCHEMA,
+        "mode": "dry_run",
+        "live_model_requests": 0,
+        "selector": "deterministic_fake",
+        "note": (
+            "Only same_label_comparison compares like with like. Relabelled and added cases "
+            "are not evidence of improvement, and headline scores from two dataset versions "
+            "must not be compared."
+        ),
+        "routing_versions": {dataset.version: routing_for(dataset.version)[0] for dataset in (previous, current)},
+        **compare_dataset_versions(previous, selection[previous.version], current, selection[current.version]),
     }
 
 
@@ -213,6 +244,9 @@ def main(argv: list[str] | None = None) -> int:
         return EXIT_REFUSED
 
     dataset = load_dataset(args.dataset)
+    if args.compare_with is not None:
+        _emit(_comparison_report(load_dataset(args.compare_with), dataset), args.output)
+        return EXIT_OK
     model = args.model or DEFAULT_MODEL
     settings = real_settings(model)
     limit = args.sample

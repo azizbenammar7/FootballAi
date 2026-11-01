@@ -39,6 +39,7 @@ _REAL_DATA_QUALITIES = frozenset({None, "unverified"})
 
 _DISTRIBUTION_KEYS = ("min", "median", "mean", "p90", "p95", "max")
 _ACTIVE_KEYS = ("median", "mean", "p95", "max")
+_LEGACY_TRACKING_KEYS = ("detection_rows", "tracked_ids", "frames_processed", "max_track_observations")
 
 
 class _NonFiniteNumber(ValueError):
@@ -289,7 +290,8 @@ class RunEvidenceService:
             for item in run.artifacts
         )
 
-        limitations = self._limitations(is_synthetic, schema, missing)
+        has_tracking_metrics = schema == REAL_DIAGNOSTICS_SCHEMA or "tracking" in (diagnostics or {})
+        limitations = self._limitations(is_synthetic, has_tracking_metrics, missing)
 
         evidence = ValidatedRunEvidence(
             run_id=run.run_id,
@@ -453,6 +455,7 @@ class RunEvidenceService:
         if isinstance(short, Mapping):
             om["short_tracklets"] = {
                 str(threshold): {
+                    "criterion": _text(block.get("criterion")),
                     "count": _count(block.get("count")),
                     "percentage": _metric(block.get("percentage")),
                 }
@@ -486,6 +489,13 @@ class RunEvidenceService:
             value = _number(payload.get(key))
             if value is not None:
                 approved[key] = value
+        # Local v1_compat 1.0.0 runs report real tracking counts under this schema.
+        # They never corroborate execution: output nature ignores this block.
+        tracking = payload.get("tracking")
+        if isinstance(tracking, Mapping) and payload.get("data_quality") != "synthetic":
+            counts = {key: _count(tracking.get(key)) for key in _LEGACY_TRACKING_KEYS}
+            if all(value is not None for value in counts.values()):
+                approved["tracking"] = counts
         return approved
 
     # -- helpers ------------------------------------------------------------
@@ -499,7 +509,7 @@ class RunEvidenceService:
         return None
 
     def _limitations(
-        self, is_synthetic: bool, schema: str | None, missing: list[str]
+        self, is_synthetic: bool, has_tracking_metrics: bool, missing: list[str]
     ) -> tuple[str, ...]:
         limitations: list[str] = [
             "Track identifiers are temporary tracklets, not verified persistent player identities.",
@@ -512,7 +522,7 @@ class RunEvidenceService:
                 "Output is synthetic: generated deterministically for workflow demonstration, "
                 "not a measurement of the match.",
             )
-        elif schema == REAL_DIAGNOSTICS_SCHEMA:
+        elif has_tracking_metrics:
             limitations.append(
                 "Tracking diagnostics are descriptive fragmentation proxies with no labelled "
                 "ground-truth identity metric."

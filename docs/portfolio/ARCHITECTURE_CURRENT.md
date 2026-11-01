@@ -59,7 +59,7 @@ changing them.
 flowchart TD
     q["Question"] --> evidence["RunEvidenceService<br/>integrity-checked, allow-listed evidence"]
     evidence --> router{"Closed-vocabulary router"}
-    router -- "unknown word" --> abstain["Abstain<br/>no provider call"]
+    router -- "unknown word or no subject" --> abstain["Abstain<br/>no provider call"]
     router -- "known words" --> catalog{"Claim catalog<br/>server-written facts"}
     catalog -- "no claim on topic" --> abstain
     catalog -- "eligible claims" --> select["Provider selects claim ids<br/>default: deterministic fake"]
@@ -101,7 +101,8 @@ flowchart LR
 | Copilot | Evidence service, router, claim catalog, citations, abstention | IMPLEMENTED, VERIFIED | 310 copilot tests passed, 1 skipped, run 2026-11-01 |
 | Copilot | Deterministic fake provider | IMPLEMENTED, VERIFIED | It is not a language model, and the UI says so |
 | Copilot | `AnthropicTextProvider` | IMPLEMENTED, UNVERIFIED live | Tested against the real SDK and a local server only |
-| Evaluation | 52-case harness and deterministic baseline | IMPLEMENTED, VERIFIED | Reproduced 2026-11-01 |
+| Evaluation | 52-case v1 harness and deterministic baseline | IMPLEMENTED, VERIFIED | Reproduced 2026-11-01 |
+| Copilot | Dashboard question box and dataset v2 | IMPLEMENTED on `feat/copilot-interactive-m2a`, **not on `main` until merged** | M2-A pull request |
 | Agent | Tool calling, agent loop, RAG, MCP, memory | **PLANNED, does not exist** | No such code on `main` |
 | Observability | JSON logs, health and readiness endpoints | IMPLEMENTED, VERIFIED | `logging_config.py`, runtime health modules |
 | Observability | Application Insights, metric alerts, OpenTelemetry instrumentation | EXPERIMENTAL, **not on `main`** | Draft [PR #20](https://github.com/azizbenammar7/FootballAi/pull/20), conflicting. Partly applied to staging from that branch |

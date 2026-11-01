@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Active. M0 audit complete, M1 awaiting approval |
+| **Status** | Active. M0 audit complete, M1 awaiting approval, M2-A in review |
 | **Owner** | Aziz Ben Ammar |
 | **Baseline** | `main` at `2c83cb3`, audited 2026-11-01 |
 | **Next milestone** | M1, controlled real LLM evaluation |
@@ -53,7 +53,7 @@ chatbot, and it is true.
 | Real LLM in the copilot | IMPLEMENTED, **never run live** |
 | Tool-using agent | **PLANNED** |
 | Agent evaluation and traces | **PLANNED** |
-| Question box in the dashboard | **Missing.** The API accepts a question, the panel never sends one |
+| Question box in the dashboard | IMPLEMENTED in M2-A, in review. Browser-checked locally on 2026-11-01 |
 | Observability on `main` | JSON logs and health endpoints only. P6 is not merged |
 | RAG, MCP, multi-agent | Not planned. No need has been shown |
 
@@ -317,7 +317,9 @@ flowchart LR
 - **Demo contribution:** the core of the target demo.
 - **PR boundaries:**
   1. **M2-A:** question box, new claims, vocabulary, label-only fix, dataset v2. Useful
-     without any LLM, and it unlocks the earliest demo.
+     without any LLM, and it unlocks the earliest demo. **Implemented, pending human
+     review and merge.** M2-A is not a tool-using agent. See
+     [ADR-004](../v2/ADR-004-versioned-question-routing.md).
   2. **M2-B:** tool registry and loop, tested against a stub.
   3. **M2-C:** endpoint wiring and trace in the API response.
 
@@ -458,7 +460,7 @@ release.
 | Shareable, licensed footage | M0, every real-run demo | Owner | Open |
 | Decision on the repository licence and Ultralytics licensing | Public release | Owner | Open. The repository has no licence file |
 | Permission to keep the original test-assignment wording in the README heading | M5 README | Owner | Open |
-| Dashboard question box | Every question on camera | M2-A | Not built |
+| Dashboard question box | Every question on camera | M2-A | Implemented, in review |
 | Agent decision rule | M3 paid run | Owner | Proposed |
 
 ## Later, not now

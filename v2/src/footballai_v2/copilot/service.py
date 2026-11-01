@@ -13,6 +13,7 @@ from footballai_v2.copilot.config import CopilotSettings
 from footballai_v2.copilot.errors import ProviderTimeoutError, ProviderUnavailableError
 from footballai_v2.copilot.evidence import RunEvidenceService, ValidatedRunEvidence
 from footballai_v2.copilot.grounding import (
+    QuestionRouter,
     QuestionScope,
     build_claim_catalog,
     build_system_instructions,
@@ -42,14 +43,16 @@ class ExplanationService:
         object_storage: ObjectStorage,
         provider: LLMProvider,
         settings: CopilotSettings | None = None,
+        router: QuestionRouter = route_question,
     ) -> None:
         self._settings = settings or CopilotSettings()
+        self._router = router
         self._evidence_service = RunEvidenceService(repository, object_storage, self._settings)
         self._provider = provider
 
     def explain(self, run_id: str, question: str | None = None) -> ExplanationResponse:
         evidence = self._evidence_service.build(run_id)
-        route = route_question(question)
+        route = self._router(question)
 
         # Fail closed BEFORE the provider: neither of these spends a token.
         if route.scope is QuestionScope.UNSUPPORTED:
