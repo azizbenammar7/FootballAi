@@ -11,14 +11,14 @@ opencv-python-headless==5.0.0.93
 pyarrow==25.0.0
 tqdm==4.69.1
 matplotlib==3.11.1
-pillow==12.3.0
+pillow==13.0.0
 PyYAML==6.0.3
 requests==2.34.2
 psutil==7.2.2
 polars==1.43.0
 polars-runtime-32==1.43.0
 nvidia-ml-py==13.610.43
-filelock==3.32.0
+filelock==4.2.6
 Jinja2==3.1.6
 MarkupSafe==3.0.3
 charset-normalizer==3.4.9
@@ -32,4 +32,4 @@ networkx==3.6.1
 pyparsing==3.3.2
 setuptools==83.0.0
 sympy==1.14.0
-urllib3==2.7.0
+urllib3==2.8.0
