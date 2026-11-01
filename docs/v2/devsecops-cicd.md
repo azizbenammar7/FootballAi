@@ -97,8 +97,8 @@ another, and has no Azure session. Phase B logs in through OIDC and pushes only 
 every image passed.
 
 Phase B is sequential, not transactional. A network or registry failure can leave
-only some images in ACR for a SHA, so confirm that all three exist before
-deploying that SHA.
+only some images in ACR for a SHA. `deploy-staging.yml` checks that all three
+exist and refuses to deploy a SHA with any image missing.
 
 ## PostgreSQL regression protection (the P4 defect)
 

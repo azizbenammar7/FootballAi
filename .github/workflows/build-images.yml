@@ -4,8 +4,8 @@
 # GitHub OIDC build identity (AcrPush). No ACR admin, no docker password, no
 # `latest`. Phase A verifies all three images; Phase B pushes only if all pass.
 # Publishing is sequential, not transactional: a network or registry failure
-# during Phase B can leave only some images in ACR for a SHA, so confirm that all
-# three exist before deploying that SHA.
+# during Phase B can leave only some images in ACR for a SHA. deploy-staging.yml
+# refuses to deploy such a SHA.
 name: Build images
 
 on:

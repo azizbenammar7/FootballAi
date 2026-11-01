@@ -29,7 +29,7 @@ if [[ "$1" == buildx ]]; then exit 0; fi
 if [[ "$1 $2" == "image inspect" ]]; then
   case "$*" in
     *RepoDigests*) echo "registry/image@sha256:abc" ;;
-    *) echo "${STUB_ARCH:-linux/amd64}" ;;
+    *) [[ "$image" == *"footballai-${ARCH_FAIL_IMAGE:-}:"* ]] && echo linux/arm64 || echo linux/amd64 ;;
   esac
   exit 0
 fi
@@ -37,6 +37,8 @@ if [[ "$1" == run && "$*" == *" -u" ]]; then
   [[ "$image" == *"footballai-${ROOT_IMAGE:-}:"* ]] && echo 0 || echo 1000
   exit 0
 fi
+if [[ "$*" == *"import psycopg"* && "$image" == *"footballai-${PSYCOPG_FAIL_IMAGE:-}:"* ]]; then exit 1; fi
+if [[ "$*" == *"alembic.config"* && "$image" == *"footballai-${ALEMBIC_FAIL_IMAGE:-}:"* ]]; then exit 1; fi
 exit 0
 """
 
@@ -140,7 +142,8 @@ def test_every_image_passes_then_pushes_only_sha_tags_in_order(tmp_path):
     ("variable", "gate"),
     [
         pytest.param("FAIL_IMAGE", "buildx", id="build"),
-        pytest.param("FAIL_IMAGE", "run", id="runtime-check"),
+        pytest.param("ARCH_FAIL_IMAGE", "", id="architecture"),
+        pytest.param("FAIL_IMAGE", "run", id="uid-probe"),
         pytest.param("ROOT_IMAGE", "", id="root-user"),
         pytest.param("TRIVY_FAIL_IMAGE", "", id="trivy-critical"),
         pytest.param("SBOM_FAIL_IMAGE", "", id="sbom"),
@@ -148,6 +151,21 @@ def test_every_image_passes_then_pushes_only_sha_tags_in_order(tmp_path):
 )
 def test_any_failed_gate_on_any_image_prevents_every_push(tmp_path, image, variable, gate):
     code, calls = run_workflow_steps(tmp_path, FAIL_GATE=gate, **{variable: image})
+
+    assert code != 0
+    assert not any(call.startswith("docker push") for call in calls)
+
+
+@pytest.mark.parametrize(
+    ("variable", "image"),
+    [
+        pytest.param("PSYCOPG_FAIL_IMAGE", "api", id="psycopg-api"),
+        pytest.param("PSYCOPG_FAIL_IMAGE", "worker", id="psycopg-worker"),
+        pytest.param("ALEMBIC_FAIL_IMAGE", "api", id="alembic-api"),
+    ],
+)
+def test_runtime_import_gates_prevent_every_push(tmp_path, variable, image):
+    code, calls = run_workflow_steps(tmp_path, **{variable: image})
 
     assert code != 0
     assert not any(call.startswith("docker push") for call in calls)
@@ -182,5 +200,6 @@ def test_workflow_preserves_oidc_and_platform_invariants():
     assert "environment: staging-build" in content
     assert "--platform linux/amd64" in content
     assert "--severity CRITICAL --ignore-unfixed --exit-code 1" in content
+    assert "assert impl!='python'" in step_script(PHASE_A)
     assert "password" not in step_script(PHASE_B)
     assert "secrets." not in content
