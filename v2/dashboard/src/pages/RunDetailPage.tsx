@@ -1,9 +1,10 @@
-import { AlertTriangle, Box, CheckCircle2, ChevronRight, Clock3, FileCheck2, GitBranch, ShieldAlert, Sparkles } from 'lucide-react'
+import { AlertTriangle, Bot, Box, CheckCircle2, ChevronRight, Clock3, FileCheck2, GitBranch, ShieldAlert, Sparkles } from 'lucide-react'
 import { type FormEvent, useId, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ApiError, explainRun, useApi } from '../api'
+import { ApiError, askAgent, explainRun, useApi } from '../api'
+import { AgentTraceView } from '../components/AgentTraceView'
 import { AnalysisWarning, ErrorState, LoadingState, OriginBadge, Panel, StatusBadge, formatDate, shortId } from '../components/ui'
-import type { ArtifactListResponse, ExplanationResponse, ModelMode, OutputNature, RunDetail, SupportLevel } from '../types'
+import type { AgentResponse, AgentTrace, ArtifactListResponse, ExplanationResponse, ModelMode, OutputNature, RunDetail, SupportLevel } from '../types'
 
 const SUPPORT_LABEL: Record<SupportLevel, string> = {
   supported: 'Supported by evidence',
@@ -23,6 +24,11 @@ const NATURE_LABEL: Record<OutputNature, string> = {
   unverified_or_partial: 'Real inference not verified',
 }
 
+const ADAPTER_LABEL: Record<string, string> = {
+  offline_scripted: 'OFFLINE SCRIPTED AGENT',
+  real_model: 'LANGUAGE MODEL AGENT',
+}
+
 const REASON_LABEL: Record<string, string> = {
   unsupported_question: 'FootballAI does not measure this, or the question is outside the run\u2019s evidence.',
   evidence_not_available: 'This run\u2019s verified evidence does not include this information.',
@@ -30,6 +36,9 @@ const REASON_LABEL: Record<string, string> = {
   provider_unavailable: 'The explanation model is unavailable.',
   provider_timeout: 'The explanation model timed out.',
   prompt_budget_exceeded: 'The evidence for this run exceeds the safe prompt size.',
+  cross_run_rejected: 'The request tried to reach another run, so it was stopped.',
+  agent_limit_reached: 'The agent reached a safety limit, so no partial answer is shown.',
+  forged_citation: 'The selected evidence failed server validation, so it was not shown.',
 }
 
 const MAX_QUESTION_CHARS = 500
@@ -39,7 +48,17 @@ const EXAMPLE_QUESTIONS = [
   'How many successful passes did player 7 make?',
 ]
 
-type ExplanationState = { phase: 'idle' | 'loading' | 'done' | 'error'; data?: ExplanationResponse; error?: string; disabled?: boolean; asked?: string | null }
+type CopilotMode = 'explanation' | 'agent'
+type ExplanationState = { phase: 'idle' | 'loading' | 'done' | 'error'; data?: ExplanationResponse; trace?: AgentTrace; error?: string; asked?: string | null }
+
+const MODES: { id: CopilotMode; label: string }[] = [
+  { id: 'explanation', label: 'Grounded Explanation' },
+  { id: 'agent', label: 'Read-Only Agent' },
+]
+const DISABLED_NOTICE: Record<CopilotMode, string> = {
+  explanation: 'The explanation copilot is disabled in this environment. It is a development-only feature and is not exposed where access controls are not yet in place.',
+  agent: 'The read-only agent is disabled in this environment. It needs its own development-only flag, and answers only on this machine. Grounded Explanation is unaffected by this flag.',
+}
 
 function failureMessage(reason: unknown) {
   // A network failure's own text can hold addresses, so it is never shown.
@@ -48,11 +67,14 @@ function failureMessage(reason: unknown) {
 
 function ExplanationPanel({ runId, status }: { runId: string; status: RunDetail['status'] }) {
   const eligible = status === 'succeeded' || status === 'partial'
+  const [mode, setMode] = useState<CopilotMode>('explanation')
+  const [disabled, setDisabled] = useState<Record<CopilotMode, boolean>>({ explanation: false, agent: false })
   const [state, setState] = useState<ExplanationState>({ phase: 'idle' })
   const [question, setQuestion] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const questionId = useId()
   const hintId = useId()
+  const modeName = useId()
   const trimmed = question.trim()
   const loading = state.phase === 'loading'
   const tooLong = trimmed.length > MAX_QUESTION_CHARS
@@ -61,12 +83,27 @@ function ExplanationPanel({ runId, status }: { runId: string; status: RunDetail[
   async function run(asked: string | null) {
     setState({ phase: 'loading', asked })
     try {
-      const data = await explainRun<ExplanationResponse>(runId, asked)
-      setState({ phase: 'done', data, asked })
+      if (mode === 'agent') {
+        const { explanation, trace } = await askAgent<AgentResponse>(runId, asked)
+        setState({ phase: 'done', data: explanation, trace, asked })
+      } else {
+        const data = await explainRun<ExplanationResponse>(runId, asked)
+        setState({ phase: 'done', data, asked })
+      }
     } catch (reason) {
-      const notFound = reason instanceof ApiError && reason.status === 404
-      setState({ phase: 'error', disabled: notFound, error: failureMessage(reason), asked })
+      if (reason instanceof ApiError && reason.status === 404) {
+        setDisabled((current) => ({ ...current, [mode]: true }))
+        setState({ phase: 'idle' })
+      } else {
+        setState({ phase: 'error', error: failureMessage(reason), asked })
+      }
     }
+  }
+
+  // An answer belongs to the mode that produced it, so it cannot stay on screen in the other.
+  function changeMode(next: CopilotMode) {
+    setMode(next)
+    setState({ phase: 'idle' })
   }
 
   function submit(event: FormEvent) {
@@ -83,8 +120,20 @@ function ExplanationPanel({ runId, status }: { runId: string; status: RunDetail[
     <Panel>
       <div className="panel-head"><div><span className="eyebrow">AI copilot</span><h2>AI Analysis Explanation</h2></div><Sparkles /></div>
       <p className="explain-intro">Ask one question about this run. Answers come only from its verified evidence, and each question stands alone. It never invents player identities, passes, possession, tactics, verified distances, or injury risk.</p>
-      {state.disabled
-        ? <p className="explain-disabled" role="status"><AlertTriangle /> The explanation copilot is disabled in this environment. It is a development-only feature and is not exposed where access controls are not yet in place.</p>
+      <fieldset className="explain-modes" disabled={loading}>
+        <legend>Copilot mode</legend>
+        {MODES.map((item) => (
+          <label key={item.id} className={mode === item.id ? 'explain-mode-option explain-mode-option--selected' : 'explain-mode-option'}>
+            <input type="radio" name={modeName} checked={mode === item.id} onChange={() => changeMode(item.id)} />
+            {item.label}
+          </label>
+        ))}
+      </fieldset>
+      {mode === 'agent' && !disabled.agent && (
+        <p className="agent-banner"><Bot /><span><strong>{ADAPTER_LABEL.offline_scripted}</strong> A fixed script, not a language model, chooses the tools. The tool calls, limits, and evidence checks are real.</span></p>
+      )}
+      {disabled[mode]
+        ? <p className="explain-disabled" role="status"><AlertTriangle /> {DISABLED_NOTICE[mode]}</p>
         : (
           <>
             <form className="explain-form" onSubmit={submit}>
@@ -106,15 +155,15 @@ function ExplanationPanel({ runId, status }: { runId: string; status: RunDetail[
           </>
         )}
       <div aria-live="polite">
-        {loading && <LoadingState label="Generating grounded explanation…" />}
-        {state.phase === 'error' && !state.disabled && <p className="explain-failure" role="alert"><AlertTriangle /> {state.error}</p>}
-        {state.phase === 'done' && state.data && <ExplanationResult data={state.data} asked={state.asked ?? null} />}
+        {loading && <LoadingState label={mode === 'agent' ? 'Running the read-only agent…' : 'Generating grounded explanation…'} />}
+        {state.phase === 'error' && <p className="explain-failure" role="alert"><AlertTriangle /> {state.error}</p>}
+        {state.phase === 'done' && state.data && <ExplanationResult data={state.data} trace={state.trace} asked={state.asked ?? null} />}
       </div>
     </Panel>
   )
 }
 
-function ExplanationResult({ data, asked }: { data: ExplanationResponse; asked: string | null }) {
+function ExplanationResult({ data, trace, asked }: { data: ExplanationResponse; trace?: AgentTrace; asked: string | null }) {
   return (
     <div className="explain-result">
       {asked && <p className="explain-asked"><span>Question</span>{asked}</p>}
@@ -122,6 +171,7 @@ function ExplanationResult({ data, asked }: { data: ExplanationResponse; asked: 
         <span className={`explain-support explain-support--${data.support_level}`}>{SUPPORT_LABEL[data.support_level]}</span>
         <span className={`explain-nature explain-nature--${data.output_nature}`}>{NATURE_LABEL[data.output_nature]}</span>
         <span className={`explain-mode explain-mode--${data.model_mode}`}>{MODE_LABEL[data.model_mode]}</span>
+        {trace && <span className={`explain-adapter explain-adapter--${trace.adapter}`}>{ADAPTER_LABEL[trace.adapter] ?? trace.adapter}</span>}
       </div>
       <p className="explain-answer">{data.answer}</p>
       {data.unavailable_reason && <p className="explain-reason">{REASON_LABEL[data.unavailable_reason] ?? data.unavailable_reason}</p>}
@@ -144,6 +194,7 @@ function ExplanationResult({ data, asked }: { data: ExplanationResponse; asked: 
           <ul className="explain-limitations">{data.limitations.map((item, index) => <li key={index}>{item}</li>)}</ul>
         </div>
       )}
+      {trace && <AgentTraceView trace={trace} />}
     </div>
   )
 }

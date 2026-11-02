@@ -157,6 +157,52 @@ export interface ExplanationResponse {
   unavailable_reason: string | null
 }
 
+export type AgentAdapter = 'offline_scripted' | 'real_model'
+export type ToolCallStatus = 'ok' | 'no_evidence' | 'rejected' | 'failed'
+export type AgentStopReason =
+  | 'answered' | 'unsupported_question' | 'evidence_not_available' | 'no_relevant_claim'
+  | 'selection_rejected' | 'citation_rejected' | 'cross_run_rejected' | 'tool_budget_exhausted'
+  | 'turn_budget_exhausted' | 'deadline_exceeded' | 'prompt_budget_exceeded' | 'model_timeout'
+  | 'model_refusal' | 'model_truncated' | 'malformed_response' | 'provider_error'
+
+export interface AgentToolCall {
+  sequence: number
+  turn: number
+  tool: string | null
+  status: ToolCallStatus
+  duration_ms: number
+  claim_ids_returned: string[]
+  error_code: string | null
+}
+
+export interface AgentTrace {
+  schema_version: string
+  correlation_id: string
+  run_id: string
+  adapter: AgentAdapter
+  model: string
+  model_mode: ModelMode
+  instruction_version: string
+  routing_version: string
+  termination: AgentStopReason
+  tool_error_code: string | null
+  duration_ms: number
+  model_turns: number
+  model_turn_limit: number
+  tool_call_limit: number
+  tool_calls: AgentToolCall[]
+  tool_calls_refused: number
+  claim_ids_returned: string[]
+  claim_ids_selected: string[]
+  claim_ids_rendered: string[]
+  selected_ids_rejected: number
+}
+
+export interface AgentResponse {
+  explanation: ExplanationResponse
+  trace: AgentTrace
+}
+
 export interface PlayerDetail {
   run_id: string
   player_id: string

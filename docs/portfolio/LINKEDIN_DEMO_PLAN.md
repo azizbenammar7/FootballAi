@@ -15,13 +15,16 @@ A recording made today would mislead or fail. Four things block it:
 
 | Blocker | Evidence | Fix |
 |---|---|---|
-| The dashboard cannot ask a question | Fixed in M2-A, pending merge | M2-A |
-| No verified real run exists locally | All 5 local `v1_compat` runs are version `1.0.0` with `/v1` diagnostics. The one tested returned `unverified_or_partial` | Fresh run in M0 |
+| The dashboard cannot ask a question | Fixed in M2-A, merged | M2-A |
+| No shareable verified real run exists | Run `87da5c1b` is `verified_real`, but on broadcast footage that must never be published | Run on licensed footage, M0 |
 | Footage rights are not established | No licence record exists | Owner, M0 |
-| The flagship follow-up abstained | Fixed in M2-A, pending merge. It now explains fragmentation and what was not measured | M2-A |
+| The flagship follow-up abstained | Fixed in M2-A, merged. It now explains fragmentation and what was not measured | M2-A |
+| No language model has driven the agent | The trace viewer works, with an offline scripted adapter only | M1 and M3, each with approval |
 
-The Tier C storyboard below also needs the agent, the trace view, and evaluation
-results. See the [demo ladder](AI_ENGINEERING_ROADMAP.md#demo-ladder-and-fallbacks).
+The Tier C storyboard below needs a real model and evaluation results. The agent and
+trace view exist, in M2-C, but a recording today could only show the scripted adapter,
+which must stay labelled. See the
+[demo ladder](AI_ENGINEERING_ROADMAP.md#demo-ladder-and-fallbacks).
 
 ## Demo environments
 
@@ -87,12 +90,12 @@ Say "open source" only after the licence decision.
 |---|---|---|---|---|
 | Dashboard, run detail, artifacts | Yes | Yes | Yes | Yes |
 | Explanation panel with badges and citations | Yes | Yes | Yes | Yes |
-| Question box | M2-A, in review | Yes | Yes | Yes |
+| Question box | Merged | Yes | Yes | Yes |
 | Verified real run on shareable footage | **No** | Yes | Yes | Yes |
-| `reliable` vocabulary | M2-A, in review | Optional | Optional | Yes |
+| `reliable` vocabulary | Merged | Optional | Optional | Yes |
 | Live real model | **Never run** | No | Yes | Yes |
-| Tool-using agent | **No** | No | No | Yes |
-| Trace view | **No** | No | No | Yes |
+| Tool-using agent | Offline scripted only, M2-C in review | No | No | Yes, with a real model |
+| Trace view | M2-C, in review | No | No | Yes |
 | Evaluation summary shot | Deterministic only | Optional | Yes | Yes |
 
 ## Release gate
@@ -119,6 +122,8 @@ pass. Record the commit and date below.
 **Evidence**
 
 - [ ] Fake-provider output is never called a real LLM.
+- [ ] The scripted agent shows `OFFLINE SCRIPTED AGENT` in every shot, and is never
+      called an AI agent.
 - [ ] Synthetic analysis is never called real YOLO inference.
 - [ ] Tracklets are never called verified players.
 - [ ] Each claim is in the [claim register](#claim-register).
@@ -154,7 +159,8 @@ Add a row for each claim. An empty proof means the claim stays out.
 | Citation validity 100% in the baseline | Verified, deterministic only | Same report |
 | Deployed to Azure staging | Verified at P4, `demo_fast` | `docs/v2/azure-staging-architecture.md` |
 | Any real-model result | **Not measured** | Pending M1 |
-| Any agent capability | **Does not exist** | Pending M2 and M3 |
+| Offline scripted agent runs real tools, limits, and grounding through a local API | Verified, scripted adapter only | [Browser validation](../v2/COPILOT_AGENT.md#browser-validation) |
+| Any claim that an AI model chooses tools | **Not measured** | Pending M3 |
 
 ## Recording requirements
 

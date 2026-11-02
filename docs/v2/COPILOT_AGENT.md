@@ -1,15 +1,22 @@
-# Bounded read-only agent (M2-B)
+# Bounded read-only agent (M2-B, M2-C)
 
 One tool-calling agent that decides which verified evidence to retrieve about one
-analysis run, then selects claims for the server to render. Design decision:
-[ADR-005](ADR-005-bounded-read-only-agent.md).
+analysis run, then selects claims for the server to render. Design decisions:
+[ADR-005](ADR-005-bounded-read-only-agent.md) and
+[ADR-006](ADR-006-agent-endpoint-and-trace.md).
 
-**Status on 2026-11-02.** Implemented and tested offline.
+**Status on 2026-11-02.**
 
-- **No language model has driven this agent.** Every result below comes from scripts
-  and rules. The real adapter has run only against a stand-in SDK and a local server.
-- **It is not wired in.** No endpoint, worker, or dashboard path reaches it. The API
-  and worker do not import it, and a test enforces that. M2-C adds the endpoint.
+| Capability | State |
+|---|---|
+| Real CV inference | **Validated.** Run `87da5c1b` is `verified_real`, on private footage that cannot be published |
+| Grounded Copilot | **Validated** in a real browser, with the offline deterministic selector |
+| Offline scripted agent | **Validated** through the API and a real browser on that run |
+| Actual LLM tool calling | **Not yet validated.** No language model has ever driven this agent |
+| LinkedIn release | **Planned.** Nothing is recorded or published |
+
+- **The endpoint is local and scripted.** It can only use the scripted adapter, so it
+  cannot reach a paid model. See [API](#api).
 - **"Agentic" is not earned yet.** That needs a real model, evaluated under an accepted
   decision rule (M3).
 
@@ -17,7 +24,7 @@ analysis run, then selects claims for the server to render. Design decision:
 
 ```mermaid
 flowchart LR
-    caller["Calling server code<br/>binds one run"] --> agent["ReadOnlyAgent"]
+    caller["Agent route<br/>binds one run"] --> agent["ReadOnlyAgent"]
     agent --> evidence["RunEvidenceService<br/>built once"]
     evidence --> ports["AnalysisRepository<br/>ObjectStorage"]
     agent --> router["Closed-vocabulary router"]
@@ -25,7 +32,8 @@ flowchart LR
     agent --> tools["ToolRegistry<br/>five read-only tools"]
     tools --> claims["This question's<br/>approved claims"]
     agent --> ground["Server rendering<br/>and citation validation"]
-    agent --> trace["AgentTrace"]
+    agent --> trace["AgentTrace<br/>to the log"]
+    trace --> public["PublicAgentTrace<br/>to the dashboard"]
 ```
 
 The package is `footballai_v2.copilot.agent`:
@@ -34,9 +42,10 @@ The package is `footballai_v2.copilot.agent`:
 |---|---|
 | `tools.py` | Tool names, typed input and output, the closed registry |
 | `loop.py` | `ReadOnlyAgent`, `AgentLimits`, grounding, public reasons |
-| `trace.py` | `AgentStopReason`, the trace schema, `TraceRecorder` |
+| `trace.py` | `AgentStopReason`, both trace schemas, `TraceRecorder`, `publish_trace` |
 | `../provider.py` | `AgentModel`, `AnthropicAgentModel`, `parse_agent_message` |
-| `../evaluation/agent_models.py` | The scripted stub and policies. Never production code |
+| `../evaluation/agent_models.py` | The scripted stub and policies. Loaded by the local route only when its gate is open |
+| `../../api/agent_route.py` | The route, its loopback guard, and the adapter choice |
 
 ## One request
 
@@ -66,7 +75,7 @@ sequenceDiagram
 agent = ReadOnlyAgent(repository, object_storage, model, settings)
 result = agent.answer(run_id, question, correlation_id=request_id)
 result.response  # ExplanationResponse, the existing contract
-result.trace     # AgentTrace, never returned to a client yet
+result.trace     # AgentTrace, for the log. Clients receive publish_trace(...)
 ```
 
 A run that is not `succeeded` or `partial` raises `RunNotEligibleError`, and an unknown
@@ -82,7 +91,7 @@ abstention.
 | `get_tracking_diagnostics` | every `diag_*` claim |
 | `get_artifact_metadata` | `artifact_integrity` |
 | `get_model_provenance` | `provenance`, `model_references`, `model_details`, `source_duration` |
-| `get_evidence_limitations` | `missing_evidence`, `boundaries` |
+| `get_evidence_limitations` | `missing_evidence`, `no_missing_evidence`, `boundaries` |
 
 - **Input.** Every tool takes nothing. The schema is `strict`, has
   `additionalProperties: false`, and the server validates it again.
@@ -145,8 +154,8 @@ reason in `unavailable_reason`, and the trace keeps the exact one.
 | `model_timeout` | `provider_timeout` | See above |
 | `model_refusal`, `model_truncated`, `malformed_response`, `provider_error` | `provider_unavailable` | Typed provider failure. One attempt only |
 
-`cross_run_rejected` and `agent_limit_reached` are new values of the existing
-`unavailable_reason` string. M2-C must teach the dashboard about them.
+`cross_run_rejected` and `agent_limit_reached` are values of the existing
+`unavailable_reason` string. The dashboard explains both, and `forged_citation`.
 
 ### Model misbehaviour
 
@@ -212,7 +221,8 @@ it, the fallback is the terminal strict tool described in
 ## Trace
 
 `AgentTrace` (`footballai.copilot-agent-trace/v1`) is built for every request, including
-abstentions. It is a frozen, `extra="forbid"` schema with explicit length limits.
+abstentions. It is a frozen, `extra="forbid"` schema with explicit length limits. It is
+the operator's record: the route writes it to the log as one `agent_trace` line.
 
 | Holds | Never holds |
 |---|---|
@@ -231,6 +241,87 @@ worst-case trace is under 8 KiB, and a test enforces that.
 `usage_complete: false` means a turn reported no usage, so the total is a lower bound.
 A failed turn's reported usage is kept, because refusals can be billed.
 
+### What a client sees
+
+`PublicAgentTrace` (`footballai.copilot-agent-public-trace/v1`) is an allow-list built by
+`publish_trace`. It is under 17 KiB with every id at its schema maximum.
+
+| Published | Kept in the log only |
+|---|---|
+| Correlation id, equal to the `X-Request-ID` header | Provider failure class, such as `authentication` or `billing` |
+| Adapter, model name, mode, instruction and routing versions | Provider request ids and per-turn stop reasons |
+| Termination, and a tool error code if one ended the request | Token counts, and whether they are complete |
+| Duration, turns and tool calls with their limits | Peak prompt size |
+| Each tool call: sequence, turn, tool, status, duration, claim ids, error code | |
+| Claim ids returned, selected, and rendered, and how many were rejected | |
+
+The stub's token counts are constants, so publishing them would present stub values as
+measurements. A provider failure stays visible to a client as its termination, such as
+`provider_error`.
+
+## API
+
+`POST /api/v1/runs/{run_id}/agent` takes `{"question": "..."}`, at most 500 characters, or
+`null` for a general request. Any other key is rejected, so a run can only come from the
+path.
+
+```json
+{
+  "explanation": {"run_id": "…", "answer": "…", "support_level": "supported", "…": "…"},
+  "trace": {
+    "schema_version": "footballai.copilot-agent-public-trace/v1",
+    "adapter": "offline_scripted",
+    "model": "scripted-stub",
+    "termination": "answered",
+    "model_turns": 2,
+    "model_turn_limit": 5,
+    "tool_call_limit": 4,
+    "tool_calls": [{"sequence": 1, "turn": 1, "tool": "get_tracking_diagnostics", "status": "ok", "…": "…"}],
+    "…": "…"
+  }
+}
+```
+
+`explanation` is the existing `ExplanationResponse`, documented in
+[COPILOT_EXPLANATION.md](COPILOT_EXPLANATION.md#api).
+
+| Status | When |
+|---|---|
+| `200` | Every agent outcome, including abstentions and stopped requests |
+| `404` | Unknown run, gate closed, or a caller that is not local |
+| `409` | Run not `succeeded` or `partial` |
+| `422` | Invalid UUID, an unknown key, or a question over the limit |
+
+### Gate
+
+All of these must hold, or the route is not registered and the agent is not imported:
+
+- `FOOTBALLAI_ENVIRONMENT` is exactly `local` or `test`.
+- `FOOTBALLAI_COPILOT_ENABLED=1`.
+- `FOOTBALLAI_COPILOT_AGENT_ENABLED=1`.
+
+At request time the caller must also be on a loopback address, use a loopback `Host`, and
+send no `Origin` or an allowed one. This stops a server bound to a shared address, a
+tunnel, DNS rebinding, and other pages in a local browser. It is not authentication.
+
+### Adapter
+
+The route always uses `offline_agent_model()`, whatever `FOOTBALLAI_COPILOT_PROVIDER`
+says, and builds one per request. It is the `route_following` policy from the
+evaluation, so the demo runs what the baseline measures. A fixed rule chooses the tools.
+Their execution, the limits, and the grounding are the real code.
+
+## Dashboard
+
+The Run Detail copilot panel has two modes. **Grounded Explanation** is the default and
+calls `/explain`. **Read-Only Agent** calls this route and shows `OFFLINE SCRIPTED AGENT`
+before anything is asked, and again on every answer, including abstentions.
+
+Each agent answer has a collapsed **Tool execution trace**: tools, results, claim ids,
+turns, termination, and the correlation id. Every line comes from the response. An
+abstention says that no tool ran, and a rejected call is shown as never having run. If
+the agent is disabled, only that mode shows a notice.
+
 ## Testing
 
 Run from the repository root.
@@ -245,7 +336,10 @@ PYTHONPATH=v2/src .venv-test/bin/python -m pytest v2/tests/test_copilot_agent*.p
 | Real adapter against a stand-in SDK | `test_copilot_agent_model.py` | Nothing |
 | Real SDK against 127.0.0.1 | `test_copilot_agent_sdk_contract.py` | The SDK. Skipped without it |
 | Evaluation, import boundaries | `test_copilot_agent_evaluation.py` | Nothing |
-| Mutation tests | `test_copilot_agent_mutations.py` | Nothing. About 80 seconds |
+| Route, gate, public trace | `test_copilot_agent_api.py` | Nothing |
+| Mutation tests, including the route's boundaries | `test_copilot_agent_mutations.py` | Nothing. About 40 seconds |
+| Dashboard states | `v2/dashboard/src/pages/RunDetailPage.test.tsx` | Nothing |
+| Browser, on a synthetic run | `v2/dashboard/tests/e2e/agent-copilot.spec.ts` | `ffmpeg` and Chromium. Not run in CI |
 
 `ScriptedAgentModel` is a test stub, not a language model. Its replies go through the
 real `parse_agent_message`, it reports `offline_demo_fake`, and a script that runs out
@@ -341,6 +435,23 @@ and the passes question abstained with no model call. File hashes and timestamps
 run were unchanged. This was a manual check on private data: nothing from it is
 committed, and CI does not need it.
 
+### Browser validation
+
+On the same day M2-C was exercised through the real dashboard, API, and run, on the
+final code. Nothing here calls a language model.
+
+| Question | Support | Tool that really ran | Citations |
+|---|---|---|---:|
+| "What do the tracking diagnostics tell us?" | Supported | `get_tracking_diagnostics` | 14 |
+| "What model was used in the analysis?" | Supported | `get_model_provenance` | 4 |
+| "What evidence is missing?" | Supported | `get_evidence_limitations` | 4 |
+| "How many successful passes did player 7 make?" | Abstained | None, and 0 model turns | 0 |
+
+All four were `verified_real` and labelled `OFFLINE SCRIPTED AGENT`. The layout held at
+375 px, and a server with the agent flag off showed the unavailable notice while
+Grounded Explanation kept working. Files and timestamps under `data/runs` and
+`data/job-queue` were unchanged.
+
 ### Cost
 
 Nothing has been billed. The report's plan is an upper bound for `claude-haiku-5-5`: USD
@@ -362,6 +473,11 @@ measurement. Real usage appears in the trace once a real model runs.
 - **Relevance is route-level.** The server proves a claim is on topic, not that it is
   the best answer.
 - **One author wrote everything.** Second-person review and held-out cases are M3 items.
+- **The scripted adapter proves plumbing, not judgement.** It selects everything it
+  fetched, so it says nothing about what a model would choose.
+- **The trace shows what ran, not why.** A scripted turn has no reasoning to show.
+- **Direct `127.0.0.1` only.** Compose reaches the API through a bridge address, so the
+  route answers `404` there. `make v2-demo` does not set the flag either.
 - **Hosted use stays out of scope.** Authentication, per-run authorization, and quotas
   remain hard prerequisites.
 
@@ -370,6 +486,5 @@ measurement. Real usage appears in the trace once a real model runs.
 | Milestone | Scope |
 |---|---|
 | M1 | Real LLM evaluation of claim selection. Needs separate authorization |
-| M2-C | Endpoint wiring, trace in the API response, dashboard reasons and trace view |
-| M3 | Live probe, accepted decision rule, paid agent evaluation, hard cancellation |
+| M3 | Live probe, accepted decision rule, paid agent evaluation, hard cancellation, a real `model_factory` for the route |
 | M5 | LinkedIn demo and architecture release |

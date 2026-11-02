@@ -4,7 +4,7 @@ const pythonExecutable = process.env.FOOTBALLAI_V2_PYTHON ?? '../../.venv-test/b
 const e2eRoot = `/tmp/footballai-v2-e2e-${process.pid}`
 const apiPort = Number(process.env.FOOTBALLAI_V2_E2E_API_PORT ?? 18080)
 const dashboardPort = Number(process.env.FOOTBALLAI_V2_E2E_DASHBOARD_PORT ?? 14173)
-const serviceEnvironment = `FOOTBALLAI_V2_PYTHON=${pythonExecutable} FOOTBALLAI_V2_API_PORT=${apiPort} FOOTBALLAI_V2_RUN_ROOT=${e2eRoot}/runs FOOTBALLAI_V2_QUEUE_ROOT=${e2eRoot}/queue FOOTBALLAI_V2_CORS_ORIGINS=http://127.0.0.1:${dashboardPort} FOOTBALLAI_ENABLE_TEST_PROFILES=1 FOOTBALLAI_DEMO_STAGE_DELAY_SECONDS=0.25`
+const serviceEnvironment = `FOOTBALLAI_V2_PYTHON=${pythonExecutable} FOOTBALLAI_V2_API_PORT=${apiPort} FOOTBALLAI_V2_RUN_ROOT=${e2eRoot}/runs FOOTBALLAI_V2_QUEUE_ROOT=${e2eRoot}/queue FOOTBALLAI_V2_CORS_ORIGINS=http://127.0.0.1:${dashboardPort} FOOTBALLAI_ENABLE_TEST_PROFILES=1 FOOTBALLAI_DEMO_STAGE_DELAY_SECONDS=0.25 FOOTBALLAI_ENVIRONMENT=local FOOTBALLAI_COPILOT_ENABLED=1 FOOTBALLAI_COPILOT_AGENT_ENABLED=1`
 
 export default defineConfig({
   testDir: './tests/e2e',

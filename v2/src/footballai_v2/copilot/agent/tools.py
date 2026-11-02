@@ -132,7 +132,7 @@ READ_ONLY_TOOLS: tuple[ToolSpec, ...] = (
     _tool(
         ToolName.GET_EVIDENCE_LIMITATIONS,
         "What evidence is missing for this run, and what is never measured or claimed.",
-        {"missing_evidence", "boundaries"},
+        {"missing_evidence", "no_missing_evidence", "boundaries"},
     ),
 )
 

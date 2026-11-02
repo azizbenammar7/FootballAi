@@ -95,6 +95,16 @@ describe('explainRun', () => {
     expect(Object.keys(init.headers as Record<string, string>).map((name) => name.toLowerCase())).toEqual(['content-type', 'accept'])
   })
 
+  it('asks the agent on its own route, with the run only in the path', async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(new Response('{}', { status: 200 })))
+    vi.stubGlobal('fetch', fetchMock)
+    const { askAgent } = await import('./api')
+    await askAgent('run-1', 'What evidence is missing?')
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
+    expect(url).toBe('/api/v1/runs/run-1/agent')
+    expect(JSON.parse(String(init.body))).toEqual({ question: 'What evidence is missing?' })
+  })
+
   it('raises the server message and status on failure', async () => {
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify({ detail: { message: 'Only completed runs.' } }), { status: 409 }))))
     const { explainRun, ApiError } = await import('./api')

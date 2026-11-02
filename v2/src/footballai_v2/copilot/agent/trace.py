@@ -4,24 +4,32 @@ The trace holds what happened, never what was said: tool names, statuses,
 timings, closed-vocabulary claim ids, and token counts. A value that came from a
 model is recorded only after it has been mapped onto a closed set, so a hostile
 reply cannot write into a trace. It holds no prompt, question, tool output,
-artifact content, storage path, credential, or exception text. Publishing it is
-M2-C's job.
+artifact content, storage path, credential, or exception text.
+
+``AgentTrace`` is the operator's record, and goes to the log. A client receives
+``PublicAgentTrace``, which also leaves out provider failure classes, provider
+request ids, and token counts. The offline stub reports constants for those, and
+publishing them would present stub values as measurements.
 """
 
 from __future__ import annotations
 
 import re
 from enum import StrEnum
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from footballai_v2.copilot.agent.tools import ToolCallStatus, ToolErrorCode, ToolExecution, ToolName
 from footballai_v2.copilot.errors import ProviderFailureKind
-from footballai_v2.copilot.models import ModelMode, ProviderTelemetry, TokenUsage
+from footballai_v2.copilot.models import ExplanationResponse, ModelMode, ProviderTelemetry, TokenUsage
+
+if TYPE_CHECKING:
+    from footballai_v2.copilot.agent.loop import AgentLimits
 
 
 TRACE_SCHEMA = "footballai.copilot-agent-trace/v1"
+PUBLIC_TRACE_SCHEMA = "footballai.copilot-agent-public-trace/v1"
 MAX_TRACED_TOOL_CALLS = 4
 MAX_TRACED_TURNS = 5
 _MAX_CLAIMS = 32
@@ -54,6 +62,21 @@ class AgentStopReason(StrEnum):
     MODEL_TRUNCATED = "model_truncated"
     MALFORMED_RESPONSE = "malformed_response"
     PROVIDER_ERROR = "provider_error"
+
+
+class AgentAdapter(StrEnum):
+    """What drives the agent. Fixed for a request, so an abstention keeps its label."""
+
+    OFFLINE_SCRIPTED = "offline_scripted"
+    REAL_MODEL = "real_model"
+
+    @classmethod
+    def for_mode(cls, mode: ModelMode) -> AgentAdapter:
+        if mode is ModelMode.OFFLINE_DEMO_FAKE:
+            return cls.OFFLINE_SCRIPTED
+        if mode is ModelMode.REAL_MODEL:
+            return cls.REAL_MODEL
+        raise ValueError(f"{mode.value} does not describe an adapter")
 
 
 class _TraceModel(BaseModel):
@@ -107,6 +130,63 @@ class AgentTrace(_TraceModel):
     usage: TraceUsage
     usage_complete: bool  # False: some turn reported none, so accounting is a lower bound
     peak_prompt_chars: int = Field(ge=0)
+
+
+class PublicAgentTrace(_TraceModel):
+    """What a client may see of one request. Every entry is a call that really happened."""
+
+    schema_version: str = Field(default=PUBLIC_TRACE_SCHEMA, pattern=f"^{re.escape(PUBLIC_TRACE_SCHEMA)}$")
+    correlation_id: CorrelationId
+    run_id: str = Field(max_length=64)
+    adapter: AgentAdapter
+    model: str = Field(max_length=64)
+    model_mode: ModelMode
+    instruction_version: str = Field(max_length=64)
+    routing_version: str = Field(max_length=64)
+    termination: AgentStopReason
+    tool_error_code: ToolErrorCode | None = None
+    duration_ms: float = Field(ge=0)
+    model_turns: int = Field(ge=0, le=MAX_TRACED_TURNS)
+    model_turn_limit: int = Field(ge=1, le=MAX_TRACED_TURNS)
+    tool_call_limit: int = Field(ge=0, le=MAX_TRACED_TOOL_CALLS)
+    tool_calls: tuple[ToolCallTrace, ...] = Field(max_length=MAX_TRACED_TOOL_CALLS)
+    tool_calls_refused: int = Field(ge=0)
+    claim_ids_returned: tuple[ClaimId, ...] = Field(max_length=_MAX_CLAIMS)
+    claim_ids_selected: tuple[ClaimId, ...] = Field(max_length=_MAX_CLAIMS)
+    claim_ids_rendered: tuple[ClaimId, ...] = Field(max_length=_MAX_CLAIMS)
+    selected_ids_rejected: int = Field(ge=0)
+
+
+class AgentResponse(_TraceModel):
+    """The agent route's reply: the existing explanation contract, plus its public trace."""
+
+    explanation: ExplanationResponse
+    trace: PublicAgentTrace
+
+
+def publish_trace(trace: AgentTrace, adapter: AgentAdapter, limits: AgentLimits) -> PublicAgentTrace:
+    """Project a request's trace for a client. Provider failure classes stay internal."""
+    return PublicAgentTrace(
+        correlation_id=trace.correlation_id,
+        run_id=trace.run_id,
+        adapter=adapter,
+        model=trace.model,
+        model_mode=trace.model_mode,
+        instruction_version=trace.instruction_version,
+        routing_version=trace.routing_version,
+        termination=trace.termination,
+        tool_error_code=trace.error_code if isinstance(trace.error_code, ToolErrorCode) else None,
+        duration_ms=trace.duration_ms,
+        model_turns=trace.model_turns,
+        model_turn_limit=limits.max_model_turns,
+        tool_call_limit=limits.max_tool_calls,
+        tool_calls=trace.tool_calls,
+        tool_calls_refused=trace.tool_calls_refused,
+        claim_ids_returned=trace.claim_ids_returned,
+        claim_ids_selected=trace.claim_ids_selected,
+        claim_ids_rendered=trace.claim_ids_rendered,
+        selected_ids_rejected=trace.selected_ids_rejected,
+    )
 
 
 def _milliseconds(seconds: float) -> float:
@@ -224,13 +304,18 @@ class TraceRecorder:
 
 
 __all__ = [
+    "AgentAdapter",
+    "AgentResponse",
     "AgentStopReason",
     "AgentTrace",
     "MAX_TRACED_TOOL_CALLS",
     "MAX_TRACED_TURNS",
     "ModelTurnTrace",
+    "PUBLIC_TRACE_SCHEMA",
+    "PublicAgentTrace",
     "TRACE_SCHEMA",
     "ToolCallTrace",
     "TraceRecorder",
     "TraceUsage",
+    "publish_trace",
 ]
