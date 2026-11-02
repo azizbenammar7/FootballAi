@@ -19,9 +19,10 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 from dataclasses import dataclass
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Mapping, Protocol, runtime_checkable
 
 from pydantic import ValidationError
 
@@ -120,7 +121,10 @@ def build_model_request(request: GenerationRequest, settings: CopilotSettings) -
         "max_tokens": request.max_output_tokens,
         "system": request.system_instructions,
         "messages": [{"role": "user", "content": user}],
-        "output_config": {"effort": settings.effort, "format": _selection_format(request.catalog)},
+        "output_config": {
+            "effort": settings.effort,
+            "format": _selection_format(tuple(claim.claim_id for claim in request.catalog)),
+        },
     }
 
 
@@ -207,7 +211,8 @@ def _sdk_failure(sdk: Any, exc: Exception, model: str, started: float) -> Provid
     if isinstance(exc, getattr(sdk, "APITimeoutError", ())):
         return ProviderTimeoutError("the real provider timed out", telemetry=telemetry)
     status = getattr(exc, "status_code", None)
-    if isinstance(exc, getattr(sdk, "APIResponseValidationError", ())):
+    # The SDK lets a JSON error through when a successful response has an unreadable body.
+    if isinstance(exc, (json.JSONDecodeError, getattr(sdk, "APIResponseValidationError", ()))):
         kind = ProviderFailureKind.INVALID_RESPONSE
     elif isinstance(status, int):
         fallback = ProviderFailureKind.SERVER_ERROR if status >= 500 else ProviderFailureKind.UNKNOWN
@@ -260,7 +265,7 @@ def _selection_text(message: Any, telemetry: ProviderTelemetry) -> str:
     return " ".join(part.strip() for part in parts if isinstance(part, str) and part).strip()
 
 
-def _selection_format(catalog: tuple[EvidenceClaim, ...]) -> dict[str, Any]:
+def _selection_format(claim_ids: tuple[str, ...]) -> dict[str, Any]:
     """Structured-output schema limiting the model to the ids it was offered."""
     return {
         "type": "json_schema",
@@ -269,7 +274,7 @@ def _selection_format(catalog: tuple[EvidenceClaim, ...]) -> dict[str, Any]:
             "properties": {
                 "claim_ids": {
                     "type": "array",
-                    "items": {"type": "string", "enum": [claim.claim_id for claim in catalog]},
+                    "items": {"type": "string", "enum": list(claim_ids)},
                 }
             },
             "required": ["claim_ids"],
@@ -305,14 +310,169 @@ def build_provider(settings: CopilotSettings) -> LLMProvider:
     return DeterministicFakeProvider()
 
 
+# -- agent turns ----------------------------------------------------------------
+
+
+_TOOL_USE_ID_RE = re.compile(r"[a-zA-Z0-9_-]{1,128}")
+
+
+@dataclass(frozen=True, slots=True)
+class AgentModelRequest:
+    """One model turn. ``messages`` only ever grows, and tools take no run id."""
+
+    system_instructions: str
+    tools: tuple[Mapping[str, Any], ...]
+    messages: tuple[Mapping[str, Any], ...]
+    offered_claim_ids: tuple[str, ...]
+    max_output_tokens: int
+    timeout_seconds: float
+
+
+@dataclass(frozen=True, slots=True)
+class ToolCall:
+    """A tool the model asked for. Name and arguments are untrusted until validated."""
+
+    call_id: str
+    name: str
+    arguments: Any
+
+
+@dataclass(frozen=True, slots=True)
+class AgentReply:
+    """One parsed model turn: tool calls, or a final selection of claim ids.
+
+    ``assistant_content`` is the model's content exactly as received. It goes back
+    unchanged on the next turn, because thinking blocks must not be edited, and it
+    is never shown to anyone.
+    """
+
+    assistant_content: Any
+    tool_calls: tuple[ToolCall, ...] = ()
+    claim_ids: tuple[str, ...] = ()
+    telemetry: ProviderTelemetry | None = None
+
+
+@runtime_checkable
+class AgentModel(Protocol):
+    """What the bounded loop needs from a model. Failures raise ``ProviderFailure``."""
+
+    mode: ModelMode
+    model_name: str
+
+    def complete(self, request: AgentModelRequest) -> AgentReply: ...
+
+
+def build_agent_model_request(request: AgentModelRequest, settings: CopilotSettings) -> dict[str, Any]:
+    """The exact ``messages.create`` arguments for one agent turn."""
+    return {
+        "model": settings.model_name,
+        "max_tokens": request.max_output_tokens,
+        "system": request.system_instructions,
+        "messages": list(request.messages),
+        "tools": list(request.tools),
+        "tool_choice": {"type": "auto"},
+        "output_config": {"effort": settings.effort, "format": _selection_format(request.offered_claim_ids)},
+    }
+
+
+def _invalid_reply(telemetry: ProviderTelemetry | None) -> ProviderUnavailableError:
+    return ProviderUnavailableError(
+        "the model reply did not match the agent protocol",
+        kind=ProviderFailureKind.INVALID_RESPONSE,
+        telemetry=telemetry,
+    )
+
+
+def _tool_calls(blocks: list[Any], telemetry: ProviderTelemetry | None) -> tuple[ToolCall, ...]:
+    calls = tuple(
+        ToolCall(getattr(block, "id", None), getattr(block, "name", None), getattr(block, "input", None))
+        for block in blocks
+    )
+    valid = all(
+        isinstance(call.call_id, str) and _TOOL_USE_ID_RE.fullmatch(call.call_id) and isinstance(call.name, str)
+        for call in calls
+    )
+    if not valid or len({call.call_id for call in calls}) != len(calls):
+        raise _invalid_reply(telemetry)
+    return calls
+
+
+def parse_agent_message(message: Any, telemetry: ProviderTelemetry | None = None) -> AgentReply:
+    """Read one Messages API response, failing closed on anything unexpected.
+
+    Reading by block type keeps thinking and any text out of the decision: only a
+    ``tool_use`` block or the final structured selection can have an effect.
+    """
+    stop_reason = getattr(message, "stop_reason", None)
+    # A tuple: the SDK does not validate responses, so this value may not be hashable.
+    if stop_reason not in ("tool_use", "end_turn"):  # no server tools, so pause_turn is invalid too
+        raise ProviderUnavailableError(
+            "the model did not finish its turn", kind=_stop_reason_kind(stop_reason), telemetry=telemetry
+        )
+    content = getattr(message, "content", None)
+    if not isinstance(content, (list, tuple)):
+        raise _invalid_reply(telemetry)
+    blocks = [block for block in content if getattr(block, "type", None) == "tool_use"]
+    if stop_reason == "tool_use":
+        if not blocks:
+            raise _invalid_reply(telemetry)
+        return AgentReply(content, tool_calls=_tool_calls(blocks, telemetry), telemetry=telemetry)
+    if blocks:
+        raise _invalid_reply(telemetry)
+    claim_ids = parse_selection(_selection_text(message, telemetry), telemetry=telemetry)
+    return AgentReply(content, claim_ids=claim_ids, telemetry=telemetry)
+
+
+class AnthropicAgentModel:
+    """Opt-in real model for the agent loop. One call per turn, never retried."""
+
+    mode = ModelMode.REAL_MODEL
+
+    def __init__(self, settings: CopilotSettings) -> None:
+        self._settings = settings
+        self.model_name = settings.model_name
+        self._client: Any = None  # one client serves every turn of a question
+
+    def complete(self, request: AgentModelRequest) -> AgentReply:
+        api_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
+        if not self._settings.wants_real_provider or not api_key:
+            raise ProviderUnavailableError(
+                "the real model is not enabled for the agent", kind=ProviderFailureKind.NOT_CONFIGURED
+            )
+        try:
+            import anthropic  # lazy: the default install never needs it
+        except ImportError as exc:
+            raise ProviderUnavailableError(
+                "the anthropic SDK is not installed", kind=ProviderFailureKind.NOT_CONFIGURED
+            ) from exc
+
+        if self._client is None:
+            self._client = anthropic.Anthropic(api_key=api_key, max_retries=0)
+        started = time.perf_counter()
+        try:
+            message = self._client.messages.create(
+                **build_agent_model_request(request, self._settings), timeout=request.timeout_seconds
+            )
+        except Exception as exc:  # classified below; SDK text never leaves this function
+            raise _sdk_failure(anthropic, exc, self._settings.model_name, started) from exc
+        return parse_agent_message(message, _telemetry(message, self._settings.model_name, started))
+
+
 __all__ = [
+    "AgentModel",
+    "AgentModelRequest",
+    "AgentReply",
+    "AnthropicAgentModel",
     "AnthropicTextProvider",
     "DeterministicFakeProvider",
     "GenerationRequest",
     "LLMProvider",
     "ProviderResult",
+    "ToolCall",
+    "build_agent_model_request",
     "build_model_request",
     "build_provider",
     "build_provider_payload",
+    "parse_agent_message",
     "parse_selection",
 ]

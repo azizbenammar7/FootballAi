@@ -29,9 +29,35 @@ from footballai_v2.copilot.provider import GenerationRequest, LLMProvider
 from footballai_v2.storage.ports import AnalysisRepository, ObjectStorage
 
 
-_UNSUPPORTED_REASON = "unsupported_question"
-_NO_EVIDENCE_REASON = "evidence_not_available"
-_NO_CLAIM_REASON = "no_relevant_claim"
+UNSUPPORTED_REASON = "unsupported_question"
+NO_EVIDENCE_REASON = "evidence_not_available"
+NO_CLAIM_REASON = "no_relevant_claim"
+NO_EVIDENCE_ANSWER = "This run's verified evidence does not contain what the question asks for."
+NO_CLAIM_ANSWER = "No verified evidence claim answers that question for this run."
+
+
+def support_level_for(evidence: ValidatedRunEvidence) -> SupportLevel:
+    degraded = (
+        evidence.output_nature is OutputNature.UNVERIFIED_OR_PARTIAL
+        or bool(evidence.missing_evidence)
+        or any(item.integrity_state != "verified" for item in evidence.artifacts)
+    )
+    return SupportLevel.PARTIAL if degraded else SupportLevel.SUPPORTED
+
+
+def unavailable_response(
+    evidence: ValidatedRunEvidence, reason: str, mode: ModelMode, answer: str
+) -> ExplanationResponse:
+    return ExplanationResponse(
+        run_id=evidence.run_id,
+        answer=answer,
+        support_level=SupportLevel.UNAVAILABLE,
+        output_nature=evidence.output_nature,
+        model_mode=mode,
+        citations=[],
+        limitations=list(evidence.limitations),
+        unavailable_reason=reason,
+    )
 
 
 class ExplanationService:
@@ -56,15 +82,10 @@ class ExplanationService:
 
         # Fail closed BEFORE the provider: neither of these spends a token.
         if route.scope is QuestionScope.UNSUPPORTED:
-            return self._unavailable(evidence, _UNSUPPORTED_REASON, ModelMode.NOT_INVOKED, render_abstention())
+            return unavailable_response(evidence, UNSUPPORTED_REASON, ModelMode.NOT_INVOKED, render_abstention())
         catalog = eligible_claims(build_claim_catalog(evidence), route)
         if not can_answer(catalog, route):
-            return self._unavailable(
-                evidence,
-                _NO_EVIDENCE_REASON,
-                ModelMode.NOT_INVOKED,
-                "This run's verified evidence does not contain what the question asks for.",
-            )
+            return unavailable_response(evidence, NO_EVIDENCE_REASON, ModelMode.NOT_INVOKED, NO_EVIDENCE_ANSWER)
 
         request = GenerationRequest(
             evidence=evidence,
@@ -77,7 +98,7 @@ class ExplanationService:
         try:
             result = self._provider.generate(request)
         except (ProviderTimeoutError, ProviderUnavailableError) as exc:
-            return self._unavailable(
+            return unavailable_response(
                 evidence,
                 exc.code,
                 self._provider.mode,
@@ -88,12 +109,7 @@ class ExplanationService:
         # Server-controlled rendering: unknown/forged ids raise here.
         rendered = render_from_selection(catalog, result.claim_ids, route)
         if rendered is None:
-            return self._unavailable(
-                evidence,
-                _NO_CLAIM_REASON,
-                result.mode,
-                "No verified evidence claim answers that question for this run.",
-            )
+            return unavailable_response(evidence, NO_CLAIM_REASON, result.mode, NO_CLAIM_ANSWER)
         answer, citations = rendered
         # Defence in depth even though citations are catalog-derived.
         validate_citations(citations, evidence, evidence.run_id)
@@ -101,32 +117,10 @@ class ExplanationService:
         return ExplanationResponse(
             run_id=evidence.run_id,
             answer=answer,
-            support_level=self._support_level(evidence),
+            support_level=support_level_for(evidence),
             output_nature=evidence.output_nature,
             model_mode=result.mode,
             citations=citations,
             limitations=list(evidence.limitations),
             unavailable_reason=None,
-        )
-
-    def _support_level(self, evidence: ValidatedRunEvidence) -> SupportLevel:
-        degraded = (
-            evidence.output_nature is OutputNature.UNVERIFIED_OR_PARTIAL
-            or bool(evidence.missing_evidence)
-            or any(item.integrity_state != "verified" for item in evidence.artifacts)
-        )
-        return SupportLevel.PARTIAL if degraded else SupportLevel.SUPPORTED
-
-    def _unavailable(
-        self, evidence: ValidatedRunEvidence, reason: str, mode: ModelMode, answer: str
-    ) -> ExplanationResponse:
-        return ExplanationResponse(
-            run_id=evidence.run_id,
-            answer=answer,
-            support_level=SupportLevel.UNAVAILABLE,
-            output_nature=evidence.output_nature,
-            model_mode=mode,
-            citations=[],
-            limitations=list(evidence.limitations),
-            unavailable_reason=reason,
         )

@@ -18,6 +18,12 @@ Everything below about `copilot-eval/v1` still holds: its files are unchanged, i
 replays through a frozen router, and its results are unchanged. The decision rule is
 unchanged and still applies to v1. See [Dataset versions](#dataset-versions).
 
+**Update on 2026-11-02, M2-B.** The agent has its own offline evaluation: see
+[COPILOT_AGENT.md](COPILOT_AGENT.md#evaluation). It calls no model, and changes nothing
+in `copilot-eval/v1` or `v2`. One provider detail changed: an unreadable successful
+response is now classified as `invalid_response`, not `unknown`. API clients see no
+change, and it counts against a model as it should.
+
 ## Model selection
 
 **Recommended: `claude-haiku-5-5` at `effort: low`.** It is the new default in
