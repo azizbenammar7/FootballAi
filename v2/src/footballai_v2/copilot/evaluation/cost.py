@@ -75,11 +75,26 @@ def worst_case_cost_usd(price: ModelPrice, prompt_chars: int, max_output_tokens:
     return request_cost_usd(price, usage)
 
 
+def agent_question_worst_case_usd(
+    price: ModelPrice, max_prompt_chars: int, max_output_tokens: int, model_turns: int
+) -> float:
+    """An upper bound for one agent question, which the loop's limits enforce.
+
+    Every turn sends the whole prompt budget, and each later turn also resends all
+    the output of the turns before it, thinking included.
+    """
+    return sum(
+        worst_case_cost_usd(price, max_prompt_chars + turn * max_output_tokens, max_output_tokens)
+        for turn in range(model_turns)
+    )
+
+
 __all__ = [
     "MODEL_PRICES",
     "ModelPrice",
     "PRICING_AS_OF",
     "PRICING_SOURCE",
+    "agent_question_worst_case_usd",
     "estimate_input_tokens",
     "estimate_output_tokens",
     "request_cost_usd",

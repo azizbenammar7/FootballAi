@@ -1,8 +1,9 @@
 """Evidence-grounded "Explain This Run" copilot (Phase 1).
 
 A small, read-only bounded context that explains an existing analysis run from
-integrity-verified evidence. No autonomous agent, no tool calling, no RAG, and
-no MCP: those belong to later phases. See docs/v2/ADR-003.
+integrity-verified evidence. This entry point has no tool calling, RAG, or MCP.
+The bounded agent lives in ``copilot.agent``, which is deliberately not imported
+here. See docs/v2/ADR-003 and docs/v2/ADR-005.
 """
 
 from footballai_v2.copilot.config import CopilotSettings

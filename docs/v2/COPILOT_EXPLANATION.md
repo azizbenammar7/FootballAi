@@ -324,12 +324,14 @@ model output.
 
 ## Why this is not yet an autonomous agent
 
-Each question is a single read-only query: no tool calling, no agent loop, no memory,
-no conversation store, no external browsing, and no RAG.
+Each question this endpoint serves is a single read-only query: no tool calling, no
+agent loop, no memory, no conversation store, no external browsing, and no RAG.
 
 - **Next** — validate the real provider and measure whether it adds value (M1).
-- **M2-B and M2-C** — actual read-only tool calling: a tool registry and bounded loop
-  built on `RunEvidenceService` and the provider protocol. Neither exists yet.
+- **M2-B** — a tool registry and bounded loop built on `RunEvidenceService` and the
+  provider layer. Implemented offline, and nothing here uses it yet: see
+  [COPILOT_AGENT.md](COPILOT_AGENT.md).
+- **M2-C** — an endpoint and trace for that agent. Not built.
 - **Phase 3** — retrieval (RAG) only where it is genuinely justified.
 
 Real authentication/authorization and quotas remain the prerequisite before any

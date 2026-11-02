@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Active. M0 audit complete, M1 awaiting approval, M2-A in review |
+| **Status** | Active. M1 awaiting approval. M2-A merged, M2-B implemented offline and in review |
 | **Owner** | Aziz Ben Ammar |
 | **Baseline** | `main` at `2c83cb3`, audited 2026-11-01 |
 | **Next milestone** | M1, controlled real LLM evaluation |
@@ -13,8 +13,9 @@
 ## Summary
 
 FootballAI has a real platform and a safe, evaluated copilot foundation, but no
-language model has ever been called, and no agent exists. The fastest honest path
-to a strong portfolio piece is:
+language model has ever been called. M2-B adds a bounded read-only agent, tested only
+against a scripted stub, and no endpoint reaches it. The fastest honest path to a
+strong portfolio piece is:
 
 1. measure the real model cheaply;
 2. fix the known demo blockers;
@@ -51,9 +52,9 @@ chatbot, and it is true.
 | Grounded copilot with citations and abstention | IMPLEMENTED, VERIFIED, local and test only |
 | Deterministic baseline | VERIFIED, reproduced 2026-11-01 |
 | Real LLM in the copilot | IMPLEMENTED, **never run live** |
-| Tool-using agent | **PLANNED** |
-| Agent evaluation and traces | **PLANNED** |
-| Question box in the dashboard | IMPLEMENTED in M2-A, in review. Browser-checked locally on 2026-11-01 |
+| Tool-using agent | IMPLEMENTED offline in M2-B, in review. **No model has driven it, and no endpoint reaches it** |
+| Agent evaluation and traces | Deterministic only, in M2-B. Real-model evaluation is **PLANNED** |
+| Question box in the dashboard | IMPLEMENTED in M2-A, merged. Browser-checked locally on 2026-11-01 |
 | Observability on `main` | JSON logs and health endpoints only. P6 is not merged |
 | RAG, MCP, multi-agent | Not planned. No need has been shown |
 
@@ -310,9 +311,9 @@ flowchart LR
   - [ ] Claims added for model reference and short tracklets, in a new dataset version.
   - [ ] Label-only trap fixed with a regression test.
   - [ ] `reliable` vocabulary added with cases.
-  - [ ] Five read-only tools. No `run_id` input on any of them.
-  - [ ] Loop limits enforced and tested.
-  - [ ] Only retrieved claims can be rendered.
+  - [x] Five read-only tools. No `run_id` input on any of them. (M2-B, in review)
+  - [x] Loop limits enforced and tested. (M2-B, in review)
+  - [x] Only retrieved claims can be rendered. (M2-B, in review)
   - [ ] Live probe run, with approval, confirming tools work with `output_config.format`.
 - **Demo contribution:** the core of the target demo.
 - **PR boundaries:**
@@ -320,7 +321,10 @@ flowchart LR
      without any LLM, and it unlocks the earliest demo. **Implemented, pending human
      review and merge.** M2-A is not a tool-using agent. See
      [ADR-004](../v2/ADR-004-versioned-question-routing.md).
-  2. **M2-B:** tool registry and loop, tested against a stub.
+  2. **M2-B:** tool registry and loop, tested against a stub. **Implemented, pending
+     human review and merge.** No real model has run it. See
+     [COPILOT_AGENT.md](../v2/COPILOT_AGENT.md) and
+     [ADR-005](../v2/ADR-005-bounded-read-only-agent.md).
   3. **M2-C:** endpoint wiring and trace in the API response.
 
 ### M3 — Agent reliability, tracing and LLMOps

@@ -71,6 +71,7 @@ class LocalAnthropic:
         self.body: object = REPLY
         self.delay = 0.0
         self.routes: dict[str, tuple[int, object]] = {}
+        self.queue: list[object] = []  # replies served in turn, ahead of ``body``
 
 
 def _handler(state: LocalAnthropic):
@@ -80,7 +81,7 @@ def _handler(state: LocalAnthropic):
             raw = self.rfile.read(length) if length else b"{}"
             state.requests.append((self.command, self.path, dict(self.headers), json.loads(raw)))
             time.sleep(state.delay)
-            status, body = state.status, state.body
+            status, body = state.status, state.queue.pop(0) if state.queue else state.body
             for prefix, route in state.routes.items():
                 if self.path.startswith(prefix):
                     status, body = route

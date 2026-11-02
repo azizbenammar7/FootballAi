@@ -8,6 +8,7 @@ dataset version, and published versions are immutable.
 |---|---|---|---|
 | `v1/` | `copilot.routing/v1`, frozen | Immutable. The accepted decision rule refers to it | 42 selection and 10 scripted cases, 9 fixtures |
 | `v2/` | `copilot.routing/v2`, current | M2-A regression suite | 88 selection and 18 scripted cases, 15 fixtures |
+| `agent-v1/` | `copilot.routing/v2`, current | M2-B agent suite, offline | 69 scripted tool-calling cases. Replays the `v2` fixtures, pinned by hash |
 
 Each version holds `cases.json`, `fixtures.json`, and a deterministic
 `baseline-report.json`. No model was called for any report here.
@@ -17,5 +18,9 @@ Each version holds `cases.json`, `fixtures.json`, and a deterministic
 person, alongside the router it tests, so its scores are regression evidence and not
 a benchmark.
 
+`agent-v1/` scores scripts and rules through the real agent, so it is regression
+evidence about safety machinery and says nothing about model quality.
+
 See [`../../docs/v2/COPILOT_LLM_EVALUATION.md`](../../docs/v2/COPILOT_LLM_EVALUATION.md)
-for commands, results, and limitations.
+and [`../../docs/v2/COPILOT_AGENT.md`](../../docs/v2/COPILOT_AGENT.md) for commands,
+results, and limitations.

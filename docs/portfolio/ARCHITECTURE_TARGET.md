@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Proposed. Nothing on this page beyond the current architecture exists |
+| **Status** | Partly built. M2-B implements the agent, tools, and trace offline, in review. No endpoint reaches them, and no real model has run them |
 | **Owner** | Aziz Ben Ammar |
 | **Date** | 2026-11-01 |
 | **Depends on** | M1 result in the [roadmap](AI_ENGINEERING_ROADMAP.md) |
@@ -16,7 +16,9 @@ core rule: the model never writes a fact.
 
 ## Target diagram
 
-Dashed nodes are **PLANNED** and do not exist.
+Dashed nodes are the agent parts. M2-B builds the orchestrator, registry, and trace, tested
+only against a stub. Claude tool calling, the API path to the agent, and the trace view
+remain **PLANNED**. See [COPILOT_AGENT.md](../v2/COPILOT_AGENT.md) for what exists.
 
 ```mermaid
 flowchart LR
@@ -92,7 +94,7 @@ another run.
 | `get_run_status` | Keep | None | `output_nature`, `run_status` | `ValidatedRunEvidence` |
 | `get_tracking_diagnostics` | Keep | None | `diag_*` claims | Allow-listed `/v2` diagnostics |
 | `get_artifact_metadata` | Keep | None | `artifact_integrity` | Registered artifacts with integrity state |
-| `get_model_provenance` | Keep | None | `provenance`, `model_references`, `source_duration` | Run provenance |
+| `get_model_provenance` | Keep | None | `provenance`, `model_references`, `model_details`, `source_duration` | Run provenance |
 | `get_evidence_limitations` | Add | None | `missing_evidence`, `boundaries` | Evidence limits |
 | `get_analysis_manifest` | **Reject** | n/a | n/a | It would widen exposure past the allow-list, including input URIs |
 | `compare_run_diagnostics` | **Defer** | n/a | n/a | Needs two `/v2` runs and a definition of when two runs are comparable |
