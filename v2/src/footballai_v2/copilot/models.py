@@ -61,6 +61,8 @@ class ProviderTelemetry:
     request_id: str | None = None
     stop_reason: str | None = None
     usage: TokenUsage | None = None
+    aborted: bool = False  # the caller's deadline passed, and the connection was closed
+    refusal_category: str | None = None
 
 
 class SupportLevel(StrEnum):

@@ -98,6 +98,7 @@ _PUBLIC_REASONS: dict[AgentStopReason, str] = {
     AgentStopReason.TOOL_BUDGET_EXHAUSTED: _LIMIT_REACHED,
     AgentStopReason.TURN_BUDGET_EXHAUSTED: _LIMIT_REACHED,
     AgentStopReason.DEADLINE_EXCEEDED: _LIMIT_REACHED,
+    AgentStopReason.BUDGET_EXHAUSTED: _LIMIT_REACHED,
     AgentStopReason.PROMPT_BUDGET_EXCEEDED: PromptBudgetExceededError.code,
     AgentStopReason.MODEL_TIMEOUT: ProviderTimeoutError.code,
     AgentStopReason.MODEL_REFUSAL: _PROVIDER_UNAVAILABLE,
@@ -109,7 +110,10 @@ _FAILURE_STOPS = {
     ProviderFailureKind.REFUSAL: AgentStopReason.MODEL_REFUSAL,
     ProviderFailureKind.TRUNCATED: AgentStopReason.MODEL_TRUNCATED,
     ProviderFailureKind.INVALID_RESPONSE: AgentStopReason.MALFORMED_RESPONSE,
+    ProviderFailureKind.BUDGET_EXHAUSTED: AgentStopReason.BUDGET_EXHAUSTED,
 }
+# Refused locally, so nothing was sent, nothing can be billed, and no turn happened.
+_NEVER_SENT = frozenset({ProviderFailureKind.NOT_CONFIGURED, ProviderFailureKind.BUDGET_EXHAUSTED})
 
 
 @dataclass(frozen=True, slots=True)
@@ -262,14 +266,15 @@ class ReadOnlyAgent:
             recorder.record_turn(self._clock() - called, exc.telemetry)
             return _Stop(AgentStopReason.MODEL_TIMEOUT, ProviderFailureKind.TIMEOUT)
         except ProviderFailure as exc:
-            recorder.record_turn(self._clock() - called, exc.telemetry)
+            if exc.kind not in _NEVER_SENT:
+                recorder.record_turn(self._clock() - called, exc.telemetry)
             return _Stop(_FAILURE_STOPS.get(exc.kind, AgentStopReason.PROVIDER_ERROR), exc.kind)
         except Exception:  # a defect in an adapter must not reach the caller as an answer or a traceback
             recorder.record_turn(self._clock() - called, None)
             return _Stop(AgentStopReason.PROVIDER_ERROR, ProviderFailureKind.UNKNOWN)
         elapsed = self._clock() - called
         recorder.record_turn(elapsed, reply.telemetry)
-        # The SDK's timeout bounds each network wait, not the whole call. A late reply is discarded.
+        # Adapters enforce the deadline themselves, but a reply that is late anyway is discarded.
         if elapsed > request.timeout_seconds:
             return _Stop(AgentStopReason.MODEL_TIMEOUT, ProviderFailureKind.TIMEOUT)
         return reply

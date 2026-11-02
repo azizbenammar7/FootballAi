@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { ApiError, askAgent, explainRun, useApi } from '../api'
 import { AgentTraceView } from '../components/AgentTraceView'
 import { AnalysisWarning, ErrorState, LoadingState, OriginBadge, Panel, StatusBadge, formatDate, shortId } from '../components/ui'
-import type { AgentResponse, AgentTrace, ArtifactListResponse, ExplanationResponse, ModelMode, OutputNature, RunDetail, SupportLevel } from '../types'
+import type { AgentAdapterInfo, AgentResponse, AgentTrace, ArtifactListResponse, ExplanationResponse, ModelMode, OutputNature, RunDetail, SupportLevel } from '../types'
 
 const SUPPORT_LABEL: Record<SupportLevel, string> = {
   supported: 'Supported by evidence',
@@ -49,6 +49,8 @@ const EXAMPLE_QUESTIONS = [
 ]
 
 type CopilotMode = 'explanation' | 'agent'
+
+const AGENT_ADAPTER_PATH = '/api/v1/copilot/agent'
 type ExplanationState = { phase: 'idle' | 'loading' | 'done' | 'error'; data?: ExplanationResponse; trace?: AgentTrace; error?: string; asked?: string | null }
 
 const MODES: { id: CopilotMode; label: string }[] = [
@@ -65,12 +67,24 @@ function failureMessage(reason: unknown) {
   return reason instanceof ApiError ? reason.message : 'The Copilot could not reach the local API. Check that it is running, then ask again.'
 }
 
+// The server says what drives the agent, so this banner can never promise the wrong thing.
+function adapterBanner(adapter: AgentAdapterInfo['adapter'] | undefined) {
+  if (adapter === 'offline_scripted') {
+    return <><strong>{ADAPTER_LABEL.offline_scripted}</strong> A fixed script, not a language model, chooses the tools. The tool calls, limits, and evidence checks are real.</>
+  }
+  if (adapter === 'real_model') {
+    return <><strong>{ADAPTER_LABEL.real_model}</strong> A language model chooses the tools and which claims to show. The server writes every sentence and checks every citation.</>
+  }
+  return 'The badge on each answer names what produced it.'
+}
+
 function ExplanationPanel({ runId, status }: { runId: string; status: RunDetail['status'] }) {
   const eligible = status === 'succeeded' || status === 'partial'
   const [mode, setMode] = useState<CopilotMode>('explanation')
   const [disabled, setDisabled] = useState<Record<CopilotMode, boolean>>({ explanation: false, agent: false })
   const [state, setState] = useState<ExplanationState>({ phase: 'idle' })
   const [question, setQuestion] = useState('')
+  const adapter = useApi<AgentAdapterInfo>(mode === 'agent' ? AGENT_ADAPTER_PATH : null).data?.adapter
   const inputRef = useRef<HTMLInputElement>(null)
   const questionId = useId()
   const hintId = useId()
@@ -130,7 +144,7 @@ function ExplanationPanel({ runId, status }: { runId: string; status: RunDetail[
         ))}
       </fieldset>
       {mode === 'agent' && !disabled.agent && (
-        <p className="agent-banner"><Bot /><span><strong>{ADAPTER_LABEL.offline_scripted}</strong> A fixed script, not a language model, chooses the tools. The tool calls, limits, and evidence checks are real.</span></p>
+        <p className="agent-banner"><Bot /><span>{adapterBanner(adapter)}</span></p>
       )}
       {disabled[mode]
         ? <p className="explain-disabled" role="status"><AlertTriangle /> {DISABLED_NOTICE[mode]}</p>

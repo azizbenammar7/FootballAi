@@ -83,8 +83,9 @@ FOOTBALLAI_COPILOT_ENABLED=1 FOOTBALLAI_COPILOT_AGENT_ENABLED=1 FOOTBALLAI_ENVIR
 ```
 
 Choose **Read-Only Agent** in the panel. It is labelled `OFFLINE SCRIPTED AGENT` because a
-fixed script chooses the tools. Never describe it as a language model. No setting
-connects this route to a paid model.
+fixed script chooses the tools. Never describe it as a language model. These settings
+cannot reach a paid model. That needs a separate flag, two caps, and an approved plan: see
+[COPILOT_AGENT_REAL_MODEL.md](COPILOT_AGENT_REAL_MODEL.md).
 
 | Ask | A `v1_compat/2.x` run | Tool trace |
 |---|---|---|

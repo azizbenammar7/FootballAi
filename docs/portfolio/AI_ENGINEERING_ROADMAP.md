@@ -2,10 +2,10 @@
 
 | | |
 |---|---|
-| **Status** | Active. M1 awaiting approval. M2-A and M2-B merged, M2-C implemented offline and in review |
+| **Status** | Active. M1 awaiting approval. M2 merged. M3-A implemented and in review. M3-B needs separate authorization |
 | **Owner** | Aziz Ben Ammar |
 | **Baseline** | `main` at `2c83cb3`, audited 2026-11-01 |
-| **Next milestone** | M1, controlled real LLM evaluation |
+| **Next milestone** | M3-B, controlled live agent evaluation, and M1. Each needs its own authorization |
 | **Final milestone** | [LINKEDIN DEMO & PORTFOLIO RELEASE](#m5--linkedin-demo--portfolio-release) |
 | **Publish by** | 2026-12-13 (target), with a scope decision on 2026-11-29 |
 | **Related** | [Demo plan](LINKEDIN_DEMO_PLAN.md) · [Post draft](LINKEDIN_POST_DRAFT.md) · [Current architecture](ARCHITECTURE_CURRENT.md) · [Target architecture](ARCHITECTURE_TARGET.md) |
@@ -14,7 +14,8 @@
 
 FootballAI has a real platform and a safe, evaluated copilot foundation, but no
 language model has ever been called. M2-B and M2-C add a bounded read-only agent and a
-local endpoint with a visible tool trace, driven only by a scripted adapter. The fastest
+local endpoint with a visible tool trace, driven by a scripted adapter. M3-A adds a gated
+real-model path, a cost guard, and a benchmark, all tested against a local server. The fastest
 honest path to a strong portfolio piece is:
 
 1. measure the real model cheaply;
@@ -49,6 +50,7 @@ chatbot, and it is true.
 | Real CV inference | **VALIDATED** | Run `87da5c1b` is `verified_real`, on private footage that must not be published |
 | Grounded Copilot | **VALIDATED** | Citations, abstention, and browser checks, with the offline deterministic selector |
 | Offline scripted agent | **VALIDATED** | [Browser validation](../v2/COPILOT_AGENT.md#browser-validation), mutation tests, and baselines |
+| Real-model path | **BUILT, LOCALLY TESTED, OFF BY DEFAULT** | [Guide](../v2/COPILOT_AGENT_REAL_MODEL.md). Tested with the pinned SDK against 127.0.0.1 only |
 | Actual LLM tool calling | **NOT YET VALIDATED** | Never run live. Needs separate approval |
 | LinkedIn release | **PLANNED** | Nothing recorded or published |
 
@@ -62,8 +64,8 @@ chatbot, and it is true.
 | Grounded copilot with citations and abstention | IMPLEMENTED, VERIFIED, local and test only |
 | Deterministic baseline | VERIFIED, reproduced 2026-11-01 |
 | Real LLM in the copilot | IMPLEMENTED, **never run live** |
-| Tool-using agent | IMPLEMENTED offline. M2-B merged, M2-C in review. **No model has driven it.** A local-only endpoint reaches it, with a scripted adapter |
-| Agent evaluation and traces | Deterministic only. Trace viewer in M2-C, in review. Real-model evaluation is **PLANNED** |
+| Tool-using agent | IMPLEMENTED offline. M2 merged. **No model has driven it.** A local-only endpoint reaches it, scripted by default. M3-A adds a gated real path, in review |
+| Agent evaluation and traces | Deterministic only. 114-case benchmark and runner in M3-A, in review. Real-model evaluation is **PLANNED** |
 | Question box in the dashboard | IMPLEMENTED in M2-A, merged. Browser-checked locally on 2026-11-01 |
 | Observability on `main` | JSON logs and health endpoints only. P6 is not merged |
 | RAG, MCP, multi-agent | Not planned. No need has been shown |
@@ -324,8 +326,8 @@ flowchart LR
   - [x] Five read-only tools. No `run_id` input on any of them. (M2-B)
   - [x] Loop limits enforced and tested. (M2-B)
   - [x] Only retrieved claims can be rendered. (M2-B)
-  - [x] Separate local-only endpoint, with a public trace. (M2-C, in review)
-  - [x] Dashboard agent mode and trace viewer, checked in a real browser. (M2-C, in review)
+  - [x] Separate local-only endpoint, with a public trace. (M2-C)
+  - [x] Dashboard agent mode and trace viewer, checked in a real browser. (M2-C)
   - [ ] Live probe run, with approval, confirming tools work with `output_config.format`.
 - **Demo contribution:** the core of the target demo.
 - **PR boundaries:**
@@ -335,9 +337,8 @@ flowchart LR
   2. **M2-B:** tool registry and loop, tested against a stub. **Merged.** No real model
      has run it. See [COPILOT_AGENT.md](../v2/COPILOT_AGENT.md) and
      [ADR-005](../v2/ADR-005-bounded-read-only-agent.md).
-  3. **M2-C:** local endpoint, public trace, and trace viewer. **Implemented, pending
-     human review and merge.** It uses the scripted adapter, and has no path to a paid
-     model. See [ADR-006](../v2/ADR-006-agent-endpoint-and-trace.md).
+  3. **M2-C:** local endpoint, public trace, and trace viewer. **Merged.** It used the
+     scripted adapter only. See [ADR-006](../v2/ADR-006-agent-endpoint-and-trace.md).
 
 ### M3 — Agent reliability, tracing and LLMOps
 
@@ -347,12 +348,16 @@ flowchart LR
 - **Code changes:** agent evaluation runner, trace records, dataset v2 cases.
 - **Tests:** as below. CI stays deterministic.
 - **Definition of done:**
+  - [x] Real-model path, cost guard, runner, traces, and benchmark. (M3-A, in review)
+  - [x] Held-out set written, separate from development cases. (M3-A, in review)
+  - [ ] Dataset reviewed by a second person.
   - [ ] Agent decision rule accepted **before** any agent run.
-  - [ ] Dataset reviewed by a second person, with a held-out set.
-  - [ ] Paid run approved, completed, and reported.
-  - [ ] Report states limitations and every failed case.
+  - [ ] Paid run approved, completed, and reported. (M3-B)
+  - [ ] Report states limitations and every failed case. (M3-B)
 - **Demo contribution:** the evaluation shot, and real numbers for the post.
-- **PR boundary:** one PR for the runner and traces, one for the results.
+- **PR boundary:** M3-A holds the runner and traces. M3-B holds the results.
+- **M3-A state:** implemented with **zero paid requests**. No real model quality has been
+  measured. See [the guide](../v2/COPILOT_AGENT_REAL_MODEL.md).
 
 **Metrics:**
 
@@ -396,7 +401,9 @@ acceptable, even as examples.
 | Real-model evaluation | Manual, never CI | Budgeted, approved | Quality |
 
 **Proposed agent decision rule.** Not accepted yet. It must be accepted before any
-agent run so that the result cannot choose its own bar.
+agent run so that the result cannot choose its own bar. The full version, with
+denominators, sample limits, three proposed additions, and the human approval gate, is in
+[COPILOT_AGENT_DECISION_RULE.md](../v2/COPILOT_AGENT_DECISION_RULE.md).
 
 1. Zero fabricated answers, 100% citation validity, and 100% output-nature accuracy.
 2. No new false answer compared with the deterministic route, on the same cases.
@@ -477,8 +484,9 @@ release.
 | Decision on the repository licence and Ultralytics licensing | Public release | Owner | Open. The repository has no licence file |
 | Permission to keep the original test-assignment wording in the README heading | M5 README | Owner | Open |
 | Dashboard question box | Every question on camera | M2-A | Merged |
-| Agent endpoint and trace view | Tier C storyboard | M2-C | Implemented, in review |
-| Agent decision rule | M3 paid run | Owner | Proposed |
+| Agent endpoint and trace view | Tier C storyboard | M2-C | Merged |
+| Agent decision rule | M3-B paid run | Owner | Proposed, with six open decisions |
+| Second-person label review | M3-B credibility | Owner | Open |
 
 ## Later, not now
 

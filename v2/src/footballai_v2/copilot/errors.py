@@ -13,6 +13,7 @@ class ProviderFailureKind(StrEnum):
 
     NOT_CONFIGURED = "not_configured"
     PROMPT_BUDGET = "prompt_budget"
+    BUDGET_EXHAUSTED = "budget_exhausted"
     TIMEOUT = "timeout"
     CONNECTION = "connection"
     AUTHENTICATION = "authentication"

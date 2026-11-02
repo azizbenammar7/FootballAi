@@ -158,11 +158,15 @@ export interface ExplanationResponse {
 }
 
 export type AgentAdapter = 'offline_scripted' | 'real_model'
+export interface AgentAdapterInfo {
+  adapter: AgentAdapter
+  model: string
+}
 export type ToolCallStatus = 'ok' | 'no_evidence' | 'rejected' | 'failed'
 export type AgentStopReason =
   | 'answered' | 'unsupported_question' | 'evidence_not_available' | 'no_relevant_claim'
   | 'selection_rejected' | 'citation_rejected' | 'cross_run_rejected' | 'tool_budget_exhausted'
-  | 'turn_budget_exhausted' | 'deadline_exceeded' | 'prompt_budget_exceeded' | 'model_timeout'
+  | 'turn_budget_exhausted' | 'deadline_exceeded' | 'budget_exhausted' | 'prompt_budget_exceeded' | 'model_timeout'
   | 'model_refusal' | 'model_truncated' | 'malformed_response' | 'provider_error'
 
 export interface AgentToolCall {

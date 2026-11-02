@@ -24,6 +24,13 @@ in `copilot-eval/v1` or `v2`. One provider detail changed: an unreadable success
 response is now classified as `invalid_response`, not `unknown`. API clients see no
 change, and it counts against a model as it should.
 
+**Update on 2026-11-02, M3-A.** The agent gained a gated real path, a cost guard, and its
+own benchmark. See [COPILOT_AGENT_REAL_MODEL.md](COPILOT_AGENT_REAL_MODEL.md). Prices moved
+to `copilot/pricing.py` and `BudgetGuard` to `copilot/budget.py`, and both still import
+from their old modules. The guard now also reserves money for requests in flight. **No
+model was called.** The M1 commands, rule, and dataset are unchanged. Unlike the agent's
+path, the M1 path still follows `ANTHROPIC_BASE_URL`, so check that it is unset first.
+
 ## Model selection
 
 **Recommended: `claude-haiku-5-5` at `effort: low`.** It is the new default in

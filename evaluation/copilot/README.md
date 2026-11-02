@@ -9,6 +9,7 @@ dataset version, and published versions are immutable.
 | `v1/` | `copilot.routing/v1`, frozen | Immutable. The accepted decision rule refers to it | 42 selection and 10 scripted cases, 9 fixtures |
 | `v2/` | `copilot.routing/v2`, current | M2-A regression suite | 88 selection and 18 scripted cases, 15 fixtures |
 | `agent-v1/` | `copilot.routing/v2`, current | M2-B agent suite, offline | 69 scripted tool-calling cases. Replays the `v2` fixtures, pinned by hash |
+| `agent-v2/` | `copilot.routing/v2`, current | M3-A benchmark for a real model. **No model has run it** | 114 labelled cases, 68 development and 46 held-out. Replays the `v2` fixtures, pinned by hash |
 
 Each version holds `cases.json`, `fixtures.json`, and a deterministic
 `baseline-report.json`. No model was called for any report here.

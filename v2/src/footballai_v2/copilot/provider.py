@@ -20,9 +20,11 @@ from __future__ import annotations
 import json
 import os
 import re
+import threading
 import time
 from dataclasses import dataclass
 from typing import Any, Mapping, Protocol, runtime_checkable
+from urllib.parse import urlsplit
 
 from pydantic import ValidationError
 
@@ -183,6 +185,7 @@ _STOP_REASON_KINDS = {
     "max_tokens": ProviderFailureKind.TRUNCATED,
     "model_context_window_exceeded": ProviderFailureKind.TRUNCATED,
 }
+_REFUSAL_CATEGORIES = ("bio", "cyber", "frontier_llm", "general_harms", "reasoning_extraction")
 _STATUS_KINDS = {
     400: ProviderFailureKind.BAD_REQUEST,
     401: ProviderFailureKind.AUTHENTICATION,
@@ -242,6 +245,16 @@ def _usage(message: Any) -> TokenUsage | None:
     return TokenUsage(input_tokens, output_tokens, cache_write, cache_read)
 
 
+def _refusal_category(message: Any) -> str | None:
+    """The refusal's category, on a closed set. ``explanation`` is model text and stays out."""
+    if getattr(message, "stop_reason", None) != "refusal":
+        return None
+    category = getattr(getattr(message, "stop_details", None), "category", None)
+    if category is None:
+        return None
+    return category if category in _REFUSAL_CATEGORIES else "other"
+
+
 def _telemetry(message: Any, model: str, started: float) -> ProviderTelemetry:
     return ProviderTelemetry(
         model=model,
@@ -249,6 +262,7 @@ def _telemetry(message: Any, model: str, started: float) -> ProviderTelemetry:
         request_id=getattr(message, "_request_id", None),
         stop_reason=getattr(message, "stop_reason", None),
         usage=_usage(message),
+        refusal_category=_refusal_category(message),
     )
 
 
@@ -304,8 +318,12 @@ def parse_selection(text: str, *, telemetry: ProviderTelemetry | None = None) ->
 
 
 def build_provider(settings: CopilotSettings) -> LLMProvider:
-    """Choose a provider from settings; the real one only on an explicit opt-in."""
-    if settings.wants_real_provider:
+    """Choose a provider from settings; the real one only on an explicit opt-in.
+
+    The real agent's settings would also select the real provider here, and the
+    explanation route has no cost guard or loopback guard of its own.
+    """
+    if settings.wants_real_provider and not settings.agent_real_model_enabled:
         return AnthropicTextProvider(settings)
     return DeterministicFakeProvider()
 
@@ -314,6 +332,29 @@ def build_provider(settings: CopilotSettings) -> LLMProvider:
 
 
 _TOOL_USE_ID_RE = re.compile(r"[a-zA-Z0-9_-]{1,128}")
+_ANTHROPIC_API = "https://api.anthropic.com"
+_LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost"})
+_ABORT_THREAD = "copilot-model-call"
+
+
+def api_base_url(environ: Mapping[str, str] | None = None) -> str | None:
+    """Where the agent may send a key: Anthropic, or a local test server. Otherwise ``None``.
+
+    The SDK follows ``ANTHROPIC_BASE_URL`` silently, so an inherited value would send the
+    key and every prompt to a third party, and any measurement would describe that
+    endpoint. A loopback address exists for the contract tests.
+    """
+    configured = (os.environ if environ is None else environ).get("ANTHROPIC_BASE_URL", "").strip()
+    if not configured:
+        return _ANTHROPIC_API
+    try:
+        parts = urlsplit(configured)
+        host = parts.hostname
+    except ValueError:
+        return None
+    if (parts.scheme == "https" and host == "api.anthropic.com") or (parts.scheme == "http" and host in _LOOPBACK_HOSTS):
+        return configured
+    return None
 
 
 @dataclass(frozen=True, slots=True)
@@ -424,7 +465,16 @@ def parse_agent_message(message: Any, telemetry: ProviderTelemetry | None = None
 
 
 class AnthropicAgentModel:
-    """Opt-in real model for the agent loop. One call per turn, never retried."""
+    """Opt-in real model for the agent loop. One call per turn, never retried.
+
+    The SDK's timeout bounds each network read, not a call: a server sending one byte
+    at a time held a 0.3 second timeout for 11 seconds in a local test. So the call runs
+    on a worker thread, and at its deadline the caller gives up and closes the client.
+    Tests against a dripping local server show the caller returns on time, the
+    connection is closed, and the thread ends. That stops this process waiting. It does
+    not prove that Anthropic stops generating, or that the request is not billed, so an
+    aborted turn is charged at its worst case.
+    """
 
     mode = ModelMode.REAL_MODEL
 
@@ -435,7 +485,8 @@ class AnthropicAgentModel:
 
     def complete(self, request: AgentModelRequest) -> AgentReply:
         api_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
-        if not self._settings.wants_real_provider or not api_key:
+        base_url = api_base_url()
+        if not self._settings.wants_real_provider or not api_key or base_url is None:
             raise ProviderUnavailableError(
                 "the real model is not enabled for the agent", kind=ProviderFailureKind.NOT_CONFIGURED
             )
@@ -447,15 +498,40 @@ class AnthropicAgentModel:
             ) from exc
 
         if self._client is None:
-            self._client = anthropic.Anthropic(api_key=api_key, max_retries=0)
+            self._client = anthropic.Anthropic(api_key=api_key, base_url=base_url, max_retries=0)
         started = time.perf_counter()
-        try:
-            message = self._client.messages.create(
-                **build_agent_model_request(request, self._settings), timeout=request.timeout_seconds
+        arguments = build_agent_model_request(request, self._settings)
+        outcome: dict[str, Any] = {}
+
+        def call(client: Any = self._client) -> None:
+            try:
+                outcome["message"] = client.messages.create(**arguments, timeout=request.timeout_seconds)
+            except Exception as exc:
+                outcome["error"] = exc
+
+        worker = threading.Thread(target=call, name=_ABORT_THREAD, daemon=True)
+        worker.start()
+        worker.join(request.timeout_seconds)
+        if worker.is_alive():
+            self.close()
+            raise ProviderTimeoutError(
+                "the real provider passed its deadline",
+                telemetry=ProviderTelemetry(
+                    model=self._settings.model_name,
+                    latency_seconds=time.perf_counter() - started,
+                    aborted=True,
+                ),
             )
-        except Exception as exc:  # classified below; SDK text never leaves this function
-            raise _sdk_failure(anthropic, exc, self._settings.model_name, started) from exc
+        if "error" in outcome:  # classified below; SDK text never leaves this function
+            raise _sdk_failure(anthropic, outcome["error"], self._settings.model_name, started) from outcome["error"]
+        message = outcome["message"]
         return parse_agent_message(message, _telemetry(message, self._settings.model_name, started))
+
+    def close(self) -> None:
+        """Close the connection pool. An in-flight read on another thread fails at once."""
+        client, self._client = self._client, None
+        if client is not None:
+            client.close()
 
 
 __all__ = [
@@ -469,6 +545,7 @@ __all__ = [
     "LLMProvider",
     "ProviderResult",
     "ToolCall",
+    "api_base_url",
     "build_agent_model_request",
     "build_model_request",
     "build_provider",

@@ -8,6 +8,7 @@ Negative controls exist to prove the metrics can fail.
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable
 
@@ -49,7 +50,7 @@ class AgentRun:
     """One finished question, with the exact prompt history the stand-in received."""
 
     result: AgentResult
-    model: ScriptedAgentModel
+    model: Any  # anything that keeps ``requests``: a script, or a recording real adapter
     catalog: tuple[Any, ...]
     evidence: Any
     run_id: str
@@ -74,12 +75,13 @@ def run_agent(
     dataset: EvaluationDataset,
     fixture_name: str,
     question: str | None,
-    model_for: Callable[[StepClock], ScriptedAgentModel],
+    model_for: Callable[[Any], Any],
     *,
     settings: CopilotSettings = EVALUATION_SETTINGS,
+    real_time: bool = False,
 ) -> AgentRun:
     repository, storage, run_id = build_fixture_run(dataset.fixtures.fixtures[fixture_name], dataset.fixtures)
-    clock = StepClock()
+    clock = time.monotonic if real_time else StepClock()
     model = model_for(clock)
     agent = ReadOnlyAgent(repository, storage, model, settings, routing=routing_for(dataset.version), clock=clock)
     evidence = RunEvidenceService(repository, storage, settings).build(run_id)

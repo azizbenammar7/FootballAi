@@ -27,6 +27,7 @@ from footballai_v2.copilot.agent.trace import (
     AgentStopReason,
     AgentTrace,
     ToolCallTrace,
+    UsageSource,
     publish_trace,
 )
 from footballai_v2.copilot.agent.tools import ToolCallStatus, ToolErrorCode
@@ -239,6 +240,25 @@ def test_the_no_gap_claim_is_never_offered_beside_a_failed_artifact():
     failed = tuple(replace(item, integrity_state="invalid") for item in evidence.artifacts)
     object.__setattr__(evidence, "artifacts", failed)
     assert "no_missing_evidence" not in {claim.claim_id for claim in build_claim_catalog(evidence)}
+
+
+def test_the_no_gap_claim_is_withheld_when_a_measure_was_refused():
+    assert "no_missing_evidence" not in {claim.claim_id for claim in _catalog("malformed_short_tracklets")}
+
+
+def test_the_no_gap_claim_is_withheld_beside_an_impossible_fraction():
+    evidence = _evidence("verified_real")
+    observed = {**evidence.diagnostics["observed_metrics"], "detection_assignment_fraction": 1.5}
+    object.__setattr__(evidence, "diagnostics", {**evidence.diagnostics, "observed_metrics": observed})
+    catalog = {claim.claim_id for claim in build_claim_catalog(evidence)}
+    assert "diag_assignment" not in catalog and "no_missing_evidence" not in catalog
+
+
+def test_a_schema_that_has_no_metrics_is_never_parsed_for_them():
+    evidence = _evidence("synthetic_demo_fast")
+    damaged = {**evidence.diagnostics, "observed_metrics": {"short_tracklets": "not a table"}}
+    object.__setattr__(evidence, "diagnostics", damaged)
+    assert "no_missing_evidence" in {claim.claim_id for claim in build_claim_catalog(evidence)}
 
 
 def test_the_no_gap_claim_cites_the_artifact_it_describes():
@@ -709,6 +729,13 @@ def worst_case_trace() -> AgentTrace:
         selected_ids_rejected=64,
         usage=dict(input_tokens=1),
         usage_complete=True,
+        usage_source=UsageSource.UNAVAILABLE,
+        estimated_cost_usd=0.01,
+        cost_is_lower_bound=True,
+        valid_tool_calls=4,
+        invalid_tool_calls=0,
+        model_call_ms=100_000.0,
+        tool_call_ms=1_000.0,
         peak_prompt_chars=24_576,
     )
 

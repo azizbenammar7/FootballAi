@@ -322,7 +322,18 @@ def _nothing_is_missing(evidence: ValidatedRunEvidence) -> bool:
         evidence.diagnostics is not None
         and evidence.output_nature is not OutputNature.UNVERIFIED_OR_PARTIAL
         and all(item.integrity_state == "verified" for item in evidence.artifacts)
+        and not _withheld_a_measure(evidence)
     )
+
+
+def _withheld_a_measure(evidence: ValidatedRunEvidence) -> bool:
+    """Whether a measure was present and refused as malformed, so "valid" would be untrue."""
+    if evidence.diagnostics_schema == SYNTHETIC_DIAGNOSTICS_SCHEMA:
+        return False  # this schema's metrics are never read, so none can be withheld
+    observed = evidence.diagnostics["observed_metrics"]
+    fraction = observed.get("detection_assignment_fraction")
+    short = observed.get("short_tracklets") or {}
+    return (fraction is not None and fraction > 1) or len(_short_tracklet_rows(observed)) != len(short)
 
 
 def _rounded(value: int | float) -> int | float:

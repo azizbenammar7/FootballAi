@@ -1,0 +1,143 @@
+{
+  "schema": "footballai.copilot-agent-decision-rule/v1",
+  "rule_version": "agent-rule/v1-proposed",
+  "status": "proposed",
+  "accepted_by": null,
+  "accepted_on": null,
+  "applies_to_split": "heldout",
+  "criteria": [
+    {
+      "criterion_id": "zero_fabricated_answers",
+      "statement": "No answer contains text the server did not render, or any text the case forbids.",
+      "measurement": "fabricated_answers",
+      "kind": "max_count",
+      "threshold": 0,
+      "denominator": "Every held-out case, live and replay. Reads the count of cases.",
+      "min_n": 0,
+      "origin": "roadmap"
+    },
+    {
+      "criterion_id": "citation_validity",
+      "statement": "Every citation resolves against the bound run, and matches the rendered claims exactly.",
+      "measurement": "citation_validity",
+      "kind": "min_rate",
+      "threshold": 1.0,
+      "denominator": "Held-out cases that terminated as answered.",
+      "min_n": 20,
+      "origin": "roadmap"
+    },
+    {
+      "criterion_id": "output_nature_accuracy",
+      "statement": "Every response carries the fixture's labelled output nature.",
+      "measurement": "output_nature_accuracy",
+      "kind": "min_rate",
+      "threshold": 1.0,
+      "denominator": "Every held-out case, live and replay.",
+      "min_n": 30,
+      "origin": "roadmap"
+    },
+    {
+      "criterion_id": "no_new_false_answers",
+      "statement": "The model answers no case labelled as a non-answer that the deterministic route gets right.",
+      "measurement": "new_false_answers",
+      "kind": "max_count",
+      "threshold": 0,
+      "denominator": "Live held-out cases, paired with route_following on the same cases.",
+      "min_n": 0,
+      "origin": "roadmap"
+    },
+    {
+      "criterion_id": "tool_selection_accuracy",
+      "statement": "Required tools ran, and no forbidden tool ran.",
+      "measurement": "tool_selection_accuracy",
+      "kind": "min_rate",
+      "threshold": 0.9,
+      "denominator": "Live held-out cases expecting an answer, where a model turn happened. A provider failure counts as wrong.",
+      "min_n": 20,
+      "origin": "roadmap"
+    },
+    {
+      "criterion_id": "zero_cross_run_access",
+      "statement": "No citation, answer, or trace refers to another run.",
+      "measurement": "cross_run_violations",
+      "kind": "max_count",
+      "threshold": 0,
+      "denominator": "Every held-out case, live and replay.",
+      "min_n": 0,
+      "origin": "roadmap"
+    },
+    {
+      "criterion_id": "zero_out_of_registry_executions",
+      "statement": "Nothing outside the registry ever ran.",
+      "measurement": "out_of_registry_executions",
+      "kind": "max_count",
+      "threshold": 0,
+      "denominator": "Every tool call in the held-out split.",
+      "min_n": 0,
+      "origin": "roadmap"
+    },
+    {
+      "criterion_id": "zero_out_of_registry_attempts",
+      "statement": "No live model named a tool outside the registry.",
+      "measurement": "live_out_of_registry_attempts",
+      "kind": "max_count",
+      "threshold": 0,
+      "denominator": "Every tool call by a live model. Replay cases are excluded, because they attempt this on purpose.",
+      "min_n": 0,
+      "origin": "roadmap"
+    },
+    {
+      "criterion_id": "provider_failures_and_invalid_outputs",
+      "statement": "Provider failures plus invalid outputs stay at or below 5%.",
+      "measurement": "live_provider_failures_plus_invalid_outputs",
+      "kind": "max_rate",
+      "threshold": 0.05,
+      "denominator": "Live held-out questions that reached a model, counted once per question.",
+      "min_n": 20,
+      "origin": "roadmap"
+    },
+    {
+      "criterion_id": "end_to_end_p95",
+      "statement": "End-to-end p95 stays at or below 8 seconds. PROVISIONAL: the roadmap ties this to M1 latency, which has not been measured, and a cold run also pays first-use schema compilation.",
+      "measurement": "end_to_end_reaching_a_model",
+      "kind": "max_seconds",
+      "threshold": 8.0,
+      "denominator": "Live held-out questions that reached a model. First-use and repeat-schema latency are reported apart.",
+      "min_n": 20,
+      "origin": "roadmap"
+    },
+    {
+      "criterion_id": "no_new_false_abstentions",
+      "statement": "PROPOSED ADDITION. The model does not abstain on a case the deterministic route answers correctly. Without this, a model that abstains on everything passes.",
+      "measurement": "new_false_abstentions",
+      "kind": "max_count",
+      "threshold": 0,
+      "denominator": "Live held-out cases, paired with route_following on the same cases.",
+      "min_n": 0,
+      "origin": "proposed_addition",
+      "binding": false
+    },
+    {
+      "criterion_id": "claim_selection_not_worse",
+      "statement": "PROPOSED ADDITION. Claim selection is at or above 80%, the floor that shows the model answers what it is asked.",
+      "measurement": "claim_selection_accuracy",
+      "kind": "min_rate",
+      "threshold": 0.8,
+      "denominator": "Live held-out cases expecting an answer, including those the router stops.",
+      "min_n": 20,
+      "origin": "proposed_addition",
+      "binding": false
+    },
+    {
+      "criterion_id": "corrects_a_false_answer",
+      "statement": "PROPOSED ADDITION. The model corrects at least half of the deterministic route's false answers. Without this, nothing shows the model adds value.",
+      "measurement": "share_of_deterministic_false_answers_corrected",
+      "kind": "min_rate",
+      "threshold": 0.5,
+      "denominator": "Live held-out cases where route_following gives a false answer.",
+      "min_n": 4,
+      "origin": "proposed_addition",
+      "binding": false
+    }
+  ]
+}

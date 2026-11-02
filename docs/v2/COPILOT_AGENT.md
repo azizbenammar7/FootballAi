@@ -1,9 +1,11 @@
-# Bounded read-only agent (M2-B, M2-C)
+# Bounded read-only agent (M2-B, M2-C, M3-A)
 
 One tool-calling agent that decides which verified evidence to retrieve about one
 analysis run, then selects claims for the server to render. Design decisions:
-[ADR-005](ADR-005-bounded-read-only-agent.md) and
-[ADR-006](ADR-006-agent-endpoint-and-trace.md).
+[ADR-005](ADR-005-bounded-read-only-agent.md),
+[ADR-006](ADR-006-agent-endpoint-and-trace.md), and
+[ADR-007](ADR-007-real-model-path.md). The real-model path has its own guide:
+[COPILOT_AGENT_REAL_MODEL.md](COPILOT_AGENT_REAL_MODEL.md).
 
 **Status on 2026-11-02.**
 
@@ -12,11 +14,12 @@ analysis run, then selects claims for the server to render. Design decisions:
 | Real CV inference | **Validated.** Run `87da5c1b` is `verified_real`, on private footage that cannot be published |
 | Grounded Copilot | **Validated** in a real browser, with the offline deterministic selector |
 | Offline scripted agent | **Validated** through the API and a real browser on that run |
+| Real-model path | **Built and locally tested, off by default.** Tested against 127.0.0.1 only |
 | Actual LLM tool calling | **Not yet validated.** No language model has ever driven this agent |
 | LinkedIn release | **Planned.** Nothing is recorded or published |
 
-- **The endpoint is local and scripted.** It can only use the scripted adapter, so it
-  cannot reach a paid model. See [API](#api).
+- **The endpoint is local, and scripted by default.** A billed model needs a third flag
+  and two caps, or the server refuses to start. See [Adapter](#adapter).
 - **"Agentic" is not earned yet.** That needs a real model, evaluated under an accepted
   decision rule (M3).
 
@@ -43,8 +46,10 @@ The package is `footballai_v2.copilot.agent`:
 | `tools.py` | Tool names, typed input and output, the closed registry |
 | `loop.py` | `ReadOnlyAgent`, `AgentLimits`, grounding, public reasons |
 | `trace.py` | `AgentStopReason`, both trace schemas, `TraceRecorder`, `publish_trace` |
-| `../provider.py` | `AgentModel`, `AnthropicAgentModel`, `parse_agent_message` |
-| `../evaluation/agent_models.py` | The scripted stub and policies. Loaded by the local route only when its gate is open |
+| `../provider.py` | `AgentModel`, `AnthropicAgentModel`, `parse_agent_message`, `api_base_url` |
+| `../real_agent.py` | The gate in front of a billed model. See [the guide](COPILOT_AGENT_REAL_MODEL.md) |
+| `../budget.py`, `../pricing.py` | The cost guard, and prices. Runtime modules, so nothing billed needs `evaluation` |
+| `../evaluation/agent_models.py` | The scripted stub and policies. Loaded only for the scripted adapter |
 | `../../api/agent_route.py` | The route, its loopback guard, and the adapter choice |
 
 ## One request
@@ -120,7 +125,7 @@ never loosen them.
 |---|---:|---|
 | Tool calls per question | 4 | `tool_budget_exhausted`. A turn that would pass the limit runs none of its calls |
 | Model turns per question | 5 | `turn_budget_exhausted`. Calls on the last turn do not run |
-| Time per model call | 20 s, or what remains of the deadline | `model_timeout`. A late reply is discarded, even if valid |
+| Time per model call | 20 s, or what remains of the deadline | `model_timeout`. The real adapter stops waiting and closes the connection |
 | Time per question | 45 s, from before evidence is read | `deadline_exceeded`. No further model call starts |
 | Prompt size | 24 KiB of server-written text, checked before each call | `prompt_budget_exceeded` |
 | Retries | 0 | The SDK's retries are off, and the loop never repeats a call |
@@ -131,9 +136,11 @@ With the defaults, the turn limit cannot be the first limit reached: a turn with
 final answer needs at least one tool call, so the fifth call hits the tool budget first.
 It is enforced anyway, and tested with a tighter setting.
 
-**Known gap.** The SDK's timeout bounds each network wait, not a whole call, so a server
-dripping bytes can overrun. A late reply is still discarded, but the wait is not cut
-short. A hard cancel would need a worker thread, and is deferred to M3.
+**Closed in M3-A, on the client side.** The SDK's timeout bounds each network wait, not
+a whole call: a 0.3 second timeout ran for 11 seconds against a dripping server. The real
+adapter now calls from a worker thread and closes its client at the deadline. This stops
+the wait. It does not prove the provider stops generating or billing. See
+[Timeouts](COPILOT_AGENT_REAL_MODEL.md#timeouts-and-cancellation).
 
 ## Stop reasons
 
@@ -150,6 +157,7 @@ reason in `unavailable_reason`, and the trace keeps the exact one.
 | `citation_rejected` | `forged_citation` | A citation failed validation against the requested run |
 | `cross_run_rejected` | `cross_run_rejected` | A tool call named a run. Nothing in that turn runs |
 | `tool_budget_exhausted`, `turn_budget_exhausted`, `deadline_exceeded` | `agent_limit_reached` | See above |
+| `budget_exhausted` | `agent_limit_reached` | The cost guard refused a request. Nothing was sent, so no turn is recorded |
 | `prompt_budget_exceeded` | `prompt_budget_exceeded` | See above |
 | `model_timeout` | `provider_timeout` | See above |
 | `model_refusal`, `model_truncated`, `malformed_response`, `provider_error` | `provider_unavailable` | Typed provider failure. One attempt only |
@@ -212,15 +220,18 @@ no claim states them.
 - **Opt-in.** It refuses to call unless `FOOTBALLAI_COPILOT_PROVIDER=real`,
   `FOOTBALLAI_COPILOT_REAL_PROVIDER_ENABLED=1`, and a key are all present.
 
+- **Endpoint.** A key goes only to Anthropic, or to loopback for tests. Any other
+  `ANTHROPIC_BASE_URL` is refused.
+
 The local-server contract tests run the pinned SDK (`anthropic==2.3.0`) over HTTP. They
 confirm a thinking block returns byte for byte. Combining strict tools with
-`output_config.format` on a real model is **still unverified**. If a live probe rejects
-it, the fallback is the terminal strict tool described in
+`output_config.format` is documented as supported, and is **still unverified live**. If
+a live probe rejects it, the fallback is the terminal strict tool described in
 [ARCHITECTURE_TARGET.md](../portfolio/ARCHITECTURE_TARGET.md).
 
 ## Trace
 
-`AgentTrace` (`footballai.copilot-agent-trace/v1`) is built for every request, including
+`AgentTrace` (`footballai.copilot-agent-trace/v2`) is built for every request, including
 abstentions. It is a frozen, `extra="forbid"` schema with explicit length limits. It is
 the operator's record: the route writes it to the log as one `agent_trace` line.
 
@@ -231,6 +242,7 @@ the operator's record: the route writes it to the log as one `agent_trace` line.
 | Each turn: duration, stop reason, provider request id, tokens | Raw video paths, artifact content |
 | Claim ids returned, selected, and rendered | Source metadata, exception text |
 | Token totals, whether they are complete, peak prompt size | Rejected claim ids or tool names |
+| Usage source, list-price estimate, valid and invalid calls, aborted turns, refusal category | |
 | Termination, error code, total duration | Anything else a model wrote |
 
 A value from a model enters the trace only after mapping onto a closed set. A name
@@ -240,6 +252,9 @@ worst-case trace is under 8 KiB, and a test enforces that.
 
 `usage_complete: false` means a turn reported no usage, so the total is a lower bound.
 A failed turn's reported usage is kept, because refusals can be billed.
+
+`usage_source` says where tokens came from, so the stub's constants are never mistaken for
+measurements. `estimated_cost_usd` is reported tokens at list price, not a bill.
 
 ### What a client sees
 
@@ -304,18 +319,26 @@ At request time the caller must also be on a loopback address, use a loopback `H
 send no `Origin` or an allowed one. This stops a server bound to a shared address, a
 tunnel, DNS rebinding, and other pages in a local browser. It is not authentication.
 
+`GET /api/v1/copilot/agent` returns `{"adapter": "...", "model": "..."}` behind the same
+gate and local guard, so the dashboard states what the server says.
+
 ### Adapter
 
-The route always uses `offline_agent_model()`, whatever `FOOTBALLAI_COPILOT_PROVIDER`
+By default the route uses `offline_agent_model()`, whatever `FOOTBALLAI_COPILOT_PROVIDER`
 says, and builds one per request. It is the `route_following` policy from the
 evaluation, so the demo runs what the baseline measures. A fixed rule chooses the tools.
 Their execution, the limits, and the grounding are the real code.
 
+`FOOTBALLAI_COPILOT_AGENT_REAL_MODEL_ENABLED=1` asks for a billed model instead. Every
+[condition](COPILOT_AGENT_REAL_MODEL.md#feature-flags) must then hold, or the server
+refuses to start. It never falls back to the script.
+
 ## Dashboard
 
 The Run Detail copilot panel has two modes. **Grounded Explanation** is the default and
-calls `/explain`. **Read-Only Agent** calls this route and shows `OFFLINE SCRIPTED AGENT`
-before anything is asked, and again on every answer, including abstentions.
+calls `/explain`. **Read-Only Agent** calls this route and shows the adapter the server reports, such as
+`OFFLINE SCRIPTED AGENT`, before anything is asked, and again on every answer, including
+abstentions.
 
 Each agent answer has a collapsed **Tool execution trace**: tools, results, claim ids,
 turns, termination, and the correlation id. Every line comes from the response. An
@@ -334,10 +357,13 @@ PYTHONPATH=v2/src .venv-test/bin/python -m pytest v2/tests/test_copilot_agent*.p
 |---|---|---|
 | Registry, loop, grounding, trace | `test_copilot_agent.py` | Nothing |
 | Real adapter against a stand-in SDK | `test_copilot_agent_model.py` | Nothing |
-| Real SDK against 127.0.0.1 | `test_copilot_agent_sdk_contract.py` | The SDK. Skipped without it |
+| Real SDK against 127.0.0.1 | `test_copilot_agent_sdk_contract.py`, `test_copilot_agent_sdk_protocol.py` | The SDK. Skipped without it |
+| Gates, cost guard, usage accounting | `test_copilot_agent_real_gate.py` | Nothing |
+| Benchmark, rule, approval | `test_copilot_agent_benchmark.py` | Nothing |
+| The whole paid path, on 127.0.0.1 | `test_copilot_agent_benchmark_live.py` | The SDK. Skipped without it |
 | Evaluation, import boundaries | `test_copilot_agent_evaluation.py` | Nothing |
 | Route, gate, public trace | `test_copilot_agent_api.py` | Nothing |
-| Mutation tests, including the route's boundaries | `test_copilot_agent_mutations.py` | Nothing. About 40 seconds |
+| Mutation tests, including every real-path gate | `test_copilot_agent_mutations.py` | Nothing, or the SDK for abort mutants. A few minutes |
 | Dashboard states | `v2/dashboard/src/pages/RunDetailPage.test.tsx` | Nothing |
 | Browser, on a synthetic run | `v2/dashboard/tests/e2e/agent-copilot.spec.ts` | `ffmpeg` and Chromium. Not run in CI |
 
@@ -353,6 +379,10 @@ and no tool call. They also found dead code, which was removed.
 
 ## Evaluation
 
+**A larger benchmark for a real model lives in `agent-v2`.** See
+[Evaluation](COPILOT_AGENT_REAL_MODEL.md#evaluation). What follows is `agent-v1`, kept as
+the existing baseline.
+
 `evaluation/copilot/agent-v1/` is a new dataset, because tool expectations cannot be
 stated in the claim-selection format. It owns no fixtures: it replays the immutable
 `copilot-eval/v2` fixtures, pinned by hash. `v1/` and `v2/` are unchanged.
@@ -362,7 +392,8 @@ PYTHONPATH=v2/src python -m footballai_v2.cli.copilot_agent_eval --dataset evalu
 ```
 
 The command has no paid mode, needs no SDK, key, or network, and writes a
-byte-reproducible report that a test compares with `baseline-report.json`.
+byte-reproducible report that a test compares with `baseline-report.json`. The paid
+runner is a separate command with its own approval gate.
 
 **Every number below is deterministic and describes scripts and rules. None is a model
 benchmark.** The same person wrote the labels, the scripts, and the agent, so these are
@@ -466,13 +497,14 @@ measurement. Real usage appears in the trace once a real model runs.
 - **Prompt and tool descriptions are unvalidated.** `copilot.agent-instructions/v1` has
   never met a real model.
 - **Strict tools with structured output are unproven live.** See [Model protocol](#model-protocol).
+- **The cost guard is per process.** A restart resets it, so a Console limit stays the backstop.
 - **First-use schema compilation** may exceed 20 seconds. Each question's claim set is a
   distinct schema, so M3 must measure this.
 - **Lexical routing still decides scope.** The agent inherits its limits.
 - **Grounded does not mean accurate.** Claims report the pipeline's output.
 - **Relevance is route-level.** The server proves a claim is on topic, not that it is
   the best answer.
-- **One author wrote everything.** Second-person review and held-out cases are M3 items.
+- **One author wrote everything.** Held-out cases exist. Second-person review does not.
 - **The scripted adapter proves plumbing, not judgement.** It selects everything it
   fetched, so it says nothing about what a model would choose.
 - **The trace shows what ran, not why.** A scripted turn has no reasoning to show.
@@ -486,5 +518,5 @@ measurement. Real usage appears in the trace once a real model runs.
 | Milestone | Scope |
 |---|---|
 | M1 | Real LLM evaluation of claim selection. Needs separate authorization |
-| M3 | Live probe, accepted decision rule, paid agent evaluation, hard cancellation, a real `model_factory` for the route |
+| M3-B | Live probe, accepted decision rule, paid agent evaluation. Needs separate human authorization |
 | M5 | LinkedIn demo and architecture release |
