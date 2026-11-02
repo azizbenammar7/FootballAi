@@ -15,6 +15,11 @@ from footballai_v2.execution.ai1.artifacts import (
 )
 
 
+def sampled_frame_index(sample_index: int, stride: int) -> int:
+    """Source frame of one sample: Ultralytics keeps the last frame of each stride."""
+    return (sample_index + 1) * stride - 1
+
+
 class YoloDetector:
     """Run YOLO once and return the complete sampled-frame detection cache."""
 
@@ -75,7 +80,7 @@ class YoloDetector:
         sampled_frames = []
         detections = []
         for sample_index, result in enumerate(results):
-            frame_index = sample_index * stride
+            frame_index = sampled_frame_index(sample_index, stride)
             timestamp = frame_index / source_fps
             sampled_frames.append(SampledFrame(frame_index, timestamp))
             boxes = result.boxes

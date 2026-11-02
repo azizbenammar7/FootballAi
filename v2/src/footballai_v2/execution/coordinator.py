@@ -16,7 +16,7 @@ from footballai_v2.contracts.v1 import (
 )
 from footballai_v2.execution.adapters import profile_catalog
 from footballai_v2.execution.adapters.v1_compat_runtime import check_v1_compat_readiness
-from footballai_v2.execution.contracts import ExecutionJob
+from footballai_v2.execution.contracts import ExecutionJob, pipeline_version_for
 
 
 MEDIA_TYPES = {".mp4": "video/mp4", ".mov": "video/quicktime", ".mkv": "video/x-matroska", ".webm": "video/webm"}
@@ -181,7 +181,7 @@ class AnalysisCoordinator:
         run = AnalysisRun.new(
             data_origin=origin, input=InputReference(f"run-input://source{extension}", checksum, MEDIA_TYPES[extension]),
             code=self.code_reference(),
-            pipeline_version="v1_compat/2.0.0" if profile == "v1_compat" else f"{profile}/1.0.0",
+            pipeline_version=pipeline_version_for(profile),
             parameters=parameters,
             models=models,
             stages=self._queued_stages(1, profile),
@@ -204,7 +204,7 @@ class AnalysisCoordinator:
     def retry(self, run_id: str) -> AnalysisRun:
         previous = self.repository.load(run_id)
         profile = str(previous.parameters["pipeline_profile"])
-        retry = AnalysisRun.retry_from(previous).with_stages(self._queued_stages(previous.attempt_number + 1, profile))
+        retry = AnalysisRun.retry_from(previous, code=self.code_reference(), pipeline_version=pipeline_version_for(profile)).with_stages(self._queued_stages(previous.attempt_number + 1, profile))
         self.repository.create(retry)
         try:
             self.object_storage.copy_input(previous.run_id, retry.run_id)
@@ -217,7 +217,7 @@ class AnalysisCoordinator:
     def clone(self, run_id: str) -> AnalysisRun:
         previous = self.repository.load(run_id)
         profile = str(previous.parameters["pipeline_profile"])
-        clone = AnalysisRun.new(data_origin=previous.data_origin, input=previous.input, code=self.code_reference(), pipeline_version=previous.pipeline_version, parameters=dict(previous.parameters), models=previous.models, stages=self._queued_stages(1, profile))
+        clone = AnalysisRun.new(data_origin=previous.data_origin, input=previous.input, code=self.code_reference(), pipeline_version=pipeline_version_for(profile), parameters=dict(previous.parameters), models=previous.models, stages=self._queued_stages(1, profile))
         self.repository.create(clone)
         try:
             self.object_storage.copy_input(previous.run_id, clone.run_id)

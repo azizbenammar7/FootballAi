@@ -33,6 +33,7 @@ from footballai_v2.execution.ai1.artifacts import (  # noqa: E402
     TrackletsArtifact,
     detections_from_parquet_bytes,
     detections_to_parquet_bytes,
+    has_legacy_frame_labels,
 )
 from footballai_v2.execution.ai1.detector import YoloDetector  # noqa: E402
 from footballai_v2.execution.ai2a.model import SourceReference  # noqa: E402
@@ -52,10 +53,10 @@ def frame(index: int = 0) -> np.ndarray:
     return pixels
 
 
-def write_video(path: Path) -> Path:
+def write_video(path: Path, frames: int = FRAMES) -> Path:
     writer = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*"mp4v"), FPS, (WIDTH, HEIGHT))
     assert writer.isOpened()
-    for index in range(FRAMES):
+    for index in range(frames):
         writer.write(frame(index)[:, :, ::-1])
     writer.release()
     return path
@@ -174,9 +175,62 @@ def test_ai1_detector_writes_a_valid_artifact_from_a_real_yolo_call(model, tmp_p
         code_revision="b" * 40, pipeline_version="test", model_factory=lambda _: model,
     ).detect(video)
 
-    assert [item.frame_index for item in artifact.sampled_frames] == [0, 2, 4, 6, 8, 10]
+    assert [item.frame_index for item in artifact.sampled_frames] == [1, 3, 5, 7, 9, 11]
     assert artifact.provenance.source_width == WIDTH
     assert detections_from_parquet_bytes(detections_to_parquet_bytes(artifact)) == artifact
+
+
+def block_left_edge(pixels: np.ndarray) -> int:
+    red = (pixels[..., 2] > 150) & (pixels[..., 1] < 90)
+    return int(np.flatnonzero(red.any(axis=0))[0])
+
+
+@pytest.mark.parametrize(
+    ("stride", "expected_frames"),
+    [
+        pytest.param(1, list(range(13)), id="stride-1"),
+        pytest.param(2, [1, 3, 5, 7, 9, 11], id="stride-2-drops-trailing-frame"),
+        pytest.param(5, [4, 9], id="stride-5-drops-trailing-frames"),
+        pytest.param(6, [5, 11], id="stride-6-drops-trailing-frame"),
+    ],
+)
+def test_ai1_labels_name_the_frames_the_real_loader_gave_yolo(model, tmp_path, stride, expected_frames):
+    video = write_video(tmp_path / "clip.mp4", frames=13)
+    weights = tmp_path / "weights.pt"
+    weights.write_bytes(b"unused: the factory supplies the model")
+    analysed = []
+
+    class RecordingModel:
+        def predict(self, **arguments):
+            for result in model.predict(**arguments):
+                analysed.append(result.orig_img)
+                yield result
+
+    artifact = YoloDetector(
+        model_path=weights, model_sha256="a" * 64, model_version="random-weights",
+        confidence=0.25, image_size=64, target_fps=FPS / stride, device="cpu",
+        source_video_sha256=hashlib.sha256(video.read_bytes()).hexdigest(),
+        code_revision="b" * 40, pipeline_version="test",
+        model_factory=lambda _: RecordingModel(),
+    ).detect(video)
+
+    labels = [item.frame_index for item in artifact.sampled_frames]
+    assert labels == expected_frames
+    assert [item.timestamp_seconds for item in artifact.sampled_frames] == pytest.approx(
+        [label / FPS for label in labels]
+    )
+    assert [block_left_edge(pixels) for pixels in analysed] == pytest.approx(
+        [20 + label * 4 for label in labels], abs=1
+    )
+    assert not has_legacy_frame_labels(artifact)
+
+    # AI2A review seeks to the label, so a seek must land on the analysed frame.
+    capture = cv2.VideoCapture(str(video))
+    for label, pixels in zip(labels, analysed):
+        capture.set(cv2.CAP_PROP_POS_FRAMES, label)
+        success, sought = capture.read()
+        assert success and block_left_edge(sought) == block_left_edge(pixels)
+    capture.release()
 
 
 def test_ai2a_review_crops_and_contact_sheet_open_with_pillow(tmp_path):

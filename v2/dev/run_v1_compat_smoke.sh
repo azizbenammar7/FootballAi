@@ -28,7 +28,7 @@ export FOOTBALLAI_V1_SUBPROCESS_TIMEOUT_SECONDS="${FOOTBALLAI_V1_SUBPROCESS_TIME
 export FOOTBALLAI_DEMO_STAGE_DELAY_SECONDS=0
 
 PYTHONPATH=v2/src "$smoke_python" -m footballai_v2.cli.v1_compat_runtime check >/dev/null
-git diff --quiet technical-test-v1.0 -- pipeline dashboard scripts data/processed
+./v2/dev/check_v1_baseline.sh
 
 ffmpeg -v error -f lavfi -i "color=c=0x195f3b:s=320x192:r=12:d=2" \
   -c:v libx264 -pix_fmt yuv420p -movflags +faststart "$smoke_fixture"
@@ -37,4 +37,4 @@ PYTHONPATH=v2/src "$smoke_python" -m footballai_v2.worker >"$smoke_worker_log" 2
 smoke_worker_pid=$!
 PYTHONPATH=v2/src "$smoke_python" -m footballai_v2.cli.v1_compat_smoke --fixture "$smoke_fixture"
 
-git diff --quiet technical-test-v1.0 -- pipeline dashboard scripts data/processed
+./v2/dev/check_v1_baseline.sh

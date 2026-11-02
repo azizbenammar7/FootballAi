@@ -32,6 +32,9 @@ target/effective/source FPS, sampling stride, source dimensions/frame count and
 duration, device, source-video checksum, code revision, and pipeline version.
 No local model or video path is published.
 
+`frame_index` is the source frame that YOLO analysed, and `timestamp_seconds` is that
+frame divided by the source FPS. See [frame labels](#frame-labels-and-cache-compatibility).
+
 The tracklets artifact stores every temporary tracking observation with its
 track ID, frame/time, pixel bounding box, centroid-derivable coordinates,
 confidence, and class. Its metadata records the ByteTrack version and complete
@@ -43,6 +46,35 @@ deterministically derivable and exposed through the typed reader.
 statistics scripts. The adapter retains the historical 10-observation filter;
 the AI1 tracklets artifact does not discard shorter fragments. The later
 historical 50-observation threshold remains unchanged.
+
+## Frame labels and cache compatibility
+
+Ultralytics grabs `vid_stride` frames and keeps the last one, so stride 6 analyses
+frames 5, 11, 17, and so on. It drops a trailing partial stride, so 13 frames at stride
+5 give frames 4 and 9.
+
+`v1_compat/2.1.0` records those frames. Earlier versions counted from the first frame
+of each stride, so their labels are `stride - 1` frames early: 0.167 seconds at stride 6.
+Their counts, durations, and fragmentation metrics are unaffected, but a box does not
+line up with its labelled frame.
+
+**Decision.** The pipeline version changed and the schema did not.
+
+- `footballai.detections/v1` and `footballai.tracklets/v1` keep their layout, and both
+  label styles stay readable. Old artifacts are history and are never rewritten.
+- The pipeline version changed because the meaning of a value changed. It is recorded in
+  the manifest and in the Parquet metadata. Retries and clones run current code, so they
+  record the current version and revision.
+- `has_legacy_frame_labels` reads the labels themselves, so it does not depend on a
+  version string. It cannot tell the two styles apart at stride 1, where they are equal.
+
+Old and new caches cannot mix silently:
+
+- Tracklets name the exact detections checksum they came from.
+- AI2A ground truth and review samples are pinned by checksum to one cache, and each
+  annotation must match its tracklet's frames.
+- `detection_id` includes `frame_index`, so a recomputed cache has different IDs.
+- AI2A `prepare` refuses a legacy cache unless `--accept-legacy-frame-labels` is passed.
 
 ## Descriptive diagnostics
 

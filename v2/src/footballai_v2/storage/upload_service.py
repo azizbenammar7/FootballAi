@@ -29,7 +29,7 @@ from footballai_v2.contracts.v1 import (
     StageName,
     StageStatus,
 )
-from footballai_v2.execution.contracts import ExecutionJob
+from footballai_v2.execution.contracts import ExecutionJob, pipeline_version_for
 from footballai_v2.storage.local_analysis_runs import RunAlreadyExistsError
 from footballai_v2.storage.errors import InvalidStorageObjectError
 from footballai_v2.storage.ports import UploadGrant
@@ -100,7 +100,7 @@ class DirectUploadService:
                 finalized.content_type,
             ),
             code=self._code_reference,
-            pipeline_version=f"{profile}/1.0.0",
+            pipeline_version=pipeline_version_for(profile),
             parameters={**dict(parameters or {}), "pipeline_profile": profile},
             stages=_queued_stages(1),
         )

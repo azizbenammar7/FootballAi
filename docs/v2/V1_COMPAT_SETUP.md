@@ -107,6 +107,13 @@ use `demo_fast` or copyrighted footage. Zero detections are an acceptable
 succeeded-empty environment result. The smoke verifies terminal detection and
 tracking, artifact isolation, model provenance, and no changes to V1 paths.
 
+`v2/dev/check_v1_baseline.sh` compares `pipeline`, `dashboard`, `scripts`, and
+`data/processed` with tag `technical-test-v1.0`, including uncommitted and untracked
+files. Any difference fails, with two exact exceptions:
+
+- deleting one of the eight named bytecode files committed by mistake at the tag;
+- adding a file under `scripts/ci/`, which the tag does not contain.
+
 For a private longer test, first confirm readiness, free disk space, sustained
 power, thermal conditions, input licensing, and the selected device. Start the
 combined demo, upload the video, and select `v1_compat`. The 94-minute fixture

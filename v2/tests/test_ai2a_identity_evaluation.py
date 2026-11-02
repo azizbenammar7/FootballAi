@@ -149,6 +149,20 @@ def test_annotation_round_trip_is_canonical_and_validated_against_ai1_tracklets(
     assert encoded == ground_truth_to_json_bytes(decoded)
 
 
+def test_ground_truth_from_an_earlier_cache_rejects_relabelled_tracklets():
+    artifact = IdentityGroundTruthArtifact(
+        schema=GROUND_TRUTH_SCHEMA,
+        source=source(),
+        annotations=(annotation(1, "TEAM_A_01"),),
+    )
+
+    with pytest.raises(ValueError, match="annotation extent does not match"):
+        ground_truth_from_json_bytes(
+            ground_truth_to_json_bytes(artifact),
+            tracklets=make_tracklets(make_tracklet(1, (5, 10))),
+        )
+
+
 def test_invalid_tracklet_reference_is_rejected():
     artifact = IdentityGroundTruthArtifact(
         schema=GROUND_TRUTH_SCHEMA,
