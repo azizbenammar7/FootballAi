@@ -1,0 +1,966 @@
+{
+  "schema": "footballai.copilot-agent-benchmark-report/v1",
+  "mode": "replay",
+  "note": "Replay only. No language model was called, so nothing here measures model quality, latency, or real token use. label_oracle does exactly what the labels ask, which shows the labels can be reached. route_following is a rule. Hostile scripts show the agent fails closed. One author wrote every label, and none has had a second review.",
+  "live_model_requests": 0,
+  "real_model_quality_measured": false,
+  "dataset": {
+    "version": "copilot-agent-eval/v2",
+    "selection_dataset": "copilot-eval/v2",
+    "fixtures_sha256": "30b8efc2cbe99686d1e8d3862e3a9dcba2f83463f9239045e20c921c89806b7b"
+  },
+  "instruction_version": "copilot.agent-instructions/v1",
+  "limits": {
+    "max_tool_calls": 4,
+    "max_model_turns": 5,
+    "model_timeout_seconds": 20.0,
+    "total_timeout_seconds": 45.0
+  },
+  "tools": [
+    "get_run_status",
+    "get_tracking_diagnostics",
+    "get_artifact_metadata",
+    "get_model_provenance",
+    "get_evidence_limitations"
+  ],
+  "decision_rule": {
+    "sha256": "47feefb33fad491d83d18105b78485c453f376b7b179be86cbf5cb9df34cdf3c",
+    "status": "proposed"
+  },
+  "dev": {
+    "sha256": "a18ad4dfffbeb167f35a4070df7d1c4982a99f15bc60cd6160ea89288ea2cff1",
+    "shape": {
+      "cases": 68,
+      "live_eligible": 50,
+      "replay_only": 18,
+      "expecting_an_answer": 30,
+      "labels_reviewed_by_a_second_person": 0,
+      "by_category": {
+        "adversarial_instructions": 8,
+        "answerable": 12,
+        "corrupted_evidence": 7,
+        "cross_run_attack": 5,
+        "invalid_tool_arguments": 5,
+        "missing_evidence": 5,
+        "model_failure": 6,
+        "multiple_tools": 6,
+        "unsupported": 8,
+        "zero_tool_abstention": 6
+      }
+    },
+    "label_oracle": {
+      "cases": 50,
+      "fabricated_answers": [],
+      "citation_validity": {
+        "correct": 24,
+        "n": 24,
+        "rate": 1.0,
+        "ci95": [
+          0.862,
+          1.0
+        ]
+      },
+      "output_nature_accuracy": {
+        "correct": 50,
+        "n": 50,
+        "rate": 1.0,
+        "ci95": [
+          0.9286,
+          1.0
+        ]
+      },
+      "outcome_accuracy": {
+        "correct": 45,
+        "n": 50,
+        "rate": 0.9,
+        "ci95": [
+          0.7864,
+          0.9565
+        ]
+      },
+      "claim_selection_accuracy": {
+        "correct": 24,
+        "n": 29,
+        "rate": 0.8276,
+        "ci95": [
+          0.6545,
+          0.924
+        ]
+      },
+      "tool_selection_accuracy": {
+        "correct": 26,
+        "n": 26,
+        "rate": 1.0,
+        "ci95": [
+          0.8713,
+          1.0
+        ]
+      },
+      "false_answers": [],
+      "false_abstentions": [
+        "ans-finish-paraphrase",
+        "ans-real-or-synthetic",
+        "multi-overview-synthetic"
+      ],
+      "answer_cases_stopped_before_a_model": [
+        "ans-finish-paraphrase",
+        "ans-real-or-synthetic",
+        "multi-overview-synthetic"
+      ],
+      "unsupported_claim_rate": {
+        "definition": "rendered claims a case does not permit / rendered claims, excluding the label",
+        "unpermitted": 0,
+        "rendered": 28,
+        "rate": 0.0
+      },
+      "cross_run_violations": [],
+      "cross_run_attempts_stopped": 0,
+      "out_of_registry_attempts": 0,
+      "out_of_registry_executions": 0,
+      "invalid_tool_arguments": 0,
+      "provider_failures_plus_invalid_outputs": {
+        "correct": 2,
+        "n": 31,
+        "rate": 0.0645,
+        "ci95": [
+          0.0179,
+          0.2072
+        ]
+      },
+      "protocol_problems": 0,
+      "failed_cases": [
+        "adv-inside-the-vocabulary",
+        "ans-finish-paraphrase",
+        "ans-real-or-synthetic",
+        "multi-model-and-status",
+        "multi-overview-synthetic"
+      ]
+    },
+    "route_following": {
+      "cases": 50,
+      "fabricated_answers": [],
+      "citation_validity": {
+        "correct": 31,
+        "n": 31,
+        "rate": 1.0,
+        "ci95": [
+          0.8897,
+          1.0
+        ]
+      },
+      "output_nature_accuracy": {
+        "correct": 50,
+        "n": 50,
+        "rate": 1.0,
+        "ci95": [
+          0.9286,
+          1.0
+        ]
+      },
+      "outcome_accuracy": {
+        "correct": 42,
+        "n": 50,
+        "rate": 0.84,
+        "ci95": [
+          0.7149,
+          0.9166
+        ]
+      },
+      "claim_selection_accuracy": {
+        "correct": 24,
+        "n": 29,
+        "rate": 0.8276,
+        "ci95": [
+          0.6545,
+          0.924
+        ]
+      },
+      "tool_selection_accuracy": {
+        "correct": 24,
+        "n": 26,
+        "rate": 0.9231,
+        "ci95": [
+          0.7586,
+          0.9786
+        ]
+      },
+      "false_answers": [
+        "zero-artifact-origin",
+        "zero-model-real",
+        "zero-model-status",
+        "zero-model-version",
+        "zero-tracks-verified"
+      ],
+      "false_abstentions": [
+        "ans-finish-paraphrase",
+        "ans-real-or-synthetic",
+        "multi-overview-synthetic"
+      ],
+      "answer_cases_stopped_before_a_model": [
+        "ans-finish-paraphrase",
+        "ans-real-or-synthetic",
+        "multi-overview-synthetic"
+      ],
+      "unsupported_claim_rate": {
+        "definition": "rendered claims a case does not permit / rendered claims, excluding the label",
+        "unpermitted": 7,
+        "rendered": 64,
+        "rate": 0.1094
+      },
+      "cross_run_violations": [],
+      "cross_run_attempts_stopped": 0,
+      "out_of_registry_attempts": 0,
+      "out_of_registry_executions": 0,
+      "invalid_tool_arguments": 0,
+      "provider_failures_plus_invalid_outputs": {
+        "correct": 0,
+        "n": 31,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.1103
+        ]
+      },
+      "protocol_problems": 0,
+      "failed_cases": [
+        "adv-inside-the-vocabulary",
+        "ans-finish-paraphrase",
+        "ans-real-or-synthetic",
+        "multi-model-and-status",
+        "multi-overview-synthetic",
+        "zero-artifact-origin",
+        "zero-model-real",
+        "zero-model-status",
+        "zero-model-version",
+        "zero-tracks-verified"
+      ]
+    },
+    "hostile_replay": {
+      "cases": 18,
+      "fabricated_answers": [],
+      "citation_validity": {
+        "correct": 1,
+        "n": 1,
+        "rate": 1.0,
+        "ci95": [
+          0.2065,
+          1.0
+        ]
+      },
+      "output_nature_accuracy": {
+        "correct": 18,
+        "n": 18,
+        "rate": 1.0,
+        "ci95": [
+          0.8241,
+          1.0
+        ]
+      },
+      "outcome_accuracy": {
+        "correct": 18,
+        "n": 18,
+        "rate": 1.0,
+        "ci95": [
+          0.8241,
+          1.0
+        ]
+      },
+      "claim_selection_accuracy": {
+        "correct": 1,
+        "n": 1,
+        "rate": 1.0,
+        "ci95": [
+          0.2065,
+          1.0
+        ]
+      },
+      "tool_selection_accuracy": {
+        "correct": 1,
+        "n": 1,
+        "rate": 1.0,
+        "ci95": [
+          0.2065,
+          1.0
+        ]
+      },
+      "false_answers": [],
+      "false_abstentions": [],
+      "answer_cases_stopped_before_a_model": [],
+      "unsupported_claim_rate": {
+        "definition": "rendered claims a case does not permit / rendered claims, excluding the label",
+        "unpermitted": 0,
+        "rendered": 1,
+        "rate": 0.0
+      },
+      "cross_run_violations": [],
+      "cross_run_attempts_stopped": 3,
+      "out_of_registry_attempts": 1,
+      "out_of_registry_executions": 0,
+      "invalid_tool_arguments": 5,
+      "provider_failures_plus_invalid_outputs": {
+        "correct": 11,
+        "n": 18,
+        "rate": 0.6111,
+        "ci95": [
+          0.3862,
+          0.797
+        ]
+      },
+      "protocol_problems": 0,
+      "failed_cases": []
+    },
+    "operations": {
+      "questions": 68,
+      "unique_correlation_ids": 68,
+      "questions_reaching_a_model": 49,
+      "real_model_questions": 0,
+      "model_turns": {
+        "total": 84,
+        "mean_per_question_reaching_a_model": 1.7143,
+        "max": 3
+      },
+      "tool_calls": {
+        "valid": 34,
+        "invalid": 6,
+        "refused_before_running": 4,
+        "by_tool": {
+          "get_artifact_metadata": 3,
+          "get_evidence_limitations": 6,
+          "get_model_provenance": 6,
+          "get_run_status": 14,
+          "get_tracking_diagnostics": 10
+        },
+        "outside_the_registry": 1,
+        "errors": {
+          "invalid_arguments": 5,
+          "unknown_tool": 1
+        }
+      },
+      "terminations": {
+        "answered": 25,
+        "cross_run_rejected": 3,
+        "evidence_not_available": 4,
+        "malformed_response": 1,
+        "model_refusal": 1,
+        "model_timeout": 2,
+        "model_truncated": 1,
+        "no_relevant_claim": 8,
+        "provider_error": 2,
+        "selection_rejected": 6,
+        "unsupported_question": 15
+      },
+      "provider_failures_by_kind": {
+        "invalid_response": 1,
+        "rate_limited": 1,
+        "refusal": 1,
+        "server_error": 1,
+        "timeout": 2,
+        "truncated": 1
+      },
+      "grounding_success": {
+        "correct": 25,
+        "n": 31,
+        "rate": 0.8065,
+        "ci95": [
+          0.6372,
+          0.9081
+        ]
+      },
+      "turns_aborted_at_their_deadline": 0,
+      "refusal_categories": {},
+      "latency": "not_measured: this run used a scripted clock",
+      "tokens": {
+        "note": "Only provider-reported tokens are counted. Scripted constants are never added in.",
+        "usage_sources": {
+          "not_called": 19,
+          "scripted_constant": 49
+        },
+        "actual_input_tokens": 0,
+        "actual_output_tokens": 0,
+        "actual_cache_read_tokens": 0,
+        "actual_cache_write_tokens": 0,
+        "totals_are_a_lower_bound": false,
+        "questions_with_unknown_usage": 0
+      },
+      "cost": {
+        "basis": "reported tokens at list price. An estimate, not a bill: only the Anthropic Console states that.",
+        "estimated_total_usd": null,
+        "estimated_per_question_usd": null,
+        "questions_estimated": 0,
+        "is_lower_bound": false
+      }
+    },
+    "decision_rule": {
+      "verdict": "NOT_A_MODEL_EVALUATION",
+      "rule_version": "agent-rule/v1-proposed",
+      "rule_status": "proposed",
+      "criteria": []
+    }
+  },
+  "heldout": {
+    "sha256": "2ca12538a11d88452623ee14d5f56ce970c5d96a17bfe328be19cf1ab4b23c5e",
+    "shape": {
+      "cases": 46,
+      "live_eligible": 38,
+      "replay_only": 8,
+      "expecting_an_answer": 24,
+      "labels_reviewed_by_a_second_person": 0,
+      "by_category": {
+        "adversarial_instructions": 4,
+        "answerable": 17,
+        "corrupted_evidence": 3,
+        "cross_run_attack": 2,
+        "invalid_tool_arguments": 2,
+        "missing_evidence": 3,
+        "model_failure": 3,
+        "multiple_tools": 4,
+        "unsupported": 4,
+        "zero_tool_abstention": 4
+      }
+    },
+    "label_oracle": {
+      "cases": 38,
+      "fabricated_answers": 0,
+      "citation_validity": {
+        "correct": 20,
+        "n": 20,
+        "rate": 1.0,
+        "ci95": [
+          0.8389,
+          1.0
+        ]
+      },
+      "output_nature_accuracy": {
+        "correct": 38,
+        "n": 38,
+        "rate": 1.0,
+        "ci95": [
+          0.9082,
+          1.0
+        ]
+      },
+      "outcome_accuracy": {
+        "correct": 35,
+        "n": 38,
+        "rate": 0.9211,
+        "ci95": [
+          0.792,
+          0.9728
+        ]
+      },
+      "claim_selection_accuracy": {
+        "correct": 20,
+        "n": 23,
+        "rate": 0.8696,
+        "ci95": [
+          0.6787,
+          0.9546
+        ]
+      },
+      "tool_selection_accuracy": {
+        "correct": 20,
+        "n": 20,
+        "rate": 1.0,
+        "ci95": [
+          0.8389,
+          1.0
+        ]
+      },
+      "false_answers": 0,
+      "false_abstentions": 3,
+      "answer_cases_stopped_before_a_model": 3,
+      "unsupported_claim_rate": {
+        "definition": "rendered claims a case does not permit / rendered claims, excluding the label",
+        "unpermitted": 0,
+        "rendered": 24,
+        "rate": 0.0
+      },
+      "cross_run_violations": 0,
+      "cross_run_attempts_stopped": 0,
+      "out_of_registry_attempts": 0,
+      "out_of_registry_executions": 0,
+      "invalid_tool_arguments": 0,
+      "provider_failures_plus_invalid_outputs": {
+        "correct": 0,
+        "n": 24,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.138
+        ]
+      },
+      "protocol_problems": 0,
+      "failed_cases": 3
+    },
+    "route_following": {
+      "cases": 38,
+      "fabricated_answers": 0,
+      "citation_validity": {
+        "correct": 24,
+        "n": 24,
+        "rate": 1.0,
+        "ci95": [
+          0.862,
+          1.0
+        ]
+      },
+      "output_nature_accuracy": {
+        "correct": 38,
+        "n": 38,
+        "rate": 1.0,
+        "ci95": [
+          0.9082,
+          1.0
+        ]
+      },
+      "outcome_accuracy": {
+        "correct": 31,
+        "n": 38,
+        "rate": 0.8158,
+        "ci95": [
+          0.6658,
+          0.9078
+        ]
+      },
+      "claim_selection_accuracy": {
+        "correct": 20,
+        "n": 23,
+        "rate": 0.8696,
+        "ci95": [
+          0.6787,
+          0.9546
+        ]
+      },
+      "tool_selection_accuracy": {
+        "correct": 20,
+        "n": 20,
+        "rate": 1.0,
+        "ci95": [
+          0.8389,
+          1.0
+        ]
+      },
+      "false_answers": 4,
+      "false_abstentions": 3,
+      "answer_cases_stopped_before_a_model": 3,
+      "unsupported_claim_rate": {
+        "definition": "rendered claims a case does not permit / rendered claims, excluding the label",
+        "unpermitted": 12,
+        "rendered": 40,
+        "rate": 0.3
+      },
+      "cross_run_violations": 0,
+      "cross_run_attempts_stopped": 0,
+      "out_of_registry_attempts": 0,
+      "out_of_registry_executions": 0,
+      "invalid_tool_arguments": 0,
+      "provider_failures_plus_invalid_outputs": {
+        "correct": 0,
+        "n": 24,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.138
+        ]
+      },
+      "protocol_problems": 0,
+      "failed_cases": 7
+    },
+    "hostile_replay": {
+      "cases": 8,
+      "fabricated_answers": 0,
+      "citation_validity": {
+        "correct": 1,
+        "n": 1,
+        "rate": 1.0,
+        "ci95": [
+          0.2065,
+          1.0
+        ]
+      },
+      "output_nature_accuracy": {
+        "correct": 8,
+        "n": 8,
+        "rate": 1.0,
+        "ci95": [
+          0.6756,
+          1.0
+        ]
+      },
+      "outcome_accuracy": {
+        "correct": 8,
+        "n": 8,
+        "rate": 1.0,
+        "ci95": [
+          0.6756,
+          1.0
+        ]
+      },
+      "claim_selection_accuracy": {
+        "correct": 1,
+        "n": 1,
+        "rate": 1.0,
+        "ci95": [
+          0.2065,
+          1.0
+        ]
+      },
+      "tool_selection_accuracy": {
+        "correct": 1,
+        "n": 1,
+        "rate": 1.0,
+        "ci95": [
+          0.2065,
+          1.0
+        ]
+      },
+      "false_answers": 0,
+      "false_abstentions": 0,
+      "answer_cases_stopped_before_a_model": 0,
+      "unsupported_claim_rate": {
+        "definition": "rendered claims a case does not permit / rendered claims, excluding the label",
+        "unpermitted": 0,
+        "rendered": 1,
+        "rate": 0.0
+      },
+      "cross_run_violations": 0,
+      "cross_run_attempts_stopped": 1,
+      "out_of_registry_attempts": 1,
+      "out_of_registry_executions": 0,
+      "invalid_tool_arguments": 2,
+      "provider_failures_plus_invalid_outputs": {
+        "correct": 5,
+        "n": 8,
+        "rate": 0.625,
+        "ci95": [
+          0.3057,
+          0.8632
+        ]
+      },
+      "protocol_problems": 0,
+      "failed_cases": 0
+    },
+    "operations": {
+      "questions": 46,
+      "unique_correlation_ids": 46,
+      "questions_reaching_a_model": 32,
+      "real_model_questions": 0,
+      "model_turns": {
+        "total": 57,
+        "mean_per_question_reaching_a_model": 1.7812,
+        "max": 3
+      },
+      "tool_calls": {
+        "valid": 26,
+        "invalid": 3,
+        "refused_before_running": 1,
+        "by_tool": {
+          "get_artifact_metadata": 4,
+          "get_evidence_limitations": 3,
+          "get_model_provenance": 4,
+          "get_run_status": 8,
+          "get_tracking_diagnostics": 9
+        },
+        "outside_the_registry": 1,
+        "errors": {
+          "invalid_arguments": 2,
+          "unknown_tool": 1
+        }
+      },
+      "terminations": {
+        "answered": 21,
+        "cross_run_rejected": 1,
+        "evidence_not_available": 4,
+        "malformed_response": 3,
+        "no_relevant_claim": 5,
+        "provider_error": 1,
+        "selection_rejected": 1,
+        "unsupported_question": 10
+      },
+      "provider_failures_by_kind": {
+        "invalid_response": 3,
+        "unknown": 1
+      },
+      "grounding_success": {
+        "correct": 21,
+        "n": 22,
+        "rate": 0.9545,
+        "ci95": [
+          0.782,
+          0.9919
+        ]
+      },
+      "turns_aborted_at_their_deadline": 0,
+      "refusal_categories": {},
+      "latency": "not_measured: this run used a scripted clock",
+      "tokens": {
+        "note": "Only provider-reported tokens are counted. Scripted constants are never added in.",
+        "usage_sources": {
+          "not_called": 14,
+          "scripted_constant": 32
+        },
+        "actual_input_tokens": 0,
+        "actual_output_tokens": 0,
+        "actual_cache_read_tokens": 0,
+        "actual_cache_write_tokens": 0,
+        "totals_are_a_lower_bound": false,
+        "questions_with_unknown_usage": 0
+      },
+      "cost": {
+        "basis": "reported tokens at list price. An estimate, not a bill: only the Anthropic Console states that.",
+        "estimated_total_usd": null,
+        "estimated_per_question_usd": null,
+        "questions_estimated": 0,
+        "is_lower_bound": false
+      }
+    },
+    "decision_rule": {
+      "verdict": "NOT_A_MODEL_EVALUATION",
+      "rule_version": "agent-rule/v1-proposed",
+      "rule_status": "proposed",
+      "criteria": []
+    }
+  },
+  "negative_controls": {
+    "every_tool_at_once": {
+      "cases": 50,
+      "fabricated_answers": 0,
+      "citation_validity": {
+        "correct": 0,
+        "n": 0,
+        "rate": null,
+        "ci95": null
+      },
+      "output_nature_accuracy": {
+        "correct": 50,
+        "n": 50,
+        "rate": 1.0,
+        "ci95": [
+          0.9286,
+          1.0
+        ]
+      },
+      "outcome_accuracy": {
+        "correct": 16,
+        "n": 50,
+        "rate": 0.32,
+        "ci95": [
+          0.2076,
+          0.4581
+        ]
+      },
+      "claim_selection_accuracy": {
+        "correct": 0,
+        "n": 29,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.117
+        ]
+      },
+      "tool_selection_accuracy": {
+        "correct": 0,
+        "n": 26,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.1287
+        ]
+      },
+      "false_answers": 0,
+      "false_abstentions": 3,
+      "answer_cases_stopped_before_a_model": 3,
+      "unsupported_claim_rate": {
+        "definition": "rendered claims a case does not permit / rendered claims, excluding the label",
+        "unpermitted": 0,
+        "rendered": 0,
+        "rate": null
+      },
+      "cross_run_violations": 0,
+      "cross_run_attempts_stopped": 0,
+      "out_of_registry_attempts": 0,
+      "out_of_registry_executions": 0,
+      "invalid_tool_arguments": 0,
+      "provider_failures_plus_invalid_outputs": {
+        "correct": 0,
+        "n": 31,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.1103
+        ]
+      },
+      "protocol_problems": 0,
+      "failed_cases": 34
+    },
+    "always_the_wrong_tool": {
+      "cases": 50,
+      "fabricated_answers": 0,
+      "citation_validity": {
+        "correct": 6,
+        "n": 6,
+        "rate": 1.0,
+        "ci95": [
+          0.6097,
+          1.0
+        ]
+      },
+      "output_nature_accuracy": {
+        "correct": 50,
+        "n": 50,
+        "rate": 1.0,
+        "ci95": [
+          0.9286,
+          1.0
+        ]
+      },
+      "outcome_accuracy": {
+        "correct": 25,
+        "n": 50,
+        "rate": 0.5,
+        "ci95": [
+          0.3664,
+          0.6336
+        ]
+      },
+      "claim_selection_accuracy": {
+        "correct": 2,
+        "n": 29,
+        "rate": 0.069,
+        "ci95": [
+          0.0191,
+          0.2196
+        ]
+      },
+      "tool_selection_accuracy": {
+        "correct": 2,
+        "n": 26,
+        "rate": 0.0769,
+        "ci95": [
+          0.0214,
+          0.2414
+        ]
+      },
+      "false_answers": 1,
+      "false_abstentions": 24,
+      "answer_cases_stopped_before_a_model": 3,
+      "unsupported_claim_rate": {
+        "definition": "rendered claims a case does not permit / rendered claims, excluding the label",
+        "unpermitted": 1,
+        "rendered": 6,
+        "rate": 0.1667
+      },
+      "cross_run_violations": 0,
+      "cross_run_attempts_stopped": 0,
+      "out_of_registry_attempts": 0,
+      "out_of_registry_executions": 0,
+      "invalid_tool_arguments": 0,
+      "provider_failures_plus_invalid_outputs": {
+        "correct": 0,
+        "n": 31,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.1103
+        ]
+      },
+      "protocol_problems": 0,
+      "failed_cases": 28
+    },
+    "skips_retrieval": {
+      "cases": 50,
+      "fabricated_answers": 0,
+      "citation_validity": {
+        "correct": 0,
+        "n": 0,
+        "rate": null,
+        "ci95": null
+      },
+      "output_nature_accuracy": {
+        "correct": 50,
+        "n": 50,
+        "rate": 1.0,
+        "ci95": [
+          0.9286,
+          1.0
+        ]
+      },
+      "outcome_accuracy": {
+        "correct": 16,
+        "n": 50,
+        "rate": 0.32,
+        "ci95": [
+          0.2076,
+          0.4581
+        ]
+      },
+      "claim_selection_accuracy": {
+        "correct": 0,
+        "n": 29,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.117
+        ]
+      },
+      "tool_selection_accuracy": {
+        "correct": 0,
+        "n": 26,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.1287
+        ]
+      },
+      "false_answers": 0,
+      "false_abstentions": 3,
+      "answer_cases_stopped_before_a_model": 3,
+      "unsupported_claim_rate": {
+        "definition": "rendered claims a case does not permit / rendered claims, excluding the label",
+        "unpermitted": 0,
+        "rendered": 0,
+        "rate": null
+      },
+      "cross_run_violations": 0,
+      "cross_run_attempts_stopped": 0,
+      "out_of_registry_attempts": 0,
+      "out_of_registry_executions": 0,
+      "invalid_tool_arguments": 0,
+      "provider_failures_plus_invalid_outputs": {
+        "correct": 31,
+        "n": 31,
+        "rate": 1.0,
+        "ci95": [
+          0.8897,
+          1.0
+        ]
+      },
+      "protocol_problems": 0,
+      "failed_cases": 34
+    }
+  },
+  "cost_plan": {
+    "dev": {
+      "note": "An upper bound at list price, not a measurement or a bill. Real questions should cost far less.",
+      "model": "claude-haiku-5-5",
+      "questions_reaching_a_model": 31,
+      "distinct_output_schemas": 19,
+      "max_model_requests": 155,
+      "worst_case_usd_per_question": 0.016872,
+      "worst_case_total_usd": 0.523032
+    },
+    "heldout": {
+      "note": "An upper bound at list price, not a measurement or a bill. Real questions should cost far less.",
+      "model": "claude-haiku-5-5",
+      "questions_reaching_a_model": 24,
+      "distinct_output_schemas": 18,
+      "max_model_requests": 120,
+      "worst_case_usd_per_question": 0.016872,
+      "worst_case_total_usd": 0.404928
+    }
+  },
+  "pricing": {
+    "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+    "verified_on": "2026-11-02"
+  }
+}

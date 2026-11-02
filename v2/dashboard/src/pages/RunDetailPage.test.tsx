@@ -374,9 +374,14 @@ describe('run detail agent mode', () => {
   const posted = (suffix: string) => vi.mocked(fetch).mock.calls
     .filter(([url, init]) => init?.method === 'POST' && String(url).endsWith(suffix))
     .map(([, init]) => JSON.parse(String(init?.body)) as { question: string | null })
-  function mockBoth(agentResult: () => Promise<Response>, explainResult: () => Promise<Response> = () => json(explanation)) {
+  function mockBoth(
+    agentResult: () => Promise<Response>,
+    explainResult: () => Promise<Response> = () => json(explanation),
+    adapterResult: () => Promise<Response> = () => json({ adapter: 'offline_scripted', model: 'scripted-stub' }),
+  ) {
     vi.mocked(fetch).mockImplementation((input, init) => {
       const url = String(input)
+      if (url.endsWith('/api/v1/copilot/agent')) return adapterResult()
       if (init?.method === 'POST' && url.endsWith('/agent')) return agentResult()
       if (init?.method === 'POST' && url.endsWith('/explain')) return explainResult()
       if (url.endsWith('/artifacts')) return json(artifacts)
@@ -407,9 +412,36 @@ describe('run detail agent mode', () => {
     route()
     const user = userEvent.setup()
     await user.click(await agentMode())
-    expect(screen.getByText('OFFLINE SCRIPTED AGENT')).toBeInTheDocument()
+    expect(await screen.findByText('OFFLINE SCRIPTED AGENT')).toBeInTheDocument()
     expect(screen.getByText(/not a language model/)).toBeInTheDocument()
     expect(posted('/agent')).toEqual([])
+  })
+
+  it('names a real model before anything is asked, when the server says one drives it', async () => {
+    mockBoth(() => json(agentReply()), undefined, () => json({ adapter: 'real_model', model: 'claude-haiku-5-5' }))
+    route()
+    const user = userEvent.setup()
+    await user.click(await agentMode())
+    expect(await screen.findByText('LANGUAGE MODEL AGENT')).toBeInTheDocument()
+    expect(screen.queryByText('OFFLINE SCRIPTED AGENT')).not.toBeInTheDocument()
+    expect(screen.queryByText(/not a language model/)).not.toBeInTheDocument()
+  })
+
+  it('claims neither adapter when the server cannot say which one runs', async () => {
+    mockBoth(() => json(agentReply()), undefined, () => Promise.resolve(new Response('{}', { status: 404 })))
+    route()
+    const user = userEvent.setup()
+    await user.click(await agentMode())
+    expect(await screen.findByText(/badge on each answer names what produced it/)).toBeInTheDocument()
+    expect(screen.queryByText('OFFLINE SCRIPTED AGENT')).not.toBeInTheDocument()
+    expect(screen.queryByText('LANGUAGE MODEL AGENT')).not.toBeInTheDocument()
+  })
+
+  it('does not ask which adapter runs until agent mode is chosen', async () => {
+    mockBoth(() => json(agentReply()))
+    route()
+    await agentMode()
+    expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url).endsWith('/api/v1/copilot/agent'))).toBe(false)
   })
 
   it('sends the question to the agent route of the selected run', async () => {

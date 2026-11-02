@@ -22,8 +22,9 @@ A recording made today would mislead or fail. Four things block it:
 | No language model has driven the agent | The trace viewer works, with an offline scripted adapter only | M1 and M3, each with approval |
 
 The Tier C storyboard below needs a real model and evaluation results. The agent and
-trace view exist, in M2-C, but a recording today could only show the scripted adapter,
-which must stay labelled. See the
+trace view exist, and a gated real path is in review in M3-A, but it has never reached a
+real model. A recording today could only show the scripted adapter, which must stay
+labelled. See the
 [demo ladder](AI_ENGINEERING_ROADMAP.md#demo-ladder-and-fallbacks).
 
 ## Demo environments
@@ -94,8 +95,8 @@ Say "open source" only after the licence decision.
 | Verified real run on shareable footage | **No** | Yes | Yes | Yes |
 | `reliable` vocabulary | Merged | Optional | Optional | Yes |
 | Live real model | **Never run** | No | Yes | Yes |
-| Tool-using agent | Offline scripted only, M2-C in review | No | No | Yes, with a real model |
-| Trace view | M2-C, in review | No | No | Yes |
+| Tool-using agent | Offline scripted, real path gated and unused | No | No | Yes, with a real model |
+| Trace view | Merged | No | No | Yes |
 | Evaluation summary shot | Deterministic only | Optional | Yes | Yes |
 
 ## Release gate
@@ -160,7 +161,8 @@ Add a row for each claim. An empty proof means the claim stays out.
 | Deployed to Azure staging | Verified at P4, `demo_fast` | `docs/v2/azure-staging-architecture.md` |
 | Any real-model result | **Not measured** | Pending M1 |
 | Offline scripted agent runs real tools, limits, and grounding through a local API | Verified, scripted adapter only | [Browser validation](../v2/COPILOT_AGENT.md#browser-validation) |
-| Any claim that an AI model chooses tools | **Not measured** | Pending M3 |
+| Any claim that an AI model chooses tools | **Not measured** | Pending M3-B |
+| Hard client-side deadline on a model call | Verified against a local server only | `v2/tests/test_copilot_agent_sdk_protocol.py`. Does not show that a provider stops work |
 
 ## Recording requirements
 

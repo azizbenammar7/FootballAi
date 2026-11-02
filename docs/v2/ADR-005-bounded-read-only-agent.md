@@ -89,6 +89,7 @@ running part of it would make results depend on block order.
 ## Action items
 
 1. [ ] Live probe, with approval, of strict tools and structured output together.
-2. [ ] M2-C endpoint, new dashboard reasons, and trace exposure.
+2. [x] M2-C endpoint, new dashboard reasons, and trace exposure.
 3. [ ] Accept the agent decision rule before any paid agent run.
-4. [ ] Hard per-call cancellation.
+4. [x] Hard per-call deadline, on the client side, in M3-A. See ADR-007. Whether the
+   provider stops work is unknown.

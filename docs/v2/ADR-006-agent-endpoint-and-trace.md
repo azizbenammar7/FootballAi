@@ -1,6 +1,6 @@
 # ADR-006: Agent endpoint and public trace
 
-**Status:** Accepted for M2-C, pending owner review of the pull request
+**Status:** Accepted for M2-C. Decision 4 is superseded by [ADR-007](ADR-007-real-model-path.md)
 **Date:** 2026-11-02
 **Deciders:** Aziz Ben Ammar
 
@@ -97,7 +97,6 @@ add a labelled case.
 ## Action items
 
 1. [x] Separate gate, route, public trace, dashboard mode, and browser validation.
-2. [ ] M3: pass a real `model_factory` only with an approved evaluation plan.
-3. [ ] M3: replace the dashboard's static offline banner when a real adapter exists. The
-   banner is client text, while the badge on each answer comes from the server.
-4. [ ] Add a labelled `no_missing_evidence` case at the next dataset version.
+2. [x] M3-A: a real path exists, gated, and unused. A paid run still needs approval.
+3. [x] M3-A: the banner now comes from the server.
+4. [x] M3-A: `gap-none-on-a-complete-run` and three related cases in `agent-v2`.

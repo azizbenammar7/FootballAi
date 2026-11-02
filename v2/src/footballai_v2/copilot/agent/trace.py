@@ -10,6 +10,10 @@ artifact content, storage path, credential, or exception text.
 ``PublicAgentTrace``, which also leaves out provider failure classes, provider
 request ids, and token counts. The offline stub reports constants for those, and
 publishing them would present stub values as measurements.
+
+Tokens are only ever what a provider reported, and ``usage_source`` says so. Money
+is an estimate, reported tokens at list price, and ``cost_is_lower_bound`` says when
+a turn reported nothing. Neither is a bill: only the Anthropic Console states that.
 """
 
 from __future__ import annotations
@@ -23,12 +27,13 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from footballai_v2.copilot.agent.tools import ToolCallStatus, ToolErrorCode, ToolExecution, ToolName
 from footballai_v2.copilot.errors import ProviderFailureKind
 from footballai_v2.copilot.models import ExplanationResponse, ModelMode, ProviderTelemetry, TokenUsage
+from footballai_v2.copilot.pricing import MODEL_PRICES, request_cost_usd
 
 if TYPE_CHECKING:
     from footballai_v2.copilot.agent.loop import AgentLimits
 
 
-TRACE_SCHEMA = "footballai.copilot-agent-trace/v1"
+TRACE_SCHEMA = "footballai.copilot-agent-trace/v2"
 PUBLIC_TRACE_SCHEMA = "footballai.copilot-agent-public-trace/v1"
 MAX_TRACED_TOOL_CALLS = 4
 MAX_TRACED_TURNS = 5
@@ -58,10 +63,20 @@ class AgentStopReason(StrEnum):
     DEADLINE_EXCEEDED = "deadline_exceeded"
     PROMPT_BUDGET_EXCEEDED = "prompt_budget_exceeded"
     MODEL_TIMEOUT = "model_timeout"
+    BUDGET_EXHAUSTED = "budget_exhausted"
     MODEL_REFUSAL = "model_refusal"
     MODEL_TRUNCATED = "model_truncated"
     MALFORMED_RESPONSE = "malformed_response"
     PROVIDER_ERROR = "provider_error"
+
+
+class UsageSource(StrEnum):
+    """Where a trace's token counts came from. Only one of these is a measurement."""
+
+    PROVIDER_REPORTED = "provider_reported"  # every turn reported usage
+    UNAVAILABLE = "unavailable"  # a turn reported none, so totals are a lower bound
+    SCRIPTED_CONSTANT = "scripted_constant"  # a stub's constants, never a measurement
+    NOT_CALLED = "not_called"  # no model turn happened
 
 
 class AgentAdapter(StrEnum):
@@ -106,6 +121,8 @@ class ModelTurnTrace(_TraceModel):
     stop_reason: str | None = Field(default=None, max_length=40)
     request_id: str | None = Field(default=None, max_length=128)
     usage: TraceUsage | None = None
+    aborted: bool = False  # the deadline passed, and the client closed the connection
+    refusal_category: str | None = Field(default=None, max_length=32)
 
 
 class AgentTrace(_TraceModel):
@@ -129,6 +146,13 @@ class AgentTrace(_TraceModel):
     selected_ids_rejected: int = Field(ge=0)  # counted, never quoted: they are model text
     usage: TraceUsage
     usage_complete: bool  # False: some turn reported none, so accounting is a lower bound
+    usage_source: UsageSource
+    estimated_cost_usd: float | None = Field(ge=0)  # reported tokens at list price, not a bill
+    cost_is_lower_bound: bool
+    valid_tool_calls: int = Field(ge=0)  # ran, whether or not they found evidence
+    invalid_tool_calls: int = Field(ge=0)  # rejected by the registry, so nothing ran
+    model_call_ms: float = Field(ge=0)
+    tool_call_ms: float = Field(ge=0)
     peak_prompt_chars: int = Field(ge=0)
 
 
@@ -220,6 +244,8 @@ class TraceRecorder:
         self._returned: dict[str, None] = {}
         self._usage = TraceUsage()
         self._usage_complete = True
+        self._price = MODEL_PRICES.get(model)
+        self._cost_usd = 0.0
         self.tool_calls_refused = 0
         self.peak_prompt_chars = 0
 
@@ -248,11 +274,15 @@ class TraceRecorder:
                     request_id if isinstance(request_id, str) and _REQUEST_ID_RE.fullmatch(request_id) else None
                 ),
                 usage=usage,
+                aborted=bool(telemetry and telemetry.aborted),
+                refusal_category=telemetry.refusal_category if telemetry else None,
             )
         )
         if usage is None:
             self._usage_complete = False
             return
+        if self._price is not None:
+            self._cost_usd += request_cost_usd(self._price, telemetry.usage)
         self._usage = TraceUsage(
             **{name: getattr(self._usage, name) + getattr(usage, name) for name in TraceUsage.model_fields}
         )
@@ -272,6 +302,13 @@ class TraceRecorder:
             )
         )
 
+    def _usage_source(self, mode: ModelMode) -> UsageSource:
+        if not self._turns:
+            return UsageSource.NOT_CALLED
+        if mode is ModelMode.OFFLINE_DEMO_FAKE:
+            return UsageSource.SCRIPTED_CONSTANT
+        return UsageSource.PROVIDER_REPORTED if self._usage_complete else UsageSource.UNAVAILABLE
+
     def build(
         self,
         termination: AgentStopReason,
@@ -283,6 +320,8 @@ class TraceRecorder:
         rendered: tuple[str, ...] = (),
         selected_ids_rejected: int = 0,
     ) -> AgentTrace:
+        scripted = mode is ModelMode.OFFLINE_DEMO_FAKE
+        estimated = self._cost_usd if self._turns and self._price is not None and not scripted else None
         return AgentTrace(
             **self._identity,
             model_mode=mode,
@@ -299,6 +338,13 @@ class TraceRecorder:
             selected_ids_rejected=selected_ids_rejected,
             usage=self._usage,
             usage_complete=self._usage_complete,
+            usage_source=self._usage_source(mode),
+            estimated_cost_usd=None if estimated is None else round(estimated, 8),
+            cost_is_lower_bound=estimated is not None and not self._usage_complete,
+            valid_tool_calls=sum(call.status is not ToolCallStatus.REJECTED for call in self._tool_calls),
+            invalid_tool_calls=sum(call.status is ToolCallStatus.REJECTED for call in self._tool_calls),
+            model_call_ms=round(sum(turn.duration_ms for turn in self._turns), 3),
+            tool_call_ms=round(sum(call.duration_ms for call in self._tool_calls), 3),
             peak_prompt_chars=self.peak_prompt_chars,
         )
 
@@ -317,5 +363,6 @@ __all__ = [
     "ToolCallTrace",
     "TraceRecorder",
     "TraceUsage",
+    "UsageSource",
     "publish_trace",
 ]

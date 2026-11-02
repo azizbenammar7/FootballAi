@@ -3,9 +3,10 @@
 ``create_app`` imports this module only when the agent gate is open, so a default
 deployment never loads the agent or its offline adapter. The run comes from the
 path and nothing else: the request body holds a question, and the agent's tools
-cannot name a run. No configuration reaches a paid model from here. A real adapter
-needs an explicit ``model_factory``, which only M3 may add. See
-docs/v2/ADR-006-agent-endpoint-and-trace.md.
+cannot name a run. The offline script is the default. A billed model needs its own
+flag, and ``real_agent_factory`` refuses to start the server unless every condition
+for one holds, so this route never falls back from one to the other. See
+docs/v2/COPILOT_AGENT_REAL_MODEL.md and docs/v2/ADR-007-real-model-path.md.
 """
 
 from __future__ import annotations
@@ -18,8 +19,7 @@ from pydantic import UUID4
 
 from footballai_v2.copilot.agent import AgentAdapter, AgentLimits, AgentResponse, ReadOnlyAgent, publish_trace
 from footballai_v2.copilot.config import CopilotSettings
-from footballai_v2.copilot.evaluation.agent_models import offline_agent_model
-from footballai_v2.copilot.models import ExplainRequest
+from footballai_v2.copilot.models import CopilotModel, ExplainRequest
 from footballai_v2.copilot.provider import AgentModel
 from footballai_v2.storage.ports import AnalysisRepository, ObjectStorage
 
@@ -47,6 +47,24 @@ def _from_this_machine(request: Request, allowed_origins: Collection[str]) -> bo
     )
 
 
+class AgentAdapterInfo(CopilotModel):
+    """What drives this server's agent, so the dashboard never has to assume."""
+
+    adapter: AgentAdapter
+    model: str
+
+
+def _default_model_factory(settings: CopilotSettings) -> Callable[[], AgentModel]:
+    """The offline script, unless the real path was asked for. Each loads only what it needs."""
+    if settings.agent_real_model_enabled:
+        from footballai_v2.copilot.real_agent import real_agent_factory
+
+        return real_agent_factory(settings)
+    from footballai_v2.copilot.evaluation.agent_models import offline_agent_model
+
+    return offline_agent_model
+
+
 def register_agent_route(
     app: FastAPI,
     repository: AnalysisRepository,
@@ -56,7 +74,7 @@ def register_agent_route(
     allowed_origins: Collection[str],
     model_factory: Callable[[], AgentModel] | None = None,
 ) -> None:
-    build_model = model_factory or offline_agent_model
+    build_model = model_factory or _default_model_factory(settings)
     limits = AgentLimits()
 
     def local_callers_only(request: Request) -> None:
@@ -64,6 +82,16 @@ def register_agent_route(
         # answered before this runs, which shows the route exists and reaches no run.
         if not _from_this_machine(request, allowed_origins):
             raise HTTPException(status_code=404, detail="Not Found")
+
+    @app.get(
+        "/api/v1/copilot/agent",
+        response_model=AgentAdapterInfo,
+        dependencies=[Depends(local_callers_only)],
+        summary="Name what drives the agent on this server",
+    )
+    def agent_adapter() -> AgentAdapterInfo:
+        model = build_model()
+        return AgentAdapterInfo(adapter=AgentAdapter.for_mode(model.mode), model=model.model_name)
 
     @app.post(
         "/api/v1/runs/{run_id}/agent",
@@ -75,7 +103,12 @@ def register_agent_route(
         require_completed(run_id)
         model = build_model()  # one adapter per request: nothing carries over between questions
         agent = ReadOnlyAgent(repository, object_storage, model, settings, limits=limits)
-        result = agent.answer(str(run_id), body.question, correlation_id=request.state.request_id)
+        try:
+            result = agent.answer(str(run_id), body.question, correlation_id=request.state.request_id)
+        finally:
+            close = getattr(model, "close", None)
+            if close is not None:
+                close()
         logger.info("agent_trace %s", result.trace.model_dump_json())  # holds no question, answer, or tool output
         return AgentResponse(
             explanation=result.response,

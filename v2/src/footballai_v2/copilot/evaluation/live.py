@@ -14,19 +14,18 @@ import os
 from dataclasses import dataclass
 from typing import Any
 
+from footballai_v2.copilot.budget import BudgetExhausted, BudgetGuard
 from footballai_v2.copilot.config import CopilotSettings
 from footballai_v2.copilot.errors import ProviderFailure, ProviderFailureKind
 from footballai_v2.copilot.evaluation.cost import (
     ModelPrice,
     estimate_input_tokens,
     estimate_output_tokens,
-    request_cost_usd,
     worst_case_cost_usd,
 )
 from footballai_v2.copilot.evaluation.dataset import EvaluationCase, EvaluationDataset, Suite
 from footballai_v2.copilot.evaluation.harness import CaseResult, run_case
 from footballai_v2.copilot.evaluation.selectors import RecordingProvider
-from footballai_v2.copilot.models import ProviderTelemetry
 from footballai_v2.copilot.provider import (
     AnthropicTextProvider,
     DeterministicFakeProvider,
@@ -49,14 +48,6 @@ _FATAL_KINDS = frozenset(
     }
 )
 MAX_CONSECUTIVE_FAILURES = 3
-
-
-class BudgetExhausted(Exception):
-    """Raised, before a request is sent, when the budget cannot cover it."""
-
-    def __init__(self, limit: str) -> None:
-        super().__init__(limit)
-        self.limit = limit
 
 
 class PreflightFailed(Exception):
@@ -148,37 +139,6 @@ def estimate_plan(plan: tuple[PlannedRequest, ...], price: ModelPrice, max_outpu
         "estimated_total_cost_usd": round(expected, 8),
         "worst_case_total_cost_usd": round(worst, 8),
     }
-
-
-class BudgetGuard:
-    """Counts requests and money, conservatively.
-
-    A request is admitted only if its worst case still fits. A request whose
-    reported usage is missing or malformed, such as one that timed out and may
-    still be billed, is charged at that worst case.
-    """
-
-    def __init__(self, max_requests: int, max_cost_usd: float, price: ModelPrice) -> None:
-        self.max_requests = max_requests
-        self.max_cost_usd = max_cost_usd
-        self.price = price
-        self.requests_sent = 0
-        self.spent_usd = 0.0
-        self.requests_at_worst_case = 0
-
-    def admit(self, worst_case_usd: float) -> None:
-        if self.requests_sent >= self.max_requests:
-            raise BudgetExhausted("max_requests")
-        if self.spent_usd + worst_case_usd > self.max_cost_usd:
-            raise BudgetExhausted("max_cost_usd")
-        self.requests_sent += 1
-
-    def charge(self, telemetry: ProviderTelemetry | None, worst_case_usd: float) -> None:
-        if telemetry is None or telemetry.usage is None:
-            self.requests_at_worst_case += 1
-            self.spent_usd += worst_case_usd
-        else:
-            self.spent_usd += request_cost_usd(self.price, telemetry.usage)
 
 
 class BudgetedProvider:

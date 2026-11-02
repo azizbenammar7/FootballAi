@@ -19,6 +19,7 @@ from footballai_v2.copilot.agent.trace import (
     AgentStopReason,
     AgentTrace,
     PublicAgentTrace,
+    UsageSource,
     publish_trace,
 )
 
@@ -36,6 +37,7 @@ __all__ = [
     "ToolErrorCode",
     "ToolName",
     "ToolRegistry",
+    "UsageSource",
     "publish_trace",
     "tool_definitions",
 ]

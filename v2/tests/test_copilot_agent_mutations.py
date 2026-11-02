@@ -23,11 +23,15 @@ TOOLS = PACKAGE / "agent/tools.py"
 TRACE = PACKAGE / "agent/trace.py"
 PROVIDER = PACKAGE / "provider.py"
 CONFIG = PACKAGE / "config.py"
+BUDGET = PACKAGE / "budget.py"
+REAL_AGENT = PACKAGE / "real_agent.py"
 GROUNDING = PACKAGE / "grounding.py"
 APP = Path("v2/src/footballai_v2/api/app.py")
 ROUTE = Path("v2/src/footballai_v2/api/agent_route.py")
 TARGETS = ["v2/tests/test_copilot_agent.py", "v2/tests/test_copilot_agent_model.py"]
 API_TARGETS = ["v2/tests/test_copilot_agent_api.py"]
+REAL_TARGETS = ["v2/tests/test_copilot_agent_real_gate.py"]
+PROTOCOL_TARGETS = ["v2/tests/test_copilot_agent_sdk_protocol.py"]
 
 MUTANTS = {
     "router_no_longer_stops_unsupported_questions": (
@@ -136,13 +140,91 @@ MUTANTS = {
     ),
     "the_adapter_uses_sdk_retries": (
         PROVIDER,
-        "anthropic.Anthropic(api_key=api_key, max_retries=0)",
-        "anthropic.Anthropic(api_key=api_key)",
+        "anthropic.Anthropic(api_key=api_key, base_url=base_url, max_retries=0)",
+        "anthropic.Anthropic(api_key=api_key, base_url=base_url)",
     ),
     "the_adapter_ignores_the_opt_in": (
         PROVIDER,
-        "if not self._settings.wants_real_provider or not api_key:",
-        "if not api_key:",
+        "if not self._settings.wants_real_provider or not api_key or base_url is None:",
+        "if not api_key or base_url is None:",
+    ),
+}
+
+# The real path's gates. These need no SDK: an adapter that counts calls stands in.
+REAL_MUTANTS = {
+    "an_unapproved_endpoint_keeps_the_key": (
+        PROVIDER,
+        "if (parts.scheme == \"https\" and host == \"api.anthropic.com\") or (parts.scheme == \"http\" and host in _LOOPBACK_HOSTS):",
+        "if True:",
+    ),
+    "a_hosted_platform_is_not_refused": (
+        REAL_AGENT,
+        '"hosted_environment": any(environment.get(name) for name in _HOSTED_MARKERS),',
+        '"hosted_environment": False,',
+    ),
+    "continuous_integration_is_not_refused": (
+        REAL_AGENT,
+        '"continuous_integration": any(environment.get(name) for name in _CI_MARKERS),',
+        '"continuous_integration": False,',
+    ),
+    "the_real_path_needs_no_cost_cap": (REAL_AGENT, '"no_cost_cap": settings.agent_max_cost_usd <= 0,', '"no_cost_cap": False,'),
+    "the_real_path_needs_no_request_cap": (REAL_AGENT, '"no_request_cap": settings.agent_max_requests < 1,', '"no_request_cap": False,'),
+    "an_unpriced_model_is_allowed": (REAL_AGENT, '"unpriced_model": settings.model_name not in MODEL_PRICES,', '"unpriced_model": False,'),
+    "a_blocked_real_path_builds_anyway": (REAL_AGENT, "    if blockers:\n        raise RealAgentRefused(blockers)\n", ""),
+    "the_real_agent_opens_explain_as_a_billed_route": (
+        PROVIDER,
+        "if settings.wants_real_provider and not settings.agent_real_model_enabled:",
+        "if settings.wants_real_provider:",
+    ),
+    "the_budget_is_not_checked_before_sending": (BUDGET, "            self._guard.admit(worst_case)\n", "            pass\n"),
+    "the_money_cap_is_ignored": (
+        BUDGET,
+        "if self.spent_usd + self.reserved_usd + worst_case_usd > self.max_cost_usd:",
+        "if False:",
+    ),
+    "in_flight_requests_reserve_nothing": (BUDGET, "self.spent_usd + self.reserved_usd + worst_case_usd", "self.spent_usd + worst_case_usd"),
+    "a_failed_request_is_not_charged": (BUDGET, "            self._guard.charge(exc.telemetry, worst_case)\n", ""),
+    "a_timeout_is_free": (
+        BUDGET,
+        "                self.requests_at_worst_case += 1\n                self.spent_usd += worst_case_usd\n",
+        "                self.requests_at_worst_case += 1\n",
+    ),
+    "earlier_turns_add_nothing_to_the_bound": (BUDGET, "prompt = _server_bytes(request) + earlier_turns * request.max_output_tokens", "prompt = _server_bytes(request)"),
+    "a_budget_refusal_counts_as_a_turn": (LOOP, "            if exc.kind not in _NEVER_SENT:\n                recorder.record_turn", "            if True:\n                recorder.record_turn"),
+    "stub_tokens_look_measured": (TRACE, "        if mode is ModelMode.OFFLINE_DEMO_FAKE:\n            return UsageSource.SCRIPTED_CONSTANT\n", ""),
+    "the_estimate_never_admits_a_gap": (TRACE, "cost_is_lower_bound=estimated is not None and not self._usage_complete,", "cost_is_lower_bound=False,"),
+    "the_route_falls_back_to_the_script": (
+        ROUTE,
+        "    if settings.agent_real_model_enabled:\n        from footballai_v2.copilot.real_agent import real_agent_factory\n\n        return real_agent_factory(settings)\n",
+        "",
+    ),
+    "the_adapter_route_skips_the_local_guard": (
+        ROUTE,
+        '''        response_model=AgentAdapterInfo,
+        dependencies=[Depends(local_callers_only)],
+''',
+        "        response_model=AgentAdapterInfo,\n",
+    ),
+    "the_adapter_route_always_says_scripted": (
+        ROUTE,
+        "return AgentAdapterInfo(adapter=AgentAdapter.for_mode(model.mode), model=model.model_name)",
+        "return AgentAdapterInfo(adapter=AgentAdapter.OFFLINE_SCRIPTED, model=model.model_name)",
+    ),
+    "the_model_is_never_closed": (ROUTE, "            if close is not None:\n                close()\n", ""),
+}
+
+# Needs the SDK and a dripping server, so it runs only where the SDK is installed.
+ABORT_MUTANTS = {
+    "a_slow_call_is_only_timed_by_the_sdk": (PROVIDER, "worker.join(request.timeout_seconds)", "worker.join()"),
+    "the_abort_leaves_the_connection_open": (
+        PROVIDER,
+        "        if worker.is_alive():\n            self.close()\n",
+        "        if worker.is_alive():\n",
+    ),
+    "a_refusal_category_is_copied_verbatim": (
+        PROVIDER,
+        'return category if category in _REFUSAL_CATEGORIES else "other"',
+        "return category",
     ),
 }
 
@@ -151,8 +233,8 @@ API_MUTANTS = {
     "the_agent_route_ignores_its_own_flag": (APP, "if gate.agent_enabled:", "if True:"),
     "the_agent_flag_opens_without_the_copilot_gate": (
         CONFIG,
-        'agent_enabled=enabled and _flag("FOOTBALLAI_COPILOT_AGENT_ENABLED"),',
-        'agent_enabled=_flag("FOOTBALLAI_COPILOT_AGENT_ENABLED"),',
+        'agent_enabled = enabled and _flag("FOOTBALLAI_COPILOT_AGENT_ENABLED")',
+        'agent_enabled = _flag("FOOTBALLAI_COPILOT_AGENT_ENABLED")',
     ),
     "a_remote_peer_reaches_the_agent": (ROUTE, "peer in _LOOPBACK_PEERS\n", "True\n"),
     "a_tunnel_or_rebound_host_reaches_the_agent": (ROUTE, "and request.url.hostname in _LOOPBACK_HOSTS\n", "\n"),
@@ -164,8 +246,8 @@ API_MUTANTS = {
     ),
     "one_adapter_is_shared_between_requests": (
         ROUTE,
-        "build_model = model_factory or offline_agent_model",
-        "shared = (model_factory or offline_agent_model)(); build_model = lambda: shared",
+        "build_model = model_factory or _default_model_factory(settings)",
+        "shared = (model_factory or _default_model_factory(settings))(); build_model = lambda: shared",
     ),
     "an_unfinished_run_reaches_the_agent": (
         ROUTE,
@@ -179,10 +261,12 @@ API_MUTANTS = {
     ),
     "a_real_setting_builds_a_real_adapter": (
         ROUTE,
-        "build_model = model_factory or offline_agent_model",
+        "build_model = model_factory or _default_model_factory(settings)",
         "from footballai_v2.copilot.provider import AnthropicAgentModel\n"
         "    build_model = model_factory or (\n"
-        "        (lambda: AnthropicAgentModel(settings)) if settings.wants_real_provider else offline_agent_model\n"
+        "        (lambda: AnthropicAgentModel(settings))\n"
+        "        if settings.wants_real_provider\n"
+        "        else _default_model_factory(settings)\n"
         "    )",
     ),
     "the_no_gap_claim_is_offered_beside_a_gap": (GROUNDING, "elif _nothing_is_missing(evidence):", "if True:"),
@@ -195,6 +279,16 @@ API_MUTANTS = {
         GROUNDING,
         "and evidence.output_nature is not OutputNature.UNVERIFIED_OR_PARTIAL\n",
         "\n",
+    ),
+    "the_no_gap_claim_ignores_a_refused_measure": (
+        GROUNDING,
+        "        and not _withheld_a_measure(evidence)\n",
+        "\n",
+    ),
+    "an_impossible_fraction_is_not_a_refused_measure": (
+        GROUNDING,
+        "return (fraction is not None and fraction > 1) or len(",
+        "return len(",
     ),
     "the_no_gap_claim_loses_its_artifact_citation": (
         GROUNDING,
@@ -215,6 +309,13 @@ def mirror(tmp_path_factory):
     ignore = shutil.ignore_patterns("__pycache__", ".pytest_cache")
     shutil.copytree(REPO_ROOT / "v2/src", root / "v2/src", ignore=ignore)
     shutil.copytree(REPO_ROOT / "evaluation/copilot", root / "evaluation/copilot", ignore=ignore)
+    (root / "docker").mkdir()
+    for name in ("api.Dockerfile", "worker.Dockerfile"):
+        shutil.copy(REPO_ROOT / "docker" / name, root / "docker" / name)
+    workloads = Path("infra/terraform/environments/staging/workloads.tf")
+    (root / workloads.parent).mkdir(parents=True)
+    shutil.copy(REPO_ROOT / workloads, root / workloads)
+    shutil.copytree(REPO_ROOT / "v2/dashboard/src", root / "v2/dashboard/src", ignore=ignore)
     (root / "v2/tests").mkdir()
     for path in (REPO_ROOT / "v2/tests").glob("*.py"):
         if path.name == "conftest.py" or path.name.startswith("test_copilot_"):
@@ -228,7 +329,8 @@ def run_tests(root: Path, targets: list[str] = TARGETS) -> subprocess.CompletedP
         "PYTHONPATH": str(root / "v2/src"),
         "PYTHONDONTWRITEBYTECODE": "1",  # a stale .pyc must not hide a mutant
     }
-    env.pop("ANTHROPIC_API_KEY", None)
+    for name in ("ANTHROPIC_API_KEY", "ANTHROPIC_BASE_URL", "CI", "GITHUB_ACTIONS"):
+        env.pop(name, None)
     command = [sys.executable, "-m", "pytest", *targets, "-x", "-q", "-p", "no:cacheprovider", "--no-header"]
     return subprocess.run(command, cwd=root, env=env, capture_output=True, text=True)
 
@@ -247,7 +349,7 @@ def assert_caught(root: Path, name: str, mutant: tuple[Path, str, str], targets:
 
 
 def test_an_unmodified_copy_passes(mirror):
-    result = run_tests(mirror, [*TARGETS, *API_TARGETS])
+    result = run_tests(mirror, [*TARGETS, *API_TARGETS, *REAL_TARGETS])
     assert result.returncode == 0, result.stdout[-2000:]
 
 
@@ -259,3 +361,14 @@ def test_mutant_is_caught(mirror, name):
 @pytest.mark.parametrize("name", API_MUTANTS)
 def test_api_mutant_is_caught(mirror, name):
     assert_caught(mirror, name, API_MUTANTS[name], API_TARGETS)
+
+
+@pytest.mark.parametrize("name", REAL_MUTANTS)
+def test_real_path_mutant_is_caught(mirror, name):
+    assert_caught(mirror, name, REAL_MUTANTS[name], REAL_TARGETS)
+
+
+@pytest.mark.parametrize("name", ABORT_MUTANTS)
+def test_abort_mutant_is_caught(mirror, name):
+    pytest.importorskip("anthropic")
+    assert_caught(mirror, name, ABORT_MUTANTS[name], PROTOCOL_TARGETS)

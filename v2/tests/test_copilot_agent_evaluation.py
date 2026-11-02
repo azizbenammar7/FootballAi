@@ -65,6 +65,7 @@ def test_every_stop_reason_the_loop_can_give_is_exercised(report):
         AgentStopReason.CITATION_REJECTED,  # needs a tampered catalog: test_copilot_agent.py
         AgentStopReason.TURN_BUDGET_EXHAUSTED,  # needs tighter limits: test_copilot_agent.py
         AgentStopReason.PROMPT_BUDGET_EXCEEDED,  # needs a tighter budget: test_copilot_agent.py
+        AgentStopReason.BUDGET_EXHAUSTED,  # needs a cost guard: test_copilot_agent_real_gate.py
     }
     assert set(report["scripted_suite"]["stops"]) == {reason.value for reason in AgentStopReason} - {
         reason.value for reason in unreachable_here
