@@ -9,6 +9,14 @@ from typing import Any
 
 from footballai_v2.contracts.v1 import parse_utc_datetime, utc_now, validate_run_id, validate_uuid_v4
 
+# 2.1.0: AI1 frame_index names the analysed source frame, not the stride's first frame.
+V1_COMPAT_PIPELINE_VERSION = "v1_compat/2.1.0"
+
+
+def pipeline_version_for(profile: str) -> str:
+    """Version of the code that executes a new attempt of ``profile``."""
+    return V1_COMPAT_PIPELINE_VERSION if profile == "v1_compat" else f"{profile}/1.0.0"
+
 
 @dataclass(frozen=True, slots=True)
 class ExecutionJob:

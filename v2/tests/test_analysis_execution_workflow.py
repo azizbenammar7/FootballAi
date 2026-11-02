@@ -10,12 +10,14 @@ import pytest
 from fastapi.testclient import TestClient
 
 from footballai_v2.api import create_app
+from footballai_v2.execution import coordinator as coordinator_module
+from footballai_v2.execution.contracts import pipeline_version_for
 from footballai_v2.execution.coordinator import AnalysisCoordinator, ExecutionSettings, UploadValidationError
 from footballai_v2.execution.executor import AnalysisExecutor
 from footballai_v2.execution.adapters.v1_compat_pipeline import V1CompatPipeline
 from footballai_v2.execution.adapters.v1_compat_runtime import V1CompatConfig, V1CompatReadiness
 from footballai_v2.execution.generated_artifact import GeneratedArtifact
-from footballai_v2.contracts.v1 import ArtifactCategory
+from footballai_v2.contracts.v1 import ArtifactCategory, CodeReference
 
 
 @pytest.fixture
@@ -186,6 +188,25 @@ def test_failure_retry_and_clone_preserve_attempt_rules(workflow):
     assert [item["status"] for item in chain] == ["failed", "succeeded"]
     clone = client.post(f"/api/v1/runs/{retry_id}/clone").json()
     assert clone["logical_analysis_id"] != failed["logical_analysis_id"] and clone["attempt_number"] == 1
+
+
+def test_retry_and_clone_record_the_code_that_will_run(workflow, monkeypatch):
+    client, settings = workflow; stale = CodeReference("https://github.com/azizbenammar7/FootballAi", "a" * 40, False)
+    with monkeypatch.context() as earlier:
+        earlier.setattr(coordinator_module, "pipeline_version_for", lambda profile: f"{profile}/0.9.0")
+        earlier.setattr(AnalysisCoordinator, "code_reference", staticmethod(lambda: stale))
+        failed = upload(client, profile="test_fail").json()
+    execute_one(client, settings)
+    store = client.app.state.run_store
+    assert store.load(failed["run_id"]).pipeline_version == "test_fail/0.9.0"
+    for created in (client.post(f"/api/v1/runs/{failed['run_id']}/retry"), client.post(f"/api/v1/runs/{failed['run_id']}/clone")):
+        run = store.load(created.json()["run_id"])
+        assert run.pipeline_version == "test_fail/1.0.0" and run.code.revision != stale.revision
+
+
+def test_pipeline_versions_name_each_label_contract():
+    assert pipeline_version_for("v1_compat") == "v1_compat/2.1.0"
+    assert pipeline_version_for("demo_fast") == "demo_fast/1.0.0"
 
 
 def test_partial_attempt_has_useful_artifacts_and_is_retryable(workflow):

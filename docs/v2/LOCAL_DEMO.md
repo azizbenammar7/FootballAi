@@ -62,7 +62,7 @@ cd v2/dashboard && npm run dev
 
 Open a completed run under **Analysis runs**, then ask these in the panel:
 
-| Ask | `demo_fast` run | Local `v1_compat/1.0.0` run | A future `v1_compat/2.0.0` run |
+| Ask | `demo_fast` run | Local `v1_compat/1.0.0` run | A `v1_compat/2.x` run |
 |---|---|---|---|
 | "Explain this analysis run." | Answered, labelled synthetic | Answered, partial | Answered |
 | "What do the tracking diagnostics tell us?" | Says nothing was measured | Track ID and detection counts, partial | Full fragmentation diagnostics |

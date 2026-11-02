@@ -328,6 +328,15 @@ class TrackletsArtifact:
         return sum(item.observation_count for item in self.tracklets)
 
 
+def has_legacy_frame_labels(artifact: DetectionsArtifact) -> bool:
+    """Whether a cache predates labels that name the analysed source frame.
+
+    Such caches are valid history, but seeking to a label misses the analysed frame.
+    """
+    stride = artifact.provenance.sampling_stride
+    return any(item.frame_index % stride != stride - 1 for item in artifact.sampled_frames)
+
+
 def sha256_bytes(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
 

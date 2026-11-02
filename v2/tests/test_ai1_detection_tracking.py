@@ -22,10 +22,14 @@ from footballai_v2.execution.ai1.artifacts import (
     TrackletsArtifact,
     detections_from_parquet_bytes,
     detections_to_parquet_bytes,
+    has_legacy_frame_labels,
+    sha256_bytes,
     tracklets_from_parquet_bytes,
     tracklets_to_parquet_bytes,
 )
+from footballai_v2.execution.ai1.detector import sampled_frame_index
 from footballai_v2.execution.ai1.diagnostics import compute_fragmentation_diagnostics
+from footballai_v2.execution.ai2a import review_cli
 from footballai_v2.execution.ai1.stages import DetectionStage, TrackingStage
 from footballai_v2.execution.ai1.tracker import ByteTrackTracker
 from footballai_v2.storage.object_storage.memory import InMemoryObjectStorage
@@ -166,6 +170,77 @@ def test_cached_detections_can_be_tracked_repeatedly_without_detector(tmp_path):
     second = stage.run(cached_once)
     assert calls == {"detector": 1, "tracker": 2}
     assert first.tracklets[0].track_id != second.tracklets[0].track_id
+
+
+@pytest.mark.parametrize(("stride", "expected"), [(1, [0, 1, 2]), (2, [1, 3, 5]), (6, [5, 11, 17])])
+def test_sampled_frame_index_is_the_last_frame_of_each_stride(stride, expected):
+    assert [sampled_frame_index(sample, stride) for sample in range(3)] == expected
+
+
+def cached_frames(*frames: int) -> DetectionsArtifact:
+    provenance = replace(detection_provenance(), sampling_stride=6)
+    sampled = tuple(SampledFrame(frame, frame / 30) for frame in frames)
+    return DetectionsArtifact(DETECTIONS_SCHEMA, provenance, (), sampled)
+
+
+@pytest.mark.parametrize(
+    ("frames", "legacy"),
+    [((0, 6, 12), True), ((5, 11, 17), False), ((5, 12), True)],
+)
+def test_legacy_frame_labels_are_recognised_from_the_cache_alone(frames, legacy):
+    assert has_legacy_frame_labels(cached_frames(*frames)) is legacy
+    decoded = detections_from_parquet_bytes(detections_to_parquet_bytes(cached_frames(*frames)))
+    assert has_legacy_frame_labels(decoded) is legacy
+
+
+def test_stride_one_labels_are_never_legacy():
+    artifact = cached_frames(0, 1, 2)
+    single = replace(artifact, provenance=replace(artifact.provenance, sampling_stride=1))
+    assert has_legacy_frame_labels(single) is False
+
+
+class ReachedCrops(Exception):
+    pass
+
+
+def prepare_review(tmp_path, monkeypatch, frames, *flags):
+    def reached(*_arguments):
+        raise ReachedCrops
+
+    monkeypatch.setattr(review_cli, "build_review_samples", reached)
+    video = tmp_path / "clip.mp4"
+    video.write_bytes(b"video")
+    cached = cached_frames(*frames)
+    provenance = replace(cached.provenance, source_video_sha256=sha256_bytes(b"video"))
+    content = detections_to_parquet_bytes(replace(cached, provenance=provenance))
+    detections = tmp_path / "detections.parquet"
+    detections.write_bytes(content)
+    tracklets = tmp_path / "tracklets.parquet"
+    tracklets.write_bytes(tracklets_to_parquet_bytes(TrackletsArtifact(
+        TRACKLETS_SCHEMA,
+        replace(tracker_provenance(), detections_sha256=sha256_bytes(content)),
+        (tracklet(7, frames),),
+    )))
+    return review_cli.main([
+        "prepare", "--video", str(video), "--detections", str(detections),
+        "--tracklets", str(tracklets), "--source-id", "clip",
+        "--output-dir", str(tmp_path / "review"), *flags,
+    ])
+
+
+def test_ai2a_prepare_refuses_crops_from_legacy_frame_labels(tmp_path, monkeypatch):
+    with pytest.raises(ValueError, match="legacy frame labels"):
+        prepare_review(tmp_path, monkeypatch, (0, 6, 12))
+
+
+def test_ai2a_prepare_reproduces_historical_crops_only_on_request(tmp_path, monkeypatch):
+    with pytest.raises(ReachedCrops):
+        prepare_review(tmp_path, monkeypatch, (0, 6, 12), "--accept-legacy-frame-labels")
+
+
+def test_ai2a_prepare_accepts_current_frame_labels(tmp_path, monkeypatch):
+    with pytest.raises(ReachedCrops):
+        prepare_review(tmp_path, monkeypatch, (5, 11, 17))
 
 
 def test_tracker_configuration_and_detection_link_roundtrip():

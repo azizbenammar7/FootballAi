@@ -270,7 +270,7 @@ flowchart LR
 - **Definition of done:**
   - [ ] Roadmap and demo documents merged.
   - [ ] Footage licence recorded, outside Git.
-  - [ ] One `v1_compat/2.0.0` run on that clip returns `verified_real` from the copilot.
+  - [ ] One `v1_compat/2.1.0` run on that clip returns `verified_real` from the copilot.
 - **Demo contribution:** the run shown on screen.
 - **Why the run is needed:** all five local `v1_compat` runs are version `1.0.0`
   with `/v1` diagnostics. An offline check on 2026-11-01 returned

@@ -63,6 +63,12 @@ PYTHONPATH=v2/src .venv-test/bin/python -m \
   --output-dir /tmp/footballai-ai2a-review
 ```
 
+`prepare` refuses a cache recorded before `v1_compat/2.1.0`, because its crops would
+come from a frame up to `stride - 1` frames before the analysed one. See
+[frame labels](AI1_DETECTION_TRACKING.md#frame-labels-and-cache-compatibility). The
+committed bounded evaluation was reviewed from such crops. Pass
+`--accept-legacy-frame-labels` only to reproduce them.
+
 Review and explicitly assign one tracklet at a time:
 
 ```bash

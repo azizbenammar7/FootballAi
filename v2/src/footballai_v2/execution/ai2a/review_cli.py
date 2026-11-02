@@ -13,6 +13,7 @@ from pathlib import Path
 
 from footballai_v2.execution.ai1.artifacts import (
     detections_from_parquet_bytes,
+    has_legacy_frame_labels,
     sha256_bytes,
     tracklets_from_parquet_bytes,
 )
@@ -65,6 +66,11 @@ def _prepare(args: argparse.Namespace) -> int:
         raise ValueError("video does not match cached detections")
     if tracklets.provenance.detections_sha256 != sha256_bytes(detection_content):
         raise ValueError("tracklets do not reference the supplied detections artifact")
+    if has_legacy_frame_labels(detections) and not args.accept_legacy_frame_labels:
+        raise ValueError(
+            "detections use legacy frame labels, so crops would miss the analysed frame; "
+            "rerun AI1, or pass --accept-legacy-frame-labels to reproduce historical crops"
+        )
     source = SourceReference(
         source_id=args.source_id,
         video_sha256=video_sha256,
@@ -216,6 +222,10 @@ def build_parser() -> argparse.ArgumentParser:
     prepare.add_argument("--tracklets", type=Path, required=True)
     prepare.add_argument("--source-id", required=True)
     prepare.add_argument("--output-dir", type=Path, required=True)
+    prepare.add_argument(
+        "--accept-legacy-frame-labels", action="store_true",
+        help="reproduce crops from a cache recorded before v1_compat/2.1.0",
+    )
     prepare.set_defaults(handler=_prepare)
 
     listing = commands.add_parser("list", help="list tracklets, evidence paths, and current labels")

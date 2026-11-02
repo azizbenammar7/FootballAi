@@ -59,6 +59,14 @@ def test_finalize_creates_attempt_and_enqueues(service):
     assert claimed is not None and claimed.run_id == run.run_id
 
 
+def test_finalize_stamps_the_current_pipeline_version(service):
+    upload, storage, _, _ = service
+    authorized = upload.authorize(content_type="video/mp4")
+    storage.put_input(authorized.run_id, b"tiny-video", extension=".mp4", content_type="video/mp4")
+
+    assert upload.finalize(authorized.run_id, profile="v1_compat").pipeline_version == "v1_compat/2.1.0"
+
+
 def test_finalize_is_idempotent(service):
     upload, storage, repository, queue = service
     authorized = upload.authorize(content_type="video/mp4")
