@@ -32,6 +32,7 @@ class CopilotSettings:
     environment: str = ""  # never assumed: must be explicit before the gate can open
     provider_mode: str = "fake"
     real_provider_enabled: bool = False
+    agent_enabled: bool = False  # a second key: the agent route also needs the copilot gate
     model_name: str = DEFAULT_MODEL
     effort: str = "low"
     # Budgets. Deliberately small: one short grounded paragraph over a bounded
@@ -46,6 +47,8 @@ class CopilotSettings:
     def __post_init__(self) -> None:
         if self.enabled and self.environment not in _LOCAL_ENVIRONMENTS:
             raise ValueError("the copilot can only be enabled in a local or test environment")
+        if self.agent_enabled and not self.enabled:
+            raise ValueError("the agent can only be enabled with the copilot")
         if self.provider_mode not in _PROVIDER_MODES:
             raise ValueError("provider_mode must be 'fake' or 'real'")
         if self.effort not in _EFFORT_LEVELS:
@@ -80,5 +83,6 @@ class CopilotSettings:
             environment=environment,
             provider_mode=provider_mode,
             real_provider_enabled=_flag("FOOTBALLAI_COPILOT_REAL_PROVIDER_ENABLED"),
+            agent_enabled=enabled and _flag("FOOTBALLAI_COPILOT_AGENT_ENABLED"),
             model_name=os.getenv("FOOTBALLAI_COPILOT_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL,
         )

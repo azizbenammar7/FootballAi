@@ -128,11 +128,10 @@ export function uploadAnalysis(form: FormData, onProgress: (percent: number) => 
   return UPLOAD_MODE === 'direct' ? directUpload(form, onProgress) : multipartUpload(form, onProgress)
 }
 
-// Request an evidence-grounded explanation. The endpoint is a development-only,
-// default-disabled capability, so a 404 means it is not enabled in this
-// environment rather than a missing run.
-export async function explainRun<T>(runId: string, question: string | null = null): Promise<T> {
-  const response = await fetch(`${API_BASE}/api/v1/runs/${runId}/explain`, {
+// Both copilot endpoints are development-only, default-disabled capabilities, so
+// a 404 means the feature is not enabled in this environment, not a missing run.
+async function askCopilot<T>(path: string, question: string | null): Promise<T> {
+  const response = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({ question }),
@@ -143,6 +142,14 @@ export async function explainRun<T>(runId: string, question: string | null = nul
     throw new ApiError(detail ?? `Request failed (${response.status})`, response.status)
   }
   return response.json() as Promise<T>
+}
+
+export function explainRun<T>(runId: string, question: string | null = null): Promise<T> {
+  return askCopilot<T>(`/api/v1/runs/${runId}/explain`, question)
+}
+
+export function askAgent<T>(runId: string, question: string | null = null): Promise<T> {
+  return askCopilot<T>(`/api/v1/runs/${runId}/agent`, question)
 }
 
 export function useApi<T>(path: string | null) {

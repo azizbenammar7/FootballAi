@@ -4,6 +4,9 @@ Their replies are shaped like Messages API responses and go through the real
 ``parse_agent_message``, so a hostile reply exercises the path production takes.
 They report ``offline_demo_fake`` and can never be mistaken for real inference.
 Everything here proves plumbing and safety, not what a real model would do.
+
+The local-only agent route uses ``offline_agent_model``, so a demo shows the same
+policy the evaluation baselines, and is labelled as a script wherever it appears.
 """
 
 from __future__ import annotations
@@ -172,6 +175,11 @@ def route_following_policy(request: AgentModelRequest) -> Step:
     return call(*_tools_for(offered - {OUTPUT_NATURE_CLAIM_ID} or offered))
 
 
+def offline_agent_model() -> ScriptedAgentModel:
+    """The adapter for one request. It keeps its requests, so it is never shared."""
+    return ScriptedAgentModel(policy=route_following_policy)
+
+
 def replay_text_policy(text: str) -> Callable[[AgentModelRequest], Step]:
     """Retrieve everything offered, label included, then finish with a recorded reply."""
 
@@ -204,6 +212,7 @@ __all__ = [
     "Step",
     "call",
     "every_tool_policy",
+    "offline_agent_model",
     "protocol_violations",
     "replay_text_policy",
     "route_following_policy",

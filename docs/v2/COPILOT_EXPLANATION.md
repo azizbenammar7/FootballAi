@@ -112,6 +112,7 @@ Dataset versions are bound to their routing. See
 | "What is the model version?" | The recorded reference, called a version only if it is one |
 | "Was this analysis synthetic?" | Answered from the output-nature claim |
 | "How many detections were recorded?" | Answered if the metric exists, otherwise `evidence_not_available` |
+| "What evidence is missing?" | The recorded gap. On a complete run, that the checks recorded nothing missing |
 | "How far did player 7 run?" | `unsupported_question` |
 | "How many successful passes did player 7 make?" | `unsupported_question` |
 | "What happened in the video?" | `unsupported_question` |
@@ -138,7 +139,7 @@ publish. Each claim has a stable id, server-authored text, and its own citations
 | Artifacts | `artifact_integrity` |
 | Tracking | `diag_tracking`, `diag_legacy_tracking`, `diag_assignment`, `diag_duration`, `diag_active`, `diag_short_tracklets`, `diag_insufficient` |
 | Interpretation | `diag_interpretation`, `diag_ground_truth`, `diag_reliability_scope`, `diag_synthetic` |
-| Limits | `missing_evidence`, `boundaries` |
+| Limits | `missing_evidence`, `no_missing_evidence`, `boundaries` |
 
 Evidence rules added in M2-A:
 
@@ -154,6 +155,15 @@ Evidence rules added in M2-A:
 - **`diag_legacy_tracking`** states the real counts in older `/v1` diagnostics from
   local `v1_compat` runs. It never affects output nature, so those runs stay
   `unverified_or_partial`, and it never appears on synthetic output.
+
+Added in M2-C:
+
+- **`no_missing_evidence`** answers "What evidence is missing?" on a complete run,
+  instead of an abstention that implied the answer was unknown. It is offered only on
+  that route, and only when diagnostics are valid, every artifact passed integrity, and
+  the run is not `unverified_or_partial`. It says what the check covers, and that passes
+  and possession are outside it. See
+  [ADR-006](ADR-006-agent-endpoint-and-trace.md#a-claim-added-beside-this-work).
 
 A claim that cannot be cited is not offered. Free text inside an artifact, such
 as an interpretation summary, is never echoed: integrity proves the bytes match
@@ -277,6 +287,9 @@ this environment" states. A failed question stays in the input for a retry.
 Each question is one independent request about one run. There is no conversation,
 memory, or chat storage.
 
+A second mode, **Read-Only Agent**, sends the same question to the agent route and adds a
+tool trace. See [COPILOT_AGENT.md](COPILOT_AGENT.md#dashboard).
+
 ## Local setup
 
 The recorded flow is in [LOCAL_DEMO.md](LOCAL_DEMO.md#copilot-question-flow).
@@ -329,9 +342,9 @@ agent loop, no memory, no conversation store, no external browsing, and no RAG.
 
 - **Next** — validate the real provider and measure whether it adds value (M1).
 - **M2-B** — a tool registry and bounded loop built on `RunEvidenceService` and the
-  provider layer. Implemented offline, and nothing here uses it yet: see
-  [COPILOT_AGENT.md](COPILOT_AGENT.md).
-- **M2-C** — an endpoint and trace for that agent. Not built.
+  provider layer. Implemented offline: see [COPILOT_AGENT.md](COPILOT_AGENT.md).
+- **M2-C** — a separate, local-only endpoint and trace viewer for that agent, driven by
+  the scripted adapter. No language model is involved, and this endpoint is unchanged.
 - **Phase 3** — retrieval (RAG) only where it is genuinely justified.
 
 Real authentication/authorization and quotas remain the prerequisite before any

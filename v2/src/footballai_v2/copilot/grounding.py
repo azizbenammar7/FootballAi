@@ -130,7 +130,7 @@ _SPECIFIC_WORDS: dict[str, frozenset[str]] = {
     **dict.fromkeys(("interpretation",), frozenset({"diag_interpretation"})),
     **dict.fromkeys(("ground", "truth"), frozenset({"diag_ground_truth"})),
     **dict.fromkeys(("median",), frozenset({"diag_duration", "diag_active"})),
-    **dict.fromkeys(("missing",), frozenset({"missing_evidence"})),
+    **dict.fromkeys(("missing",), frozenset({"missing_evidence", "no_missing_evidence"})),
 }
 # A word here routes only when no specific word is present.
 _BROAD_WORDS: dict[str, frozenset[str]] = {
@@ -314,6 +314,15 @@ def _claim(
         *(_cite(evidence, path, from_diagnostics=True) for path in diagnostic_paths),
     )
     return EvidenceClaim(claim_id, text, tuple(item for item in cited if item is not None))
+
+
+def _nothing_is_missing(evidence: ValidatedRunEvidence) -> bool:
+    """An empty list only covers diagnostics, so a failed artifact or an unverified run is not complete."""
+    return (
+        evidence.diagnostics is not None
+        and evidence.output_nature is not OutputNature.UNVERIFIED_OR_PARTIAL
+        and all(item.integrity_state == "verified" for item in evidence.artifacts)
+    )
 
 
 def _rounded(value: int | float) -> int | float:
@@ -580,6 +589,18 @@ def build_claim_catalog(evidence: ValidatedRunEvidence) -> tuple[EvidenceClaim, 
     if evidence.missing_evidence:
         claims.append(
             _claim(evidence, "missing_evidence", evidence.missing_evidence[0], ("missing_evidence",))
+        )
+    elif _nothing_is_missing(evidence):  # only ever offered for a question about gaps
+        claims.append(
+            _claim(
+                evidence,
+                "no_missing_evidence",
+                "The evidence checks recorded nothing missing for this run: its diagnostics artifact is "
+                "registered, intact, and valid. That covers the evidence FootballAI reads, not measures "
+                "it never takes, such as passes or possession.",
+                ("missing_evidence",),
+                diagnostic_paths=("diagnostics.schema",),
+            )
         )
     claims.append(
         _claim(

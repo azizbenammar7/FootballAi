@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Active. M1 awaiting approval. M2-A merged, M2-B implemented offline and in review |
+| **Status** | Active. M1 awaiting approval. M2-A and M2-B merged, M2-C implemented offline and in review |
 | **Owner** | Aziz Ben Ammar |
 | **Baseline** | `main` at `2c83cb3`, audited 2026-11-01 |
 | **Next milestone** | M1, controlled real LLM evaluation |
@@ -13,9 +13,9 @@
 ## Summary
 
 FootballAI has a real platform and a safe, evaluated copilot foundation, but no
-language model has ever been called. M2-B adds a bounded read-only agent, tested only
-against a scripted stub, and no endpoint reaches it. The fastest honest path to a
-strong portfolio piece is:
+language model has ever been called. M2-B and M2-C add a bounded read-only agent and a
+local endpoint with a visible tool trace, driven only by a scripted adapter. The fastest
+honest path to a strong portfolio piece is:
 
 1. measure the real model cheaply;
 2. fix the known demo blockers;
@@ -42,6 +42,16 @@ The strongest recruiter story is not football insight. It is the engineering:
 deterministic baseline, with its failures published.** That is rarer than another
 chatbot, and it is true.
 
+## Validation status
+
+| Capability | State | Evidence |
+|---|---|---|
+| Real CV inference | **VALIDATED** | Run `87da5c1b` is `verified_real`, on private footage that must not be published |
+| Grounded Copilot | **VALIDATED** | Citations, abstention, and browser checks, with the offline deterministic selector |
+| Offline scripted agent | **VALIDATED** | [Browser validation](../v2/COPILOT_AGENT.md#browser-validation), mutation tests, and baselines |
+| Actual LLM tool calling | **NOT YET VALIDATED** | Never run live. Needs separate approval |
+| LinkedIn release | **PLANNED** | Nothing recorded or published |
+
 ## Actual versus planned
 
 | Capability | State today |
@@ -52,8 +62,8 @@ chatbot, and it is true.
 | Grounded copilot with citations and abstention | IMPLEMENTED, VERIFIED, local and test only |
 | Deterministic baseline | VERIFIED, reproduced 2026-11-01 |
 | Real LLM in the copilot | IMPLEMENTED, **never run live** |
-| Tool-using agent | IMPLEMENTED offline in M2-B, in review. **No model has driven it, and no endpoint reaches it** |
-| Agent evaluation and traces | Deterministic only, in M2-B. Real-model evaluation is **PLANNED** |
+| Tool-using agent | IMPLEMENTED offline. M2-B merged, M2-C in review. **No model has driven it.** A local-only endpoint reaches it, with a scripted adapter |
+| Agent evaluation and traces | Deterministic only. Trace viewer in M2-C, in review. Real-model evaluation is **PLANNED** |
 | Question box in the dashboard | IMPLEMENTED in M2-A, merged. Browser-checked locally on 2026-11-01 |
 | Observability on `main` | JSON logs and health endpoints only. P6 is not merged |
 | RAG, MCP, multi-agent | Not planned. No need has been shown |
@@ -307,25 +317,27 @@ flowchart LR
 - **Code changes:** three PRs, below.
 - **Tests:** stubbed-model loop tests, schema tests, limit tests, no paid calls in CI.
 - **Definition of done:**
-  - [ ] Question box in the dashboard.
-  - [ ] Claims added for model reference and short tracklets, in a new dataset version.
-  - [ ] Label-only trap fixed with a regression test.
-  - [ ] `reliable` vocabulary added with cases.
-  - [x] Five read-only tools. No `run_id` input on any of them. (M2-B, in review)
-  - [x] Loop limits enforced and tested. (M2-B, in review)
-  - [x] Only retrieved claims can be rendered. (M2-B, in review)
+  - [x] Question box in the dashboard. (M2-A)
+  - [x] Claims added for model reference and short tracklets, in a new dataset version. (M2-A)
+  - [x] Label-only trap fixed with a regression test. (M2-A)
+  - [x] `reliable` vocabulary added with cases. (M2-A)
+  - [x] Five read-only tools. No `run_id` input on any of them. (M2-B)
+  - [x] Loop limits enforced and tested. (M2-B)
+  - [x] Only retrieved claims can be rendered. (M2-B)
+  - [x] Separate local-only endpoint, with a public trace. (M2-C, in review)
+  - [x] Dashboard agent mode and trace viewer, checked in a real browser. (M2-C, in review)
   - [ ] Live probe run, with approval, confirming tools work with `output_config.format`.
 - **Demo contribution:** the core of the target demo.
 - **PR boundaries:**
   1. **M2-A:** question box, new claims, vocabulary, label-only fix, dataset v2. Useful
-     without any LLM, and it unlocks the earliest demo. **Implemented, pending human
-     review and merge.** M2-A is not a tool-using agent. See
-     [ADR-004](../v2/ADR-004-versioned-question-routing.md).
-  2. **M2-B:** tool registry and loop, tested against a stub. **Implemented, pending
-     human review and merge.** No real model has run it. See
-     [COPILOT_AGENT.md](../v2/COPILOT_AGENT.md) and
+     without any LLM, and it unlocks the earliest demo. **Merged.** M2-A is not a
+     tool-using agent. See [ADR-004](../v2/ADR-004-versioned-question-routing.md).
+  2. **M2-B:** tool registry and loop, tested against a stub. **Merged.** No real model
+     has run it. See [COPILOT_AGENT.md](../v2/COPILOT_AGENT.md) and
      [ADR-005](../v2/ADR-005-bounded-read-only-agent.md).
-  3. **M2-C:** endpoint wiring and trace in the API response.
+  3. **M2-C:** local endpoint, public trace, and trace viewer. **Implemented, pending
+     human review and merge.** It uses the scripted adapter, and has no path to a paid
+     model. See [ADR-006](../v2/ADR-006-agent-endpoint-and-trace.md).
 
 ### M3 — Agent reliability, tracing and LLMOps
 
@@ -398,8 +410,8 @@ agent run so that the result cannot choose its own bar.
 - **Objective:** a clean, repeatable demo environment.
 - **Skills:** product UX for AI, trust signals, reproducibility.
 - **Product value:** evidence and limits a viewer can understand.
-- **Code changes:** trace view, citation readability, loading and failure states, a
-  local demo script with a documented seed path.
+- **Code changes:** citation readability, a local demo script with a documented seed
+  path. The trace view and agent loading and failure states exist since M2-C.
 - **Tests:** frontend tests, E2E flow, zero console errors.
 - **Definition of done:**
   - [ ] [Readiness checklist](LINKEDIN_DEMO_PLAN.md#release-gate) passes.
@@ -464,7 +476,8 @@ release.
 | Shareable, licensed footage | M0, every real-run demo | Owner | Open |
 | Decision on the repository licence and Ultralytics licensing | Public release | Owner | Open. The repository has no licence file |
 | Permission to keep the original test-assignment wording in the README heading | M5 README | Owner | Open |
-| Dashboard question box | Every question on camera | M2-A | Implemented, in review |
+| Dashboard question box | Every question on camera | M2-A | Merged |
+| Agent endpoint and trace view | Tier C storyboard | M2-C | Implemented, in review |
 | Agent decision rule | M3 paid run | Owner | Proposed |
 
 ## Later, not now

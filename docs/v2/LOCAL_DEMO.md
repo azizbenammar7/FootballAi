@@ -73,6 +73,30 @@ predate `/v2` diagnostics. Do not edit run metadata to change that. A
 `verified_real` answer needs a fresh licensed run (M0). The badge shows the offline
 deterministic mode unless a real model was explicitly enabled.
 
+### Read-only agent
+
+The agent has its own flag, and answers only on this machine. Replace the API command
+with this one. The dashboard's origin must be allowed, which the default is.
+
+```bash
+FOOTBALLAI_COPILOT_ENABLED=1 FOOTBALLAI_COPILOT_AGENT_ENABLED=1 FOOTBALLAI_ENVIRONMENT=local PYTHONPATH=v2/src .venv-test/bin/python -m uvicorn footballai_v2.api.main:app --host 127.0.0.1 --port 8000
+```
+
+Choose **Read-Only Agent** in the panel. It is labelled `OFFLINE SCRIPTED AGENT` because a
+fixed script chooses the tools. Never describe it as a language model. No setting
+connects this route to a paid model.
+
+| Ask | A `v1_compat/2.x` run | Tool trace |
+|---|---|---|
+| "What do the tracking diagnostics tell us?" | Answered | `get_tracking_diagnostics` |
+| "What model was used in the analysis?" | Answered | `get_model_provenance` |
+| "What evidence is missing?" | Says nothing was recorded missing, or states the gap | `get_evidence_limitations` |
+| "How many successful passes did player 7 make?" | Not answerable | No tool ran |
+
+An unverified run gives a different result for "What evidence is missing?": it stays
+`evidence_not_available` unless a gap was recorded. To use other ports, set
+`FOOTBALLAI_V2_CORS_ORIGINS` to the dashboard's exact origin, or the route answers `404`.
+
 Complete validation:
 
 ```bash

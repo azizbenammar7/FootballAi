@@ -102,8 +102,9 @@ flowchart LR
 | Copilot | Deterministic fake provider | IMPLEMENTED, VERIFIED | It is not a language model, and the UI says so |
 | Copilot | `AnthropicTextProvider` | IMPLEMENTED, UNVERIFIED live | Tested against the real SDK and a local server only |
 | Evaluation | 52-case v1 harness and deterministic baseline | IMPLEMENTED, VERIFIED | Reproduced 2026-11-01 |
-| Copilot | Dashboard question box and dataset v2 | IMPLEMENTED on `feat/copilot-interactive-m2a`, **not on `main` until merged** | M2-A pull request |
-| Agent | Tool calling and agent loop | **IMPLEMENTED offline in M2-B, in review** | `v2/src/footballai_v2/copilot/agent/`. No endpoint reaches it, and no real model has run it |
+| Copilot | Dashboard question box and dataset v2 | IMPLEMENTED, merged | M2-A pull request |
+| Agent | Tool calling and agent loop | **IMPLEMENTED offline, merged** | `v2/src/footballai_v2/copilot/agent/`. No real model has run it |
+| Agent | Local endpoint and trace viewer | **IMPLEMENTED offline in M2-C, in review** | Scripted adapter only, local and test only. See `docs/v2/ADR-006-agent-endpoint-and-trace.md` |
 | Agent | RAG, MCP, memory | **PLANNED, does not exist** | No such code on `main` |
 | Observability | JSON logs, health and readiness endpoints | IMPLEMENTED, VERIFIED | `logging_config.py`, runtime health modules |
 | Observability | Application Insights, metric alerts, OpenTelemetry instrumentation | EXPERIMENTAL, **not on `main`** | Draft [PR #20](https://github.com/azizbenammar7/FootballAi/pull/20), conflicting. Partly applied to staging from that branch |

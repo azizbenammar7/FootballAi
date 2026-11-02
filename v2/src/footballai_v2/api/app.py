@@ -6,7 +6,7 @@ import logging
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Callable, Sequence
 from urllib.parse import urlparse
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, Response, UploadFile
@@ -56,6 +56,7 @@ from footballai_v2.copilot import (
     LLMProvider,
     build_provider,
 )
+from footballai_v2.copilot.provider import AgentModel
 from footballai_v2.execution.adapters import profile_catalog
 from footballai_v2.execution.coordinator import AnalysisCoordinator, ExecutionSettings, UploadValidationError
 from footballai_v2.execution.progress import active_stage, overall_progress
@@ -149,6 +150,7 @@ def create_app(
     upload_service: DirectUploadService | None = None,
     copilot_settings: CopilotSettings | None = None,
     copilot_provider: LLMProvider | None = None,
+    copilot_agent_model_factory: Callable[[], AgentModel] | None = None,
 ) -> FastAPI:
     """Create a local, read-oriented API bound to one configured run root."""
     execution_settings = settings or ExecutionSettings.from_environment(run_root, queue_root)
@@ -209,6 +211,7 @@ def create_app(
     @app.middleware("http")
     async def request_context(request: Request, call_next):
         request_id = str(uuid.uuid4())
+        request.state.request_id = request_id
         started = time.perf_counter()
         response = await call_next(request)
         elapsed_ms = (time.perf_counter() - started) * 1000
@@ -545,6 +548,16 @@ def create_app(
         except RunNotFoundError as exc:
             raise HTTPException(status_code=404, detail="Player track not found") from exc
 
+    def require_completed(run_id: UUID4) -> None:
+        if load_run(run_id).status not in {AnalysisRunStatus.SUCCEEDED, AnalysisRunStatus.PARTIAL}:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "error_code": "run_not_eligible",
+                    "message": "Only completed (succeeded or partial) runs can be explained.",
+                },
+            )
+
     # Evidence-grounded explanation copilot. The route is a development-only
     # capability and is registered ONLY when the feature gate is enabled, so it is
     # invisible (404) in any hosted environment that lacks authorization controls.
@@ -559,15 +572,7 @@ def create_app(
             summary="Explain one completed run from integrity-verified evidence",
         )
         def explain(run_id: UUID4, request: ExplainRequest) -> ExplanationResponse:
-            run = load_run(run_id)
-            if run.status not in {AnalysisRunStatus.SUCCEEDED, AnalysisRunStatus.PARTIAL}:
-                raise HTTPException(
-                    status_code=409,
-                    detail={
-                        "error_code": "run_not_eligible",
-                        "message": "Only completed (succeeded or partial) runs can be explained.",
-                    },
-                )
+            require_completed(run_id)
             try:
                 return explanation_service.explain(str(run_id), request.question)
             except ForgedCitationError as exc:
@@ -576,6 +581,14 @@ def create_app(
                     status_code=422,
                     detail={"error_code": "evidence_validation_failed", "message": "Evidence citation validation failed."},
                 ) from exc
+
+        # A second key, and a late import: with this gate closed the agent is never loaded.
+        if gate.agent_enabled:
+            from footballai_v2.api.agent_route import register_agent_route
+
+            register_agent_route(
+                app, repository, object_storage, gate, require_completed, origins, copilot_agent_model_factory
+            )
 
     return app
 
