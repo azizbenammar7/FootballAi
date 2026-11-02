@@ -15,6 +15,7 @@ from footballai_v2.copilot.config import CopilotSettings
 from footballai_v2.copilot.errors import ForgedCitationError, ProviderFailureKind
 from footballai_v2.copilot.evaluation.dataset import EvaluationCase, EvaluationDataset, Outcome
 from footballai_v2.copilot.evaluation.fixtures import build_fixture_run
+from footballai_v2.copilot.evaluation.routers import routing_for
 from footballai_v2.copilot.evaluation.selectors import RecordingProvider
 from footballai_v2.copilot.evidence import RunEvidenceService
 from footballai_v2.copilot.grounding import OUTPUT_NATURE_CLAIM_ID, validate_citations
@@ -95,7 +96,8 @@ def run_case(
     fixture = dataset.fixtures.fixtures[case.fixture]
     repository, storage, run_id = build_fixture_run(fixture, dataset.fixtures)
     recorder = RecordingProvider(provider)
-    service = ExplanationService(repository, storage, recorder, settings)
+    _, router = routing_for(dataset.version)
+    service = ExplanationService(repository, storage, recorder, settings, router)
     evidence = RunEvidenceService(repository, storage, settings).build(run_id)
 
     started = time.perf_counter()

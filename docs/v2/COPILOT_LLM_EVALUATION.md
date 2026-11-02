@@ -13,6 +13,11 @@ It adds no agent, tool calling, RAG, MCP, or cloud service. See
 [ADR-003](ADR-003-grounded-explanation-copilot.md) for why the model may only
 select claims, and [COPILOT_EXPLANATION.md](COPILOT_EXPLANATION.md) for the feature.
 
+**Update on 2026-11-01, M2-A.** Production routing changed, and dataset v2 was added.
+Everything below about `copilot-eval/v1` still holds: its files are unchanged, it
+replays through a frozen router, and its results are unchanged. The decision rule is
+unchanged and still applies to v1. See [Dataset versions](#dataset-versions).
+
 ## Model selection
 
 **Recommended: `claude-haiku-5-5` at `effort: low`.** It is the new default in
@@ -175,6 +180,42 @@ no selector ever sees the question. Such gaps need vocabulary or new claims.
 **These counts come from a dataset designed to include hard cases.** They show where
 a model could matter, not how often real users would hit it. There is no production
 question traffic to sample.
+
+## Dataset versions
+
+`evaluation/copilot/v1/` is immutable. `evaluation/copilot/v2/` covers the M2-A
+claims and question handling. Each dataset is bound to the routing it was labelled
+against, so `--dataset evaluation/copilot/v1` keeps its original meaning.
+
+Deterministic results on v2. **No model was called.**
+
+| Metric | Deterministic fake | Lexical overlap |
+|---|---:|---:|
+| Claim selection accuracy | 54/54 | 46/54 |
+| Abstention accuracy | 88/88 | 85/88 |
+| Fabricated answers | 0 | 0 |
+| Contract cases failed closed | 18/18 | same suite |
+
+**These are regression results, not a performance claim, and not an improvement on
+v1.** The same person wrote the router and the labels at the same time, so a perfect
+fake score is expected. It says the listed behaviours work. It does not predict
+real questions: probing and code review each found false answers that the cases did
+not, and those cases were then added.
+
+**The fair comparison** uses only cases labelled identically in both versions, with
+the fake selector. Of 34 such cases, 8 improved and none regressed. All 8 had been
+over-selection. The three known false answers are not among them, because they were
+relabelled. In all, 8 cases were relabelled and 54 added, each listed in
+`evaluation/copilot/v2/v1-comparison.json`.
+
+**What this means for M1.** On v2 the fake gets every labelled case right, so a
+selector can only tie or lose there. That reflects labels written alongside the
+router, not proof that a model is unnecessary. M1 stays on v1 under the accepted rule,
+and any v2 model comparison needs independently written questions first.
+
+```bash
+PYTHONPATH=v2/src python -m footballai_v2.cli.copilot_eval --dataset evaluation/copilot/v2 --compare-with evaluation/copilot/v1
+```
 
 ## Running
 

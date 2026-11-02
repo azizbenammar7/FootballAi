@@ -35,6 +35,8 @@ from footballai_v2.copilot.grounding import (
     QuestionScope,
     build_claim_catalog,
     classify_question,
+    eligible_claims,
+    route_question,
 )
 from footballai_v2.copilot.models import ModelMode, OutputNature, SupportLevel
 from footballai_v2.copilot.provider import GenerationRequest, ProviderResult
@@ -168,9 +170,10 @@ def test_real_provider_answer_is_server_rendered_only():
     spy = SpyProvider()
     response = service_for(repository, storage, provider=spy).explain(run.run_id, "Explain this run.")
     assert spy.call_count == 1
-    # The answer is EXACTLY the server-authored catalog text, in catalog order.
+    # The answer is EXACTLY the server-authored text of the offered claims, in catalog order.
     catalog = build_claim_catalog(RunEvidenceService(repository, storage).build(run.run_id))
-    expected = " ".join(claim.text for claim in catalog)
+    offered = eligible_claims(catalog, route_question("Explain this run."))
+    expected = " ".join(claim.text for claim in offered)
     assert response.answer == expected
     # Every citation resolves to this run's evidence (server-controlled).
     assert response.citations

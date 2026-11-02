@@ -1,5 +1,5 @@
 import { AlertTriangle, Box, CheckCircle2, ChevronRight, Clock3, FileCheck2, GitBranch, ShieldAlert, Sparkles } from 'lucide-react'
-import { useState } from 'react'
+import { type FormEvent, useId, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError, explainRun, useApi } from '../api'
 import { AnalysisWarning, ErrorState, LoadingState, OriginBadge, Panel, StatusBadge, formatDate, shortId } from '../components/ui'
@@ -32,43 +32,92 @@ const REASON_LABEL: Record<string, string> = {
   prompt_budget_exceeded: 'The evidence for this run exceeds the safe prompt size.',
 }
 
+const MAX_QUESTION_CHARS = 500
+const EXAMPLE_QUESTIONS = [
+  'What do the tracking diagnostics tell us?',
+  'How reliable was the tracking?',
+  'How many successful passes did player 7 make?',
+]
+
+type ExplanationState = { phase: 'idle' | 'loading' | 'done' | 'error'; data?: ExplanationResponse; error?: string; disabled?: boolean; asked?: string | null }
+
+function failureMessage(reason: unknown) {
+  // A network failure's own text can hold addresses, so it is never shown.
+  return reason instanceof ApiError ? reason.message : 'The Copilot could not reach the local API. Check that it is running, then ask again.'
+}
+
 function ExplanationPanel({ runId, status }: { runId: string; status: RunDetail['status'] }) {
   const eligible = status === 'succeeded' || status === 'partial'
-  const [state, setState] = useState<{ phase: 'idle' | 'loading' | 'done' | 'error'; data?: ExplanationResponse; error?: string; disabled?: boolean }>({ phase: 'idle' })
+  const [state, setState] = useState<ExplanationState>({ phase: 'idle' })
+  const [question, setQuestion] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+  const questionId = useId()
+  const hintId = useId()
+  const trimmed = question.trim()
+  const loading = state.phase === 'loading'
+  const tooLong = trimmed.length > MAX_QUESTION_CHARS
+  const canAsk = eligible && !loading && trimmed.length > 0 && !tooLong
 
-  async function run() {
-    setState({ phase: 'loading' })
+  async function run(asked: string | null) {
+    setState({ phase: 'loading', asked })
     try {
-      const data = await explainRun<ExplanationResponse>(runId)
-      setState({ phase: 'done', data })
+      const data = await explainRun<ExplanationResponse>(runId, asked)
+      setState({ phase: 'done', data, asked })
     } catch (reason) {
       const notFound = reason instanceof ApiError && reason.status === 404
-      setState({ phase: 'error', disabled: notFound, error: reason instanceof Error ? reason.message : 'The explanation could not be generated.' })
+      setState({ phase: 'error', disabled: notFound, error: failureMessage(reason), asked })
     }
+  }
+
+  function submit(event: FormEvent) {
+    event.preventDefault()
+    if (canAsk) void run(trimmed)
+  }
+
+  function fillExample(example: string) {
+    setQuestion(example)
+    inputRef.current?.focus()
   }
 
   return (
     <Panel>
       <div className="panel-head"><div><span className="eyebrow">AI copilot</span><h2>AI Analysis Explanation</h2></div><Sparkles /></div>
-      <p className="explain-intro">An evidence-grounded summary of this run — its status, profile, whether the output is synthetic, verified real, or unverified, provenance, registered artifacts, and tracking diagnostics. It never invents player identities, passes, possession, tactics, verified distances, or injury risk.</p>
-      {state.phase === 'idle' && (
-        <div className="explain-actions">
-          <button className="button button--primary" onClick={run} disabled={!eligible} aria-disabled={!eligible}>Explain this run</button>
-          {!eligible && <small>Only completed (succeeded or partial) runs can be explained.</small>}
-        </div>
-      )}
-      {state.phase === 'loading' && <LoadingState label="Generating grounded explanation…" />}
-      {state.phase === 'error' && (state.disabled
+      <p className="explain-intro">Ask one question about this run. Answers come only from its verified evidence, and each question stands alone. It never invents player identities, passes, possession, tactics, verified distances, or injury risk.</p>
+      {state.disabled
         ? <p className="explain-disabled" role="status"><AlertTriangle /> The explanation copilot is disabled in this environment. It is a development-only feature and is not exposed where access controls are not yet in place.</p>
-        : <ErrorState message={state.error ?? 'The explanation could not be generated.'} />)}
-      {state.phase === 'done' && state.data && <ExplanationResult data={state.data} />}
+        : (
+          <>
+            <form className="explain-form" onSubmit={submit}>
+              <label htmlFor={questionId}>Ask about this run</label>
+              <div className="explain-ask">
+                <input ref={inputRef} id={questionId} type="text" value={question} onChange={(event) => setQuestion(event.target.value)} disabled={!eligible} readOnly={loading} autoComplete="off" placeholder="How reliable was the tracking?" aria-describedby={hintId} aria-invalid={tooLong} />
+                <button className="button button--primary" type="submit" disabled={!canAsk}>Ask Copilot</button>
+                <button className="button button--secondary" type="button" onClick={() => void run(null)} disabled={!eligible || loading}>Explain this run</button>
+              </div>
+              <small id={hintId} className="explain-hint">{trimmed.length}/{MAX_QUESTION_CHARS} characters</small>
+              {tooLong && <small className="explain-invalid" role="alert">Shorten the question to {MAX_QUESTION_CHARS} characters or fewer.</small>}
+              {!eligible && <small className="explain-hint">Only completed (succeeded or partial) runs can be explained.</small>}
+            </form>
+            {eligible && (
+              <div className="explain-examples" aria-label="Example questions">
+                {EXAMPLE_QUESTIONS.map((example) => <button key={example} type="button" onClick={() => fillExample(example)} disabled={loading}>{example}</button>)}
+              </div>
+            )}
+          </>
+        )}
+      <div aria-live="polite">
+        {loading && <LoadingState label="Generating grounded explanation…" />}
+        {state.phase === 'error' && !state.disabled && <p className="explain-failure" role="alert"><AlertTriangle /> {state.error}</p>}
+        {state.phase === 'done' && state.data && <ExplanationResult data={state.data} asked={state.asked ?? null} />}
+      </div>
     </Panel>
   )
 }
 
-function ExplanationResult({ data }: { data: ExplanationResponse }) {
+function ExplanationResult({ data, asked }: { data: ExplanationResponse; asked: string | null }) {
   return (
     <div className="explain-result">
+      {asked && <p className="explain-asked"><span>Question</span>{asked}</p>}
       <div className="explain-badges">
         <span className={`explain-support explain-support--${data.support_level}`}>{SUPPORT_LABEL[data.support_level]}</span>
         <span className={`explain-nature explain-nature--${data.output_nature}`}>{NATURE_LABEL[data.output_nature]}</span>
@@ -83,7 +132,7 @@ function ExplanationResult({ data }: { data: ExplanationResponse }) {
             {data.citations.map((citation, index) => (
               <li key={`${citation.field_path}-${index}`}>
                 <code>{citation.field_path}</code>
-                {citation.artifact_id && <span> · {citation.artifact_id}{citation.schema_version ? ` (${citation.schema_version})` : ''}</span>}
+                {citation.artifact_id && <span> · {citation.artifact_id}{citation.schema_version ? ` (${citation.schema_version})` : ''}{citation.source_sha256 ? ` · SHA-256 ${shortId(citation.source_sha256)}` : ''}</span>}
               </li>
             ))}
           </ul>
@@ -118,6 +167,7 @@ export default function RunDetailPage() {
         <Link className="button button--primary" to={run.status === 'succeeded' || run.status === 'partial' ? `/runs/${run.run_id}/team` : `/runs/${run.run_id}/progress`}>{run.status === 'succeeded' || run.status === 'partial' ? 'Open team overview' : 'Open live progress'} <ChevronRight /></Link>
         <span><FileCheck2 />{artifacts.data?.artifacts.filter((item) => item.integrity_state === 'verified').length ?? 0} verified artifacts</span>
       </div>
+      <ExplanationPanel key={run.run_id} runId={run.run_id} status={run.status} />
       <div className="detail-grid">
         <Panel>
           <div className="panel-head"><div><span className="eyebrow">Execution</span><h2>Stage timeline</h2></div><Clock3 /></div>
@@ -152,7 +202,6 @@ export default function RunDetailPage() {
         {artifacts.error && <ErrorState message={artifacts.error} />}
         <div className="artifact-grid">{artifacts.data?.artifacts.map((item) => <article key={item.artifact_id}><div><span className={`integrity integrity--${item.integrity_state}`}>{item.integrity_state}</span><small>{item.category.replaceAll('_', ' ')}</small></div><h3>{item.name}</h3><p>{item.relative_path}</p><span>{(item.size_bytes / 1024).toFixed(1)} KB · SHA-256 {shortId(item.sha256)}</span></article>)}</div>
       </Panel>
-      <ExplanationPanel runId={run.run_id} status={run.status} />
     </div>
   )
 }

@@ -114,7 +114,7 @@ describe('run detail explanation panel', () => {
     route()
     const user = userEvent.setup()
     await user.click(await screen.findByRole('button', { name: 'Explain this run' }))
-    await waitFor(() => expect(screen.queryByRole('button', { name: 'Explain this run' })).not.toBeInTheDocument())
+    expect(await screen.findByRole('alert')).toHaveTextContent('Evidence citation validation failed.')
     expect(screen.queryByText('Supported by evidence')).not.toBeInTheDocument()
     expect(screen.queryByText(/disabled in this environment/)).not.toBeInTheDocument()
   })
@@ -125,5 +125,217 @@ describe('run detail explanation panel', () => {
     const user = userEvent.setup()
     await user.click(await screen.findByRole('button', { name: 'Explain this run' }))
     await waitFor(() => expect(screen.getByText(/disabled in this environment/)).toBeInTheDocument())
+  })
+})
+
+describe('run detail question interface', () => {
+  const question = () => screen.findByRole('textbox', { name: 'Ask about this run' })
+  const ask = () => screen.getByRole('button', { name: 'Ask Copilot' })
+  const sent = () => vi.mocked(fetch).mock.calls
+    .filter(([url, init]) => init?.method === 'POST' && String(url).endsWith('/explain'))
+    .map(([, init]) => JSON.parse(String(init?.body)) as { question: string | null })
+
+  it('sends the typed question to the selected run', async () => {
+    mock(() => json(explanation))
+    route()
+    const user = userEvent.setup()
+    await user.type(await question(), 'How reliable was the tracking?')
+    await user.click(ask())
+    expect(await screen.findByText(/status succeeded/)).toBeInTheDocument()
+    expect(sent()).toEqual([{ question: 'How reliable was the tracking?' }])
+    expect(String(vi.mocked(fetch).mock.calls.at(-1)?.[0])).toContain(`/api/v1/runs/${RUN}/explain`)
+  })
+
+  it('submits with the Enter key and keeps keyboard focus in the input', async () => {
+    mock(() => json(explanation))
+    route()
+    const user = userEvent.setup()
+    await user.type(await question(), 'Which model was used?{Enter}')
+    expect(await screen.findByText(/status succeeded/)).toBeInTheDocument()
+    expect(sent()).toEqual([{ question: 'Which model was used?' }])
+    expect(await question()).toHaveFocus()
+  })
+
+  it('trims the question before sending it', async () => {
+    mock(() => json(explanation))
+    route()
+    const user = userEvent.setup()
+    await user.type(await question(), '   Was this analysis synthetic?   {Enter}')
+    await waitFor(() => expect(sent()).toEqual([{ question: 'Was this analysis synthetic?' }]))
+  })
+
+  it('shows what was asked next to the answer', async () => {
+    mock(() => json(explanation))
+    route()
+    const user = userEvent.setup()
+    await user.type(await question(), 'Which model was used?{Enter}')
+    expect(await screen.findByText('Which model was used?')).toBeInTheDocument()
+  })
+
+  it('keeps the general explanation as a request with no question', async () => {
+    mock(() => json(explanation))
+    route()
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Explain this run' }))
+    await screen.findByText(/status succeeded/)
+    expect(sent()).toEqual([{ question: null }])
+  })
+
+  it('offers example questions that fill the input without sending anything', async () => {
+    mock(() => json(explanation))
+    route()
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'How reliable was the tracking?' }))
+    expect(await question()).toHaveValue('How reliable was the tracking?')
+    expect(await question()).toHaveFocus()
+    expect(sent()).toEqual([])
+  })
+
+  it.each(['', '     '])('blocks an empty question %j', async (typed) => {
+    mock(() => json(explanation))
+    route()
+    const user = userEvent.setup()
+    const input = await question()
+    if (typed) await user.type(input, typed)
+    expect(ask()).toBeDisabled()
+    await user.type(input, '{Enter}')
+    expect(sent()).toEqual([])
+  })
+
+  it('accepts a question at the limit and refuses one past it', async () => {
+    mock(() => json(explanation))
+    route()
+    const user = userEvent.setup()
+    const input = await question()
+    await user.click(input)
+    await user.paste('x'.repeat(500))
+    expect(ask()).toBeEnabled()
+    await user.paste('y')
+    expect(ask()).toBeDisabled()
+    expect(input).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByRole('alert')).toHaveTextContent(/500 characters/)
+    await user.type(input, '{Enter}')
+    expect(sent()).toEqual([])
+  })
+
+  it('shows loading, and cannot send twice while waiting', async () => {
+    let finish: (value: Response) => void = () => {}
+    mock(() => new Promise<Response>((resolve) => { finish = resolve }))
+    route()
+    const user = userEvent.setup()
+    const input = await question()
+    await user.type(input, 'Which model was used?{Enter}')
+    expect(await screen.findByText('Generating grounded explanation…')).toBeInTheDocument()
+    expect(ask()).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Explain this run' })).toBeDisabled()
+    await user.type(input, '{Enter}')
+    expect(sent()).toHaveLength(1)
+    finish(new Response(JSON.stringify(explanation), { status: 200 }))
+    expect(await screen.findByText(/status succeeded/)).toBeInTheDocument()
+    expect(ask()).toBeEnabled()
+  })
+
+  it('replaces the previous answer on a follow-up question', async () => {
+    const answers = [{ ...explanation, answer: 'First server answer.' }, { ...explanation, answer: 'Second server answer.' }]
+    mock(() => json(answers.shift()))
+    route()
+    const user = userEvent.setup()
+    const input = await question()
+    await user.type(input, 'What is the status?{Enter}')
+    expect(await screen.findByText('First server answer.')).toBeInTheDocument()
+    await user.clear(input)
+    await user.type(input, 'Which model was used?{Enter}')
+    expect(await screen.findByText('Second server answer.')).toBeInTheDocument()
+    expect(screen.queryByText('First server answer.')).not.toBeInTheDocument()
+    expect(sent()).toEqual([{ question: 'What is the status?' }, { question: 'Which model was used?' }])
+  })
+
+  it('renders each citation with its artifact, schema and checksum', async () => {
+    mock(() => json(explanation))
+    route()
+    const user = userEvent.setup()
+    await user.type(await question(), 'How many detections were recorded?{Enter}')
+    expect(await screen.findByText('Evidence citations')).toBeInTheDocument()
+    expect(screen.getByText('diagnostics.observed_metrics.total_tracklets')).toBeInTheDocument()
+    expect(screen.getByText(/analysis-diagnostics \(footballai\.analysis-diagnostics\/v2\)/)).toHaveTextContent('aaaaaaaa')
+  })
+
+  it('renders a partial answer on an unverified run with its limits', async () => {
+    mock(() => json({ ...explanation, support_level: 'partial', output_nature: 'unverified_or_partial' }))
+    route()
+    const user = userEvent.setup()
+    await user.type(await question(), 'What do the tracking diagnostics tell us?{Enter}')
+    expect(await screen.findByText('Partially supported')).toBeInTheDocument()
+    expect(screen.getByText('Real inference not verified')).toBeInTheDocument()
+    expect(screen.getByText('Important limitations')).toBeInTheDocument()
+  })
+
+  it('treats answer text as text, never as markup', async () => {
+    mock(() => json({ ...explanation, answer: '<img src=x onerror=alert(1)>' }))
+    route()
+    const user = userEvent.setup()
+    await user.type(await question(), 'What is the status?{Enter}')
+    expect(await screen.findByText('<img src=x onerror=alert(1)>')).toBeInTheDocument()
+    expect(document.querySelector('.explain-answer img')).toBeNull()
+  })
+
+  it('keeps the question after a failure so it can be retried', async () => {
+    const replies = [json({ detail: { error_code: 'x', message: 'Evidence citation validation failed.' } }, 422), json(explanation)]
+    mock(() => replies.shift() as Promise<Response>)
+    route()
+    const user = userEvent.setup()
+    const input = await question()
+    await user.type(input, 'Which model was used?{Enter}')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Evidence citation validation failed.')
+    expect(input).toHaveValue('Which model was used?')
+    await user.click(ask())
+    expect(await screen.findByText(/status succeeded/)).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('does not show a raw network error', async () => {
+    mock(() => Promise.reject(new TypeError('connect ECONNREFUSED 127.0.0.1:8000')))
+    route()
+    const user = userEvent.setup()
+    await user.type(await question(), 'Which model was used?{Enter}')
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent(/could not reach/i)
+    expect(alert).not.toHaveTextContent('ECONNREFUSED')
+  })
+
+  it('does not blame local data when the copilot fails', async () => {
+    mock(() => json({ detail: 'Boom' }, 500))
+    route()
+    const user = userEvent.setup()
+    await user.type(await question(), 'Which model was used?{Enter}')
+    await screen.findByRole('alert')
+    expect(screen.queryByText('Local data unavailable')).not.toBeInTheDocument()
+  })
+
+  it('removes the input when the feature is disabled', async () => {
+    mock(() => json({ detail: 'Not Found' }, 404))
+    route()
+    const user = userEvent.setup()
+    await user.type(await question(), 'Which model was used?{Enter}')
+    expect(await screen.findByText(/disabled in this environment/)).toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: 'Ask about this run' })).not.toBeInTheDocument()
+  })
+
+  it.each(['queued', 'running', 'failed'])('does not accept questions on a %s run', async (status) => {
+    vi.mocked(fetch).mockImplementation((input) => String(input).endsWith('/artifacts') ? json(artifacts) : json({ ...detail, status }))
+    route()
+    expect(await question()).toBeDisabled()
+    expect(ask()).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Explain this run' })).toBeDisabled()
+    expect(screen.getByText(/Only completed/)).toBeInTheDocument()
+  })
+
+  it('announces results to assistive technology', async () => {
+    mock(() => json(explanation))
+    route()
+    const user = userEvent.setup()
+    await user.type(await question(), 'Which model was used?{Enter}')
+    await screen.findByText(/status succeeded/)
+    expect(document.querySelector('.explain-result')?.closest('[aria-live="polite"]')).not.toBeNull()
   })
 })

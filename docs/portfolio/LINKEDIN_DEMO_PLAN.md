@@ -15,10 +15,10 @@ A recording made today would mislead or fail. Four things block it:
 
 | Blocker | Evidence | Fix |
 |---|---|---|
-| The dashboard cannot ask a question | `ExplanationPanel` calls `explainRun(runId)` with no question, though the API accepts one | M2-A |
+| The dashboard cannot ask a question | Fixed in M2-A, pending merge | M2-A |
 | No verified real run exists locally | All 5 local `v1_compat` runs are version `1.0.0` with `/v1` diagnostics. The one tested returned `unverified_or_partial` | Fresh run in M0 |
 | Footage rights are not established | No licence record exists | Owner, M0 |
-| The flagship follow-up abstains | "How reliable was the tracking?" fails on the word `reliable` | M2-A |
+| The flagship follow-up abstained | Fixed in M2-A, pending merge. It now explains fragmentation and what was not measured | M2-A |
 
 The Tier C storyboard below also needs the agent, the trace view, and evaluation
 results. See the [demo ladder](AI_ENGINEERING_ROADMAP.md#demo-ladder-and-fallbacks).
@@ -87,9 +87,9 @@ Say "open source" only after the licence decision.
 |---|---|---|---|---|
 | Dashboard, run detail, artifacts | Yes | Yes | Yes | Yes |
 | Explanation panel with badges and citations | Yes | Yes | Yes | Yes |
-| Question box | **No** | Yes | Yes | Yes |
+| Question box | M2-A, in review | Yes | Yes | Yes |
 | Verified real run on shareable footage | **No** | Yes | Yes | Yes |
-| `reliable` vocabulary | **No** | Optional | Optional | Yes |
+| `reliable` vocabulary | M2-A, in review | Optional | Optional | Yes |
 | Live real model | **Never run** | No | Yes | Yes |
 | Tool-using agent | **No** | No | No | Yes |
 | Trace view | **No** | No | No | Yes |

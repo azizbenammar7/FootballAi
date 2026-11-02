@@ -81,3 +81,25 @@ describe('cloud direct upload', () => {
     expect(progress).toHaveBeenLastCalledWith(100)
   })
 })
+
+describe('explainRun', () => {
+  it('posts the question as JSON and sends no credential', async () => {
+    const fetchMock = vi.fn(() => Promise.resolve(new Response('{}', { status: 200 })))
+    vi.stubGlobal('fetch', fetchMock)
+    const { explainRun } = await import('./api')
+    await explainRun('run-1', 'How reliable was the tracking?')
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
+    expect(url).toBe('/api/v1/runs/run-1/explain')
+    expect(init.method).toBe('POST')
+    expect(JSON.parse(String(init.body))).toEqual({ question: 'How reliable was the tracking?' })
+    expect(Object.keys(init.headers as Record<string, string>).map((name) => name.toLowerCase())).toEqual(['content-type', 'accept'])
+  })
+
+  it('raises the server message and status on failure', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify({ detail: { message: 'Only completed runs.' } }), { status: 409 }))))
+    const { explainRun, ApiError } = await import('./api')
+    const failure = await explainRun('run-1').catch((reason: unknown) => reason)
+    expect(failure).toBeInstanceOf(ApiError)
+    expect(failure).toMatchObject({ message: 'Only completed runs.', status: 409 })
+  })
+})

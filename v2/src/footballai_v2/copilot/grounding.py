@@ -17,7 +17,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Iterable
+from typing import Any, Callable, Iterable, Mapping
 
 from footballai_v2.copilot.evidence import (
     SYNTHETIC_DIAGNOSTICS_SCHEMA,
@@ -40,67 +40,148 @@ SYSTEM_INSTRUCTIONS = (
 )
 
 _MAX_ANSWER_CHARS = 4000
+_MAX_MODELS_STATED = 5
+_MODEL_TOKEN_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._+-]{0,79}")
+_RELEASE_VERSION_RE = re.compile(r"v?\d+(?:\.\d+){0,3}(?:[-+][0-9A-Za-z.-]+)?")
+_SHORT_TRACKLET_KEY_RE = re.compile(r"(\d{1,4})_seconds")
+_SHORT_TRACKLET_CRITERION_RE = re.compile(r"duration_seconds < (\d{1,4})")
 
-# Claim topics a question can be routed to.
-_RUN = "run"
-_OUTPUT = "output"
-_PROVENANCE = "provenance"
-_ARTIFACTS = "artifacts"
-_COUNTS = "counts"
-_DETAIL = "detail"
-_LIMITS = "limits"
-_ALL_TOPICS = frozenset({_RUN, _OUTPUT, _PROVENANCE, _ARTIFACTS, _COUNTS, _DETAIL, _LIMITS})
+# Bumped when routing changes what a question may be answered from. Evaluation
+# datasets are bound to the routing they were labelled against; see
+# ``copilot/evaluation/routers.py``.
+ROUTING_VERSION = "copilot.routing/v2"
 
 # The claim that labels the run's provenance. It is rendered first in every
-# answer, whatever the model selected, so a label can never be dropped.
+# answer, whatever the model selected, so a label can never be dropped. It only
+# counts as an ANSWER when a route names it, so that a generic statement can never
+# stand in for an answer to something else.
 OUTPUT_NATURE_CLAIM_ID = "output_nature"
+
+_MODEL_CLAIMS = frozenset({"model_details", "model_references"})
+_TRACK_COUNT_CLAIMS = frozenset({"diag_tracking", "diag_legacy_tracking"})
+_DIAGNOSTIC_CLAIMS = _TRACK_COUNT_CLAIMS | {
+    "diag_synthetic",
+    "diag_assignment",
+    "diag_duration",
+    "diag_active",
+    "diag_short_tracklets",
+    "diag_insufficient",
+    "diag_interpretation",
+    "diag_ground_truth",
+    "diag_reliability_scope",
+}
+# Descriptive evidence, plus the statement of what it is not.
+_RELIABILITY_CLAIMS = _TRACK_COUNT_CLAIMS | {
+    "diag_synthetic",
+    "diag_duration",
+    "diag_short_tracklets",
+    "diag_insufficient",
+    "diag_reliability_scope",
+}
+_LIMIT_CLAIMS = frozenset({"missing_evidence", "boundaries"})
+# A general question gets a short overview, not every claim the run supports.
+_SUMMARY_CLAIMS = (
+    frozenset({OUTPUT_NATURE_CLAIM_ID, "run_status", "model_details", "artifact_integrity", "diag_synthetic"})
+    | _TRACK_COUNT_CLAIMS
+    | _LIMIT_CLAIMS
+)
 
 # Question routing uses a CLOSED vocabulary, not keyword matching. Every word of
 # a question must be known, so a single unknown word ("fouls", "player", "7")
 # fails closed. No football performance term is in this vocabulary, by design.
 _FUNCTION_WORDS = frozenset(
     "a about all an analysis and any are as at be been by can could did do does for from had "
-    "has have how i in is it its long many me much my of on or our please produced recorded "
-    "report reported run runs s say says show should tell that the their there this to use "
-    "used was we were what which with would you".split()
+    "has have how i important in is it its key long main many me much my of on once or our please "
+    "produced recorded report reported run runs s say says show should tell that the their "
+    "there this to us use used was we were what which with would you".split()
 )
 _GENERAL_WORDS = frozenset(
-    "describe explain explanation happened overview summarise summarize summary".split()
+    "describe explain explanation happened outcome overview result results summarise summarize "
+    "summary".split()
 )
-_TOPIC_WORDS: dict[str, tuple[str, ...]] = {
+_RELIABILITY_WORDS = frozenset("accurate accuracy reliable reliability trust trustworthy".split())
+_OUTCOME_WORDS = frozenset("complete completed fail failed finished partial succeed succeeded success successful".split())
+# A word here decides the question: broader words beside it no longer add claims.
+_SPECIFIC_WORDS: dict[str, frozenset[str]] = {
+    **dict.fromkeys(_RELIABILITY_WORDS, _RELIABILITY_CLAIMS),
+    **dict.fromkeys(("short",), frozenset({"diag_short_tracklets"})),
+    **dict.fromkeys(("ml", "model", "models", "reference", "references", "weights"), _MODEL_CLAIMS),
     **dict.fromkeys(
-        "complete completed fail failed finished origin outcome partial pipeline profile result "
-        "results state status succeed succeeded success successful version".split(),
-        (_RUN,),
+        "checksum code commit hash repo repository revision sha sha-256 sha256".split(),
+        frozenset({"provenance"}),
+    ),
+    **dict.fromkeys(("assigned", "assignment", "fraction"), frozenset({"diag_assignment"})),
+    **dict.fromkeys(("active", "simultaneous"), frozenset({"diag_active"})),
+    **dict.fromkeys(("insufficient",), frozenset({"diag_insufficient"})),
+    **dict.fromkeys(("interpretation",), frozenset({"diag_interpretation"})),
+    **dict.fromkeys(("ground", "truth"), frozenset({"diag_ground_truth"})),
+    **dict.fromkeys(("median",), frozenset({"diag_duration", "diag_active"})),
+    **dict.fromkeys(("missing",), frozenset({"missing_evidence"})),
+}
+# A word here routes only when no specific word is present.
+_BROAD_WORDS: dict[str, frozenset[str]] = {
+    **dict.fromkeys(
+        "complete completed fail failed finished origin partial pipeline profile state status "
+        "succeed succeeded success successful version".split(),
+        frozenset({"run_status"}),
     ),
     **dict.fromkeys(
         "demo demo_fast executed fake genuine inference placeholder placeholders real synthetic "
         "unverified verified".split(),
-        (_OUTPUT,),
+        frozenset({OUTPUT_NATURE_CLAIM_ID}),
     ),
     **dict.fromkeys(
-        "checksum code commit hash length provenance repo repository revision sha sha-256 sha256 "
-        "source video".split(),
-        (_PROVENANCE,),
+        ("provenance",), _MODEL_CLAIMS | {"provenance", "source_duration"}
     ),
-    **dict.fromkeys(("ml", "model", "models"), (_OUTPUT, _PROVENANCE)),
-    **dict.fromkeys("artifact artifacts file files integrity passed registered verification".split(), (_ARTIFACTS,)),
-    **dict.fromkeys("count counts detection detections total track tracklet tracklets tracks".split(), (_COUNTS,)),
     **dict.fromkeys(
-        "active assigned assignment fraction fragmentation ground insufficient interpretation "
-        "short simultaneous truth".split(),
-        (_DETAIL,),
+        "artifact artifacts file files integrity passed registered verification".split(),
+        frozenset({"artifact_integrity"}),
     ),
-    **dict.fromkeys(("duration",), (_PROVENANCE, _DETAIL)),
-    **dict.fromkeys("diagnostic diagnostics metric metrics tracked tracking".split(), (_COUNTS, _DETAIL)),
     **dict.fromkeys(
-        "available boundaries caveat caveats evidence limit limitation limitations limits measured "
-        "missing".split(),
-        (_LIMITS,),
+        "count counts detection detections total track tracklet tracklets tracks".split(),
+        _TRACK_COUNT_CLAIMS,
+    ),
+    **dict.fromkeys("diagnostic diagnostics fragmentation metric metrics tracked tracking".split(), _DIAGNOSTIC_CLAIMS),
+    **dict.fromkeys(
+        "available boundaries caveat caveats evidence limit limitation limitations limits measured".split(),
+        _LIMIT_CLAIMS,
     ),
 }
-_KNOWN_WORDS = _FUNCTION_WORDS | _GENERAL_WORDS | _TOPIC_WORDS.keys()
+# Well-formed sentences can still ask for something no claim measures, so a word
+# only counts beside the subject it describes. A length needs something with a
+# length, a quantity something countable, and "which" cannot be answered by a count.
+# A video is never a subject by itself: no claim describes what it shows.
+_LENGTH_WORDS = frozenset({"long", "length", "duration"})
+_VIDEO_WORDS = frozenset({"source", "video"})
+_TRACKLET_WORDS = frozenset({"track", "tracks", "tracklet", "tracklets"})
+_DETECTION_WORDS = frozenset({"detection", "detections"})
+_ARTIFACT_WORDS = frozenset({"artifact", "artifacts", "file", "files"})
+_QUANTITY_WORDS = frozenset({"many", "much"})
+_COUNTABLE_WORDS = (
+    _TRACKLET_WORDS | _DETECTION_WORDS | _ARTIFACT_WORDS | {"model", "models", "reference", "references"}
+)
+_LISTED_WORDS = _TRACKLET_WORDS | _DETECTION_WORDS | _ARTIFACT_WORDS
+_TRACKING_SUBJECTS = _TRACKLET_WORDS | _DETECTION_WORDS
+_SUBJECT_OF_WORD: dict[str, frozenset[str]] = {
+    **dict.fromkeys(
+        "active assigned assignment count counts fraction insufficient median short simultaneous total".split(),
+        _TRACKING_SUBJECTS,
+    ),
+    "ground": frozenset({"truth"}),
+    "truth": frozenset({"ground"}),
+    "passed": _ARTIFACT_WORDS | {"integrity", "verification"},
+}
+_KNOWN_WORDS = (
+    _FUNCTION_WORDS
+    | _GENERAL_WORDS
+    | _LENGTH_WORDS
+    | _VIDEO_WORDS
+    | _SPECIFIC_WORDS.keys()
+    | _BROAD_WORDS.keys()
+)
 _WORD_RE = re.compile(r"\w+(?:[-_]\w+)*", re.UNICODE)
+# "most" alone would admit superlatives, which no claim can answer.
+_FILLER_PHRASE_RE = re.compile(r"\bmost important\b")
 
 
 class QuestionScope(StrEnum):
@@ -111,28 +192,64 @@ class QuestionScope(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class QuestionRoute:
-    """Where a question may be answered from. No topics means abstain."""
+    """The claims a question may be answered from. None means abstain."""
 
     scope: QuestionScope
-    topics: frozenset[str]
+    claims: frozenset[str]
 
 
-_GENERAL_ROUTE = QuestionRoute(QuestionScope.GENERAL, _ALL_TOPICS)
+QuestionRouter = Callable[[str | None], QuestionRoute]
+
+_GENERAL_ROUTE = QuestionRoute(QuestionScope.GENERAL, _SUMMARY_CLAIMS)
 _UNSUPPORTED_ROUTE = QuestionRoute(QuestionScope.UNSUPPORTED, frozenset())
 
 
+def _length_claims(words: set[str]) -> frozenset[str]:
+    claims: set[str] = set()
+    if words & _VIDEO_WORDS:
+        claims.add("source_duration")
+    if words & _TRACKLET_WORDS:
+        claims.add("diag_duration")
+    return frozenset(claims)
+
+
+def _names_its_subject(words: set[str]) -> bool:
+    if words & _QUANTITY_WORDS and not words & _COUNTABLE_WORDS:
+        return False
+    if "which" in words and words & _LISTED_WORDS:
+        return False
+    if words & _OUTCOME_WORDS and words & _SPECIFIC_WORDS.keys():
+        return False  # only the run has an outcome: "Did the model fail?" has no claim
+    if words & _RELIABILITY_WORDS and words & (_VIDEO_WORDS | _LENGTH_WORDS):
+        return False  # no claim assesses the video, or the reliability of one statistic
+    return all(words & _SUBJECT_OF_WORD[word] for word in words & _SUBJECT_OF_WORD.keys())
+
+
 def route_question(question: str | None) -> QuestionRoute:
-    """Route a question to claim topics, failing closed on any unknown word."""
+    """Route a question to the claims that answer it, failing closed.
+
+    Routing is lexical: it understands vocabulary, not meaning. Its job is to stop
+    what it can, and to offer only claims about what the question names.
+    """
     text = (question or "").strip().lower()
     if not text:
         return _GENERAL_ROUTE
-    words = _WORD_RE.findall(text)
+    words = _WORD_RE.findall(_FILLER_PHRASE_RE.sub(" ", text))
     if not words or any(word not in _KNOWN_WORDS for word in words):
         return _UNSUPPORTED_ROUTE
-    topics = frozenset(topic for word in words for topic in _TOPIC_WORDS.get(word, ()))
-    if topics:
-        return QuestionRoute(QuestionScope.SUPPORTED, topics)
-    return _GENERAL_ROUTE if _GENERAL_WORDS.intersection(words) else _UNSUPPORTED_ROUTE
+    present = set(words)
+    if not _names_its_subject(present):
+        return _UNSUPPORTED_ROUTE
+    if present & _LENGTH_WORDS:
+        if "short" in present:
+            return _UNSUPPORTED_ROUTE  # the duration claim describes every tracklet
+        claims = _length_claims(present)
+        return QuestionRoute(QuestionScope.SUPPORTED, claims) if claims else _UNSUPPORTED_ROUTE
+    specific = frozenset(claim for word in words for claim in _SPECIFIC_WORDS.get(word, ()))
+    claims = specific or frozenset(claim for word in words for claim in _BROAD_WORDS.get(word, ()))
+    if present & _GENERAL_WORDS and claims <= {OUTPUT_NATURE_CLAIM_ID}:
+        return _UNSUPPORTED_ROUTE if present & _VIDEO_WORDS else _GENERAL_ROUTE
+    return QuestionRoute(QuestionScope.SUPPORTED, claims) if claims else _UNSUPPORTED_ROUTE
 
 
 def classify_question(question: str | None) -> QuestionScope:
@@ -151,7 +268,6 @@ class EvidenceClaim:
     """One server-authored factual statement plus the citations that back it."""
 
     claim_id: str
-    topic: str
     text: str
     citations: tuple[Citation, ...]
 
@@ -174,7 +290,6 @@ def _cite(evidence: ValidatedRunEvidence, field_path: str, *, from_diagnostics: 
 def _claim(
     evidence: ValidatedRunEvidence,
     claim_id: str,
-    topic: str,
     text: str,
     paths: tuple[str, ...] = (),
     *,
@@ -184,11 +299,80 @@ def _claim(
         *(_cite(evidence, path, from_diagnostics=False) for path in paths),
         *(_cite(evidence, path, from_diagnostics=True) for path in diagnostic_paths),
     )
-    return EvidenceClaim(claim_id, topic, text, tuple(item for item in cited if item is not None))
+    return EvidenceClaim(claim_id, text, tuple(item for item in cited if item is not None))
 
 
 def _rounded(value: int | float) -> int | float:
     return round(value, 2) if isinstance(value, float) else value
+
+
+def _reliability_scope(
+    evidence: ValidatedRunEvidence, diagnostic_paths: tuple[str, ...]
+) -> EvidenceClaim | None:
+    """What descriptive diagnostics are not. Withdrawn if labels might exist."""
+    diagnostics = evidence.diagnostics or {}
+    if "ground_truth_metrics" in diagnostics and diagnostics["ground_truth_metrics"].get("status") != "not_measured":
+        return None
+    return _claim(
+        evidence,
+        "diag_reliability_scope",
+        "These diagnostics describe tracking fragmentation, not accuracy. With no labelled "
+        "evaluation for this run, HOTA, IDF1, and player identity accuracy are not measured.",
+        diagnostic_paths=diagnostic_paths,
+    )
+
+
+def _short_tracklet_rows(observed: Mapping[str, Any]) -> list[tuple[int, str, int, int | float]]:
+    """Rows whose threshold, unit, and criterion agree: (seconds, key, count, %).
+
+    Keys and criteria come from the artifact, so they are parsed, never echoed.
+    """
+    rows = []
+    for key, block in (observed.get("short_tracklets") or {}).items():
+        threshold = _SHORT_TRACKLET_KEY_RE.fullmatch(key)
+        criterion = _SHORT_TRACKLET_CRITERION_RE.fullmatch(block.get("criterion") or "")
+        count, percentage = block.get("count"), block.get("percentage")
+        if threshold is None or criterion is None or threshold[1] != criterion[1]:
+            continue
+        if count is None or percentage is None or count > observed["total_tracklets"] or percentage > 100:
+            continue
+        rows.append((int(threshold[1]), key, count, percentage))
+    return sorted(rows)
+
+
+def _short_tracklet_claim(evidence: ValidatedRunEvidence, observed: Mapping[str, Any]) -> EvidenceClaim | None:
+    rows = _short_tracklet_rows(observed)
+    if not rows:
+        return None
+    parts = ", ".join(
+        f"{count} ({_rounded(percentage)}%) lasted under {seconds} second(s)" for seconds, _, count, percentage in rows
+    )
+    return _claim(
+        evidence,
+        "diag_short_tracklets",
+        f"Of {observed['total_tracklets']} temporary tracklet(s), {parts}. These counts use tracklet "
+        "duration and overlap, because a shorter threshold is included in a longer one.",
+        diagnostic_paths=tuple(f"diagnostics.observed_metrics.short_tracklets.{key}" for _, key, _, _ in rows),
+    )
+
+
+def _legacy_tracking_claims(evidence: ValidatedRunEvidence, tracking: Mapping[str, int]) -> list[EvidenceClaim]:
+    """Older-schema counts: real pipeline output, never corroboration of a real run."""
+    paths = tuple(f"diagnostics.tracking.{key}" for key in tracking)
+    claims = [
+        _claim(
+            evidence,
+            "diag_legacy_tracking",
+            f"Older-schema diagnostics report {tracking['tracked_ids']:,} temporary track ID(s) from "
+            f"{tracking['detection_rows']:,} detection row(s) across {tracking['frames_processed']:,} "
+            f"processed frame(s), with at most {tracking['max_track_observations']:,} observation(s) on "
+            "one track ID; these are descriptive fragmentation proxies, and track IDs are not verified "
+            "player identities.",
+            diagnostic_paths=paths,
+        ),
+        _reliability_scope(evidence, paths[:1]),
+    ]
+    return [claim for claim in claims if claim is not None]
 
 
 def _diagnostic_claims(evidence: ValidatedRunEvidence) -> list[EvidenceClaim]:
@@ -208,12 +392,13 @@ def _diagnostic_claims(evidence: ValidatedRunEvidence) -> list[EvidenceClaim]:
                 _claim(
                     evidence,
                     "diag_synthetic",
-                    _DETAIL,
                     "The diagnostics describe generated placeholder output; no detection or "
                     "tracking measurement was taken.",
                     diagnostic_paths=("diagnostics.data_quality",),
                 )
             )
+        elif "tracking" in diagnostics:
+            claims.extend(_legacy_tracking_claims(evidence, diagnostics["tracking"]))
         return claims
 
     observed = diagnostics["observed_metrics"]
@@ -222,7 +407,6 @@ def _diagnostic_claims(evidence: ValidatedRunEvidence) -> list[EvidenceClaim]:
         _claim(
             evidence,
             "diag_tracking",
-            _COUNTS,
             f"Tracking diagnostics report {observed['total_tracklets']} temporary tracklet(s) from "
             f"{observed['total_detections']} detection(s); these are descriptive fragmentation "
             "proxies, and track IDs are not verified player identities.",
@@ -235,7 +419,6 @@ def _diagnostic_claims(evidence: ValidatedRunEvidence) -> list[EvidenceClaim]:
             _claim(
                 evidence,
                 "diag_assignment",
-                _DETAIL,
                 f"{fraction * 100:.1f}% of detections were assigned to a temporary tracklet.",
                 diagnostic_paths=(f"{metric}.detection_assignment_fraction",),
             )
@@ -246,7 +429,6 @@ def _diagnostic_claims(evidence: ValidatedRunEvidence) -> list[EvidenceClaim]:
             _claim(
                 evidence,
                 "diag_duration",
-                _DETAIL,
                 f"Temporary tracklets lasted a median of {_rounded(duration['median'])} seconds "
                 f"(maximum {_rounded(duration['max'])} seconds).",
                 diagnostic_paths=(f"{metric}.tracklet_duration_seconds",),
@@ -258,19 +440,20 @@ def _diagnostic_claims(evidence: ValidatedRunEvidence) -> list[EvidenceClaim]:
             _claim(
                 evidence,
                 "diag_active",
-                _DETAIL,
                 f"A median of {_rounded(active['median'])} temporary tracklets were active at once "
                 f"(maximum {_rounded(active['max'])}).",
                 diagnostic_paths=(f"{metric}.active_simultaneous_tracklets",),
             )
         )
+    short = _short_tracklet_claim(evidence, observed)
+    if short is not None:
+        claims.append(short)
     insufficient = observed.get("insufficient_tracklets") or {}
     if insufficient.get("count") is not None and insufficient.get("percentage") is not None:
         claims.append(
             _claim(
                 evidence,
                 "diag_insufficient",
-                _DETAIL,
                 f"{insufficient['count']} temporary tracklet(s) ({_rounded(insufficient['percentage'])}%) "
                 "fell below the minimum observation count.",
                 diagnostic_paths=(f"{metric}.insufficient_tracklets",),
@@ -281,7 +464,6 @@ def _diagnostic_claims(evidence: ValidatedRunEvidence) -> list[EvidenceClaim]:
             _claim(
                 evidence,
                 "diag_interpretation",
-                _DETAIL,
                 "The diagnostics are descriptive only and make no identity-quality claim.",
                 diagnostic_paths=("diagnostics.interpretation.status",),
             )
@@ -291,12 +473,37 @@ def _diagnostic_claims(evidence: ValidatedRunEvidence) -> list[EvidenceClaim]:
             _claim(
                 evidence,
                 "diag_ground_truth",
-                _DETAIL,
                 "No labelled ground-truth identity metric was measured for this run.",
                 diagnostic_paths=("diagnostics.ground_truth_metrics.status",),
             )
         )
+    scope = _reliability_scope(
+        evidence,
+        ("diagnostics.ground_truth_metrics.status",)
+        if "ground_truth_metrics" in diagnostics
+        else (f"{metric}.total_tracklets",),
+    )
+    if scope is not None:
+        claims.append(scope)
     return claims
+
+
+def _model_details_text(models: Iterable[Mapping[str, Any]]) -> str:
+    """Name each recorded model. Only a version-shaped value is called a version."""
+    sentences = []
+    for model in models:
+        name, recorded = str(model.get("name")), str(model.get("version"))
+        if not (_MODEL_TOKEN_RE.fullmatch(name) and _MODEL_TOKEN_RE.fullmatch(recorded)):
+            continue  # manifest text is only repeated when it cannot carry a sentence
+        identity = (
+            f"recorded version '{recorded}'"
+            if _RELEASE_VERSION_RE.fullmatch(recorded)
+            else f"recorded label '{recorded}', which is not a release version"
+        )
+        sha256 = model.get("sha256")
+        weights = f"weights SHA-256 {sha256[:12]}" if sha256 else "no weights checksum recorded"
+        sentences.append(f"Model reference '{name}': {identity}; {weights}.")
+    return " ".join(sentences[:_MAX_MODELS_STATED])
 
 
 def build_claim_catalog(evidence: ValidatedRunEvidence) -> tuple[EvidenceClaim, ...]:
@@ -311,7 +518,6 @@ def build_claim_catalog(evidence: ValidatedRunEvidence) -> tuple[EvidenceClaim, 
         _claim(
             evidence,
             OUTPUT_NATURE_CLAIM_ID,
-            _OUTPUT,
             evidence.synthetic_explanation,
             ("output_nature.classification", "output_nature.is_synthetic"),
             diagnostic_paths=("diagnostics.schema",) if evidence.output_nature is OutputNature.VERIFIED_REAL else (),
@@ -319,7 +525,6 @@ def build_claim_catalog(evidence: ValidatedRunEvidence) -> tuple[EvidenceClaim, 
         _claim(
             evidence,
             "run_status",
-            _RUN,
             f"Analysis run {evidence.run_id[:8]} has status '{evidence.status}', produced by the "
             f"'{evidence.pipeline_profile}' profile ({evidence.pipeline_version}), with data origin "
             f"'{evidence.data_origin}'.",
@@ -328,7 +533,6 @@ def build_claim_catalog(evidence: ValidatedRunEvidence) -> tuple[EvidenceClaim, 
         _claim(
             evidence,
             "provenance",
-            _PROVENANCE,
             f"The run records code revision {str(evidence.code.get('revision'))[:12]} and source-video "
             f"SHA-256 {str(evidence.source_video.get('sha256'))[:12]}.",
             ("code.revision", "source_video.sha256"),
@@ -336,14 +540,13 @@ def build_claim_catalog(evidence: ValidatedRunEvidence) -> tuple[EvidenceClaim, 
         _claim(
             evidence,
             "model_references",
-            _PROVENANCE,
             f"The run's provenance records {len(evidence.models)} model reference(s).",
             ("models",),
         ),
+        _claim(evidence, "model_details", _model_details_text(evidence.models), ("models",)),
         _claim(
             evidence,
             "artifact_integrity",
-            _ARTIFACTS,
             f"It registered {len(evidence.artifacts)} artifact(s), of which {verified} passed "
             "SHA-256 integrity verification.",
             integrity_paths or ("artifacts",),
@@ -355,7 +558,6 @@ def build_claim_catalog(evidence: ValidatedRunEvidence) -> tuple[EvidenceClaim, 
             _claim(
                 evidence,
                 "source_duration",
-                _PROVENANCE,
                 f"The source video lasts {_rounded(duration_seconds)} seconds.",
                 ("source_video.duration_seconds",),
             )
@@ -363,13 +565,12 @@ def build_claim_catalog(evidence: ValidatedRunEvidence) -> tuple[EvidenceClaim, 
     claims.extend(_diagnostic_claims(evidence))
     if evidence.missing_evidence:
         claims.append(
-            _claim(evidence, "missing_evidence", _LIMITS, evidence.missing_evidence[0], ("missing_evidence",))
+            _claim(evidence, "missing_evidence", evidence.missing_evidence[0], ("missing_evidence",))
         )
     claims.append(
         _claim(
             evidence,
             "boundaries",
-            _LIMITS,
             "No passes, shots, possession, formations, tactics, verified physical distances, or "
             "clinical injury risks are measured or claimed for this run.",
             ("limitations",),
@@ -381,13 +582,17 @@ def build_claim_catalog(evidence: ValidatedRunEvidence) -> tuple[EvidenceClaim, 
 def eligible_claims(catalog: tuple[EvidenceClaim, ...], route: QuestionRoute) -> tuple[EvidenceClaim, ...]:
     """The claims a question may be answered from, plus the mandatory label."""
     return tuple(
-        claim for claim in catalog if claim.topic in route.topics or claim.claim_id == OUTPUT_NATURE_CLAIM_ID
+        claim for claim in catalog if claim.claim_id in route.claims or claim.claim_id == OUTPUT_NATURE_CLAIM_ID
     )
 
 
 def can_answer(eligible: tuple[EvidenceClaim, ...], route: QuestionRoute) -> bool:
-    """Whether any claim on the question's own topic exists for this run."""
-    return any(claim.topic in route.topics for claim in eligible)
+    """Whether any claim the question was routed to exists for this run.
+
+    The label only qualifies on a question routed to it, so it cannot pose as an
+    answer to something else.
+    """
+    return any(claim.claim_id in route.claims for claim in eligible)
 
 
 def render_from_selection(
