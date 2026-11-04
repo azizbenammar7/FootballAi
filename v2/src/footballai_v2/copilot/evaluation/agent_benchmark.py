@@ -2,6 +2,10 @@
 
 ``copilot-agent-eval/v2`` is a new dataset. It replays the immutable ``copilot-eval/v2``
 fixtures, pinned by hash, and keeps development and held-out cases in separate files.
+``copilot-agent-eval/v3`` uses the same fixtures and scorer, and its loader also refuses
+held-out leakage: a held-out question that repeats a development question on any
+fixture, after normalisation or as a near-duplicate, or that appears in the tool
+definitions or system instructions a model is sent. v2 stays loadable as it was.
 A script, a rule, and a real model all go through the real ``ReadOnlyAgent`` and this
 one scorer, so a script's score can never be mistaken for anything but a check that
 the scorer and the labels work. See evaluation/copilot/agent-v2/LABELLING.md.
@@ -10,6 +14,8 @@ the scorer and the labels work. See evaluation/copilot/agent-v2/LABELLING.md.
 from __future__ import annotations
 
 import hashlib
+import json
+import re
 import time
 from dataclasses import dataclass
 from enum import StrEnum
@@ -19,7 +25,7 @@ from typing import Any, Callable, Iterable, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from footballai_v2.copilot.agent.loop import AgentLimits
-from footballai_v2.copilot.agent.tools import READ_ONLY_TOOLS, ToolCallStatus, ToolErrorCode, ToolName
+from footballai_v2.copilot.agent.tools import READ_ONLY_TOOLS, ToolCallStatus, ToolErrorCode, ToolName, tool_definitions
 from footballai_v2.copilot.agent.trace import AgentStopReason
 from footballai_v2.copilot.config import CopilotSettings
 from footballai_v2.copilot.errors import ProviderFailureKind
@@ -34,13 +40,16 @@ from footballai_v2.copilot.evaluation.agent_harness import (
 from footballai_v2.copilot.evaluation.agent_models import ScriptedAgentModel, Step, call, protocol_violations, select
 from footballai_v2.copilot.evaluation.dataset import EvaluationDataset, load_dataset
 from footballai_v2.copilot.evaluation.metrics import proportion
-from footballai_v2.copilot.grounding import OUTPUT_NATURE_CLAIM_ID
+from footballai_v2.copilot.grounding import AGENT_SYSTEM_INSTRUCTIONS, OUTPUT_NATURE_CLAIM_ID, SYSTEM_INSTRUCTIONS
 from footballai_v2.copilot.models import OutputNature
 from footballai_v2.copilot.provider import AgentModel, AgentModelRequest, AgentReply
 
 
 CASES_SCHEMA = "footballai.copilot-agent-eval-cases/v2"
+CASES_SCHEMA_V3 = "footballai.copilot-agent-eval-cases/v3"
 DATASET_VERSION = "copilot-agent-eval/v2"
+DATASET_VERSION_V3 = "copilot-agent-eval/v3"
+_SCHEMA_OF_VERSION = {DATASET_VERSION: CASES_SCHEMA, DATASET_VERSION_V3: CASES_SCHEMA_V3}
 _TOOL_OF_CLAIM = {claim: spec.name for spec in READ_ONLY_TOOLS for claim in spec.claims}
 _ABSTENTIONS = frozenset(
     {
@@ -122,6 +131,18 @@ class Label(_Strict):
     rationale: str = Field(min_length=10)
     evidence: str = Field(min_length=5)
     review: Literal["pending_second_person", "agreed", "disputed"] = "pending_second_person"
+    # v3 only. Where the case came from, so nobody mistakes a case its author inspected
+    # during development for a blind one: ``v2_unchanged`` and ``v2_reworded`` name the
+    # v2 case they replace in ``supersedes``.
+    origin: Literal["v2_unchanged", "v2_reworded", "v3_new"] | None = None
+    supersedes: str | None = Field(default=None, pattern=r"^[a-z0-9-]+$")
+
+    @model_validator(mode="after")
+    def _traceable(self) -> "Label":
+        carried = self.origin in {"v2_unchanged", "v2_reworded"}
+        if carried != (self.supersedes is not None):
+            raise ValueError("a case carried from v2 names the case it supersedes, and only such a case does")
+        return self
 
 
 class BenchmarkCase(_Strict):
@@ -147,11 +168,22 @@ class _FixturePin(_Strict):
 
 
 class CaseFile(_Strict):
-    schema_id: str = Field(alias="schema", pattern=f"^{CASES_SCHEMA}$")
-    dataset_version: str = Field(pattern=f"^{DATASET_VERSION}$")
+    schema_id: str = Field(alias="schema")
+    dataset_version: Literal["copilot-agent-eval/v2", "copilot-agent-eval/v3"]
     split: Split
     fixtures: _FixturePin
     cases: tuple[BenchmarkCase, ...]
+
+    @model_validator(mode="after")
+    def _schema_matches_version(self) -> "CaseFile":
+        if self.schema_id != _SCHEMA_OF_VERSION[self.dataset_version]:
+            raise ValueError(f"{self.dataset_version} cases use schema {_SCHEMA_OF_VERSION[self.dataset_version]}")
+        has_origin = {case.label.origin is not None for case in self.cases}
+        if self.dataset_version == DATASET_VERSION_V3 and False in has_origin:
+            raise ValueError("every v3 label states its origin")
+        if self.dataset_version == DATASET_VERSION and True in has_origin:
+            raise ValueError("v2 labels predate origins; a v2 file never states one")
+        return self
 
 
 @dataclass(frozen=True, slots=True)
@@ -178,10 +210,106 @@ def _load_split(path: Path, split: Split) -> tuple[CaseFile, str]:
     return parsed, hashlib.sha256(raw).hexdigest()
 
 
+# The leakage check's words are pinned here, copied from ``copilot.routing/v2``, so whether v3
+# loads can never change because production vocabulary did. A test compares them with the
+# router: if routing changes, that test fails, and a person decides what the dataset means now.
+SIGNATURE_WORD_RE = re.compile(r"\w+(?:[-_]\w+)*", re.UNICODE)
+SIGNATURE_FUNCTION_WORDS = frozenset(
+    "a about all an analysis and any are as at be been by can could did do does for from had "
+    "has have how i important in is it its key long main many me much my of on once or our "
+    "please produced recorded report reported run runs s say says should show tell that the "
+    "their there this to us use used was we were what which with would you".split()
+)
+SIGNATURE_GENERAL_WORDS = frozenset(
+    "describe explain explanation happened outcome overview result results summarise "
+    "summarize summary".split()
+)
+
+
+def normalized_question(text: str) -> str:
+    """Lower case, punctuation and spacing removed: the words a model would read, in order."""
+    return " ".join(SIGNATURE_WORD_RE.findall(text.lower()))
+
+
+def _stem(word: str) -> str:
+    return word[:-1] if len(word) > 3 and word.endswith("s") and not word.endswith("ss") else word
+
+
+NEAR_DUPLICATE_JACCARD = 0.75
+_NOT_SUBJECT_WORDS = SIGNATURE_FUNCTION_WORDS | SIGNATURE_GENERAL_WORDS
+
+
+def question_signature(text: str) -> frozenset[str]:
+    """The words that name what a question is about, singular, in any order.
+
+    The router's function words never route, and its general words ("describe",
+    "summarize") only ask for an overview of whatever else is named, so both are left out.
+    A question made only of them has an empty signature and is compared word for word.
+    """
+    return frozenset(_stem(word) for word in SIGNATURE_WORD_RE.findall(text.lower()) if word not in _NOT_SUBJECT_WORDS)
+
+
+def _near(first: frozenset[str], second: frozenset[str]) -> bool:
+    """Mostly the same subject words: "the fraction assigned" against "the fraction assigned to a tracklet"."""
+    return bool(first and second) and len(first & second) / len(first | second) >= NEAR_DUPLICATE_JACCARD
+
+
+def prompt_texts() -> dict[str, str]:
+    """Everything a model is sent besides the question: no held-out question may be in it."""
+    return {
+        "tool_definitions": json.dumps(tool_definitions()),
+        "agent_system_instructions": AGENT_SYSTEM_INSTRUCTIONS,
+        "selection_system_instructions": SYSTEM_INSTRUCTIONS,
+    }
+
+
+@dataclass(frozen=True, slots=True)
+class LeakageFinding:
+    kind: Literal["same_question_as_dev", "near_duplicate_of_dev", "inside_prompt_text"]
+    case_id: str
+    source: str  # the development case id, or the prompt text it was found in
+
+
+def leakage_findings(
+    dev: Iterable[BenchmarkCase], heldout: Iterable[BenchmarkCase], texts: dict[str, str] | None = None
+) -> tuple[LeakageFinding, ...]:
+    """Ways a held-out question could already be known to whoever tuned on development.
+
+    Fixtures are ignored: the same words on another fixture are the same question to a
+    model, and a person who tuned a prompt on one has seen the other.
+    """
+    exact: dict[str, str] = {}
+    signatures: list[tuple[frozenset[str], str]] = []
+    for case in dev:
+        if case.mode is CaseMode.LIVE_ELIGIBLE and case.question:
+            exact.setdefault(normalized_question(case.question), case.case_id)
+            signatures.append((question_signature(case.question), case.case_id))
+    sources = {name: f" {normalized_question(text)} " for name, text in (texts or prompt_texts()).items()}
+    findings: list[LeakageFinding] = []
+    for case in heldout:
+        if case.mode is not CaseMode.LIVE_ELIGIBLE or not case.question:
+            continue
+        plain, signature = normalized_question(case.question), question_signature(case.question)
+        if plain in exact:
+            findings.append(LeakageFinding("same_question_as_dev", case.case_id, exact[plain]))
+        else:
+            similar = next((case_id for other, case_id in signatures if _near(signature, other)), None)
+            if similar is not None:
+                findings.append(LeakageFinding("near_duplicate_of_dev", case.case_id, similar))
+        findings.extend(
+            LeakageFinding("inside_prompt_text", case.case_id, name)
+            for name, text in sources.items()
+            if plain and f" {plain} " in text
+        )
+    return tuple(findings)
+
+
 def load_benchmark(directory: Path) -> BenchmarkDataset:
     """Load and cross-check both splits. Raises ``ValueError`` if invalid."""
     dev, dev_sha = _load_split(directory / "cases-dev.json", Split.DEV)
     heldout, heldout_sha = _load_split(directory / "cases-heldout.json", Split.HELDOUT)
+    if dev.dataset_version != heldout.dataset_version:
+        raise ValueError("both splits must belong to one dataset version")
     if dev.fixtures != heldout.fixtures:
         raise ValueError("both splits must replay the same fixtures")
     source = load_dataset(directory.parent / dev.fixtures.dataset)
@@ -199,7 +327,12 @@ def load_benchmark(directory: Path) -> BenchmarkDataset:
     for case in cases:
         if case.fixture not in source.fixtures.fixtures:
             raise ValueError(f"case {case.case_id} references unknown fixture {case.fixture!r}")
-    return BenchmarkDataset(DATASET_VERSION, dev.cases, heldout.cases, dev_sha, heldout_sha, source)
+    if dev.dataset_version == DATASET_VERSION_V3:
+        leaks = leakage_findings(dev.cases, heldout.cases)
+        if leaks:
+            found = sorted(f"{leak.case_id}: {leak.kind} ({leak.source})" for leak in leaks)
+            raise ValueError(f"held-out leakage: {found!r}")
+    return BenchmarkDataset(dev.dataset_version, dev.cases, heldout.cases, dev_sha, heldout_sha, source)
 
 
 class RecordingAgentModel:
@@ -413,12 +546,23 @@ __all__ = [
     "CaseMode",
     "CaseScore",
     "Category",
+    "DATASET_VERSION",
+    "DATASET_VERSION_V3",
     "Expected",
+    "LeakageFinding",
+    "NEAR_DUPLICATE_JACCARD",
+    "SIGNATURE_FUNCTION_WORDS",
+    "SIGNATURE_GENERAL_WORDS",
+    "SIGNATURE_WORD_RE",
     "Outcome",
     "RecordingAgentModel",
     "Split",
     "label_oracle_policy",
+    "leakage_findings",
     "load_benchmark",
+    "normalized_question",
+    "prompt_texts",
+    "question_signature",
     "replay_script",
     "run_case",
     "score_case",

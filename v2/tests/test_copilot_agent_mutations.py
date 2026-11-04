@@ -337,8 +337,8 @@ SCORING_MUTANTS = {
     ),
     "latency_includes_operator_stops": (
         SCORING,
-        "for score in attempted if score.owner is not Owner.OPERATOR",
-        "for score in attempted",
+        "return self.attempted and self.owner is not Owner.OPERATOR",
+        "return self.attempted",
         "test_latency_leaves_out_operator_stops",
     ),
     "untracked_code_is_ignored": (
@@ -379,8 +379,8 @@ SCORING_MUTANTS = {
     ),
     "operator_stops_join_the_denominator": (
         SCORING,
-        "attempted = [score for score in scores if score.attempted and score.owner is not Owner.OPERATOR]",
-        "attempted = [score for score in scores if score.attempted]",
+        "return self.attempted and self.owner is not Owner.OPERATOR",
+        "return self.attempted",
         "test_no_termination_disappears_and_none_is_counted_twice",
     ),
     "invalid_arguments_are_not_counted": (
@@ -436,6 +436,67 @@ SCORING_MUTANTS = {
         "or approval.max_model_requests <= PROTOCOL_PROBE_MAX_REQUESTS,",
         "or True,",
         "test_each_stage_has_its_own_bounds",
+    ),
+}
+BENCHMARK = Path("v2/src/footballai_v2/copilot/evaluation/agent_benchmark.py")
+BENCHMARK_CLI = Path("v2/src/footballai_v2/cli/copilot_agent_benchmark.py")
+DATASET_TARGETS = ["v2/tests/test_copilot_agent_dataset_v3.py"]
+
+# M3-B0.2. The v3 leakage checks, the operator-stop fix, and the unfrozen-dataset refusal.
+DATASET_MUTANTS = {
+    "exact_leakage_is_not_checked": (
+        BENCHMARK,
+        "        if plain in exact:\n",
+        "        if False:\n",
+        "test_the_v3_loader_refuses_held_out_leakage",
+    ),
+    "near_duplicates_are_not_checked": (
+        BENCHMARK,
+        "            if similar is not None:\n",
+        "            if False:\n",
+        "test_the_v3_loader_refuses_held_out_leakage",
+    ),
+    "prompt_text_is_not_checked": (
+        BENCHMARK,
+        'if plain and f" {plain} " in text',
+        "if False",
+        "test_the_v3_loader_refuses_held_out_leakage",
+    ),
+    "v3_loads_without_its_leakage_check": (
+        BENCHMARK,
+        "    if dev.dataset_version == DATASET_VERSION_V3:\n        leaks",
+        "    if False:\n        leaks",
+        "test_the_v3_loader_refuses_held_out_leakage",
+    ),
+    "a_v3_label_may_omit_its_origin": (
+        BENCHMARK,
+        "if self.dataset_version == DATASET_VERSION_V3 and False in has_origin:",
+        "if False:",
+        "test_every_v3_label_states_its_origin_and_v2_none",
+    ),
+    "operator_stops_count_against_quality": (
+        SCORING,
+        "return self.attempted and self.owner is not Owner.OPERATOR",
+        "return self.attempted",
+        "test_operator_stops_leave_every_quality_denominator",
+    ),
+    "the_signature_vocabulary_drifts_from_routing": (
+        BENCHMARK,
+        '    "a about all an analysis',
+        '    "a about all an analyses',
+        "test_the_pinned_signature_vocabulary_matches_routing_v2",
+    ),
+    "a_spend_cap_reads_as_a_finished_run": (
+        RULE,
+        '"verdict_if_accepted": _overall(as_bound, results, completed=completed).value,',
+        '"verdict_if_accepted": _overall(as_bound, results, completed=True).value,',
+        "test_a_spend_cap_is_an_incomplete_run_never_a_model_failure",
+    ),
+    "an_unfrozen_dataset_is_scored": (
+        BENCHMARK_CLI,
+        "    if not all((args.dataset / name).is_file() for name in (RULE_FILE, RULE_FILE_V2)):",
+        "    if False:",
+        "test_no_paid_or_replay_run_starts_on_a_dataset_without_its_own_rule",
     ),
 }
 # A mutant that "fails" this way broke the module, not the property under test.
@@ -515,6 +576,11 @@ def test_an_unmodified_copy_passes(mirror):
 @pytest.mark.parametrize("name", SCORING_MUTANTS)
 def test_scoring_mutant_is_caught_by_the_test_named_for_it(mirror, name):
     assert_caught_by(mirror, name, SCORING_MUTANTS[name], SCORING_TARGETS)
+
+
+@pytest.mark.parametrize("name", DATASET_MUTANTS)
+def test_dataset_mutant_is_caught_by_the_test_named_for_it(mirror, name):
+    assert_caught_by(mirror, name, DATASET_MUTANTS[name], DATASET_TARGETS)
 
 
 @pytest.mark.parametrize("name", MUTANTS)

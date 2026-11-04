@@ -115,4 +115,5 @@ offline, with scripts run through the real agent. No model was called.
 2. [x] Rule v2, proposed. Approval schema v2 and stage separation.
 3. [x] Twelve controls, old-versus-new comparison, dataset audit, committed report.
 4. [ ] Owner decides D7 to D10 in [the decision rule](COPILOT_AGENT_DECISION_RULE.md).
-5. [ ] M3-B0.2: [dataset remediation](COPILOT_AGENT_DATASET_REMEDIATION.md).
+5. [ ] M3-B0.2: [dataset remediation](COPILOT_AGENT_DATASET_REMEDIATION.md). Dataset v3
+   built offline ([results](COPILOT_AGENT_DATASET_V3.md)). Second-person review and D7 remain.

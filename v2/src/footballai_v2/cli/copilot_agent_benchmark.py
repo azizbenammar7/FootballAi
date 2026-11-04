@@ -58,6 +58,7 @@ from footballai_v2.copilot.evaluation.agent_models import (
     wrong_tool_policy,
 )
 from footballai_v2.copilot.evaluation.agent_rule import (
+    RULE_FILE,
     RULE_FILE_V2,
     DecisionRule,
     RuleStatus,
@@ -327,11 +328,56 @@ def show_fixture(dataset: BenchmarkDataset, name: str) -> dict[str, Any]:
     }
 
 
+def review_sheet(dataset: BenchmarkDataset, split: Split) -> dict[str, Any]:
+    """What a second person needs to agree or disagree with each label, and nothing else.
+
+    Blind on purpose: no score, no baseline, and no sign of whether a model can reach the
+    case, so a reviewer judges the label from the question and the fixture's claims alone.
+    """
+    claims = {name: show_fixture(dataset, name)["claims"] for name in sorted({c.fixture for c in dataset.split(split)})}
+    rows = []
+    for case in dataset.split(split):
+        expected = case.expected
+        rows.append(
+            {
+                "case_id": case.case_id,
+                "category": case.category.value,
+                "mode": case.mode.value,
+                "fixture": case.fixture,
+                "question": case.question,
+                "expected_outcome": expected.outcome.value,
+                "acceptable_terminations": [stop.value for stop in expected.terminations],
+                "required_claims": list(expected.required_claims),
+                "permitted_claims": list(expected.permitted_claims),
+                "required_tools": [tool.value for tool in expected.required_tools],
+                "forbidden_tools": [tool.value for tool in expected.forbidden_tools],
+                "rationale": case.label.rationale,
+                "evidence": case.label.evidence,
+                "origin": case.label.origin,
+                "supersedes": case.label.supersedes,
+                "reviewer_decision": "",
+                "reviewer_note": "",
+            }
+        )
+    return {
+        "dataset_version": dataset.version,
+        "split": split.value,
+        "cases_sha256": dataset.sha256(split),
+        "instructions": "For each case write 'agreed' or 'disputed' in reviewer_decision, and one sentence in "
+        "reviewer_note when disputed. Judge from the question and fixture_claims only.",
+        "fixture_claims": claims,
+        "cases": rows,
+    }
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--dataset", type=Path, required=True, help="agent-v2 dataset directory")
     parser.add_argument("--output", type=Path, help="also write the report to this JSON file")
     parser.add_argument("--show-fixture", help="print one fixture's claims, for label review")
+    parser.add_argument(
+        "--review-sheet", choices=[split.value for split in Split], help="print a blind label-review sheet for a split"
+    )
     parser.add_argument("--split", choices=[split.value for split in Split], default=Split.DEV.value)
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--preflight", action="store_true", help="check the model and count tokens. Sends no generation")
@@ -402,10 +448,20 @@ def _paid_run(args: argparse.Namespace, dataset: BenchmarkDataset) -> int:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     dataset = load_benchmark(args.dataset)
-    rule, rule_sha = load_rule(args.dataset)
-    if args.show_fixture:
+    if args.show_fixture:  # label review needs no rule, so it works on a dataset not yet frozen
         _emit(show_fixture(dataset, args.show_fixture), None)
         return 0
+    if args.review_sheet:
+        if args.output is not None and args.output.exists():  # never over a report, or a filled-in sheet
+            print("refused: output_exists")
+            return 2
+        _emit(review_sheet(dataset, Split(args.review_sheet)), args.output)
+        return 0
+    if not all((args.dataset / name).is_file() for name in (RULE_FILE, RULE_FILE_V2)):
+        # v3 has no rule until the owner freezes it, so nothing can be scored or spent against it
+        print("refused: dataset_not_frozen")
+        return 2
+    rule, rule_sha = load_rule(args.dataset)
     try:
         if args.allow_paid_calls:
             return _paid_run(args, dataset)
@@ -426,7 +482,7 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-__all__ = ["build_live_report", "build_replay_report", "main", "measurements"]
+__all__ = ["build_live_report", "build_replay_report", "main", "measurements", "review_sheet"]
 
 
 if __name__ == "__main__":

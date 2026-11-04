@@ -1,8 +1,21 @@
 # M3-B0.2 plan: agent dataset remediation
 
-**Plan only. Nothing here has been done.** M3-B0.1 measured these problems and changed no
-question or label. `copilot-agent-eval/v2` stays frozen, because its hashes are recorded in
-notes, reports, and ADR-008.
+**Status on 2026-11-04: items 1 to 3 done, offline, in `copilot-agent-eval/v3`.** Items 4
+and 5 wait on people: a second reviewer, and the owner's D7 decision. Results:
+[COPILOT_AGENT_DATASET_V3.md](COPILOT_AGENT_DATASET_V3.md). `copilot-agent-eval/v2` stays
+frozen, because its hashes are recorded in notes, reports, and ADR-008.
+
+| # | State in v3 |
+|---|---|
+| F1 | **Done.** 10 leaks found, not 7: three near-duplicates were missed. All reworded. The loader refuses same-text, near-duplicate, and prompt leaks |
+| F2 | **Done.** Reworded. The tool description is unchanged |
+| G1 | **Done.** 7 held-out injections reach a model |
+| G2 | **Done, at the minimum.** 2 cross-run questions reach a model |
+| G3 | **Not met.** Two held-out artifact-injection cases, on the one malicious fixture dev also uses. A second fixture needs a new fixture-set version |
+| G4 | **Done.** Off-topic selection is caught on 3 held-out answer cases |
+| B1 | **Confirmed structural.** 0 opportunities on v3 too. D7 package written |
+| S1 | **Done.** 36 answer and 12 non-answer held-out cases reach a model |
+| L1 | **Open.** 0 of 142 reviewed. INDEPENDENT HUMAN REVIEW PENDING |
 
 | | |
 |---|---|
@@ -55,8 +68,9 @@ Each problem has evidence in `evaluation/copilot/agent-v2/scorer-v2-report.json`
 
 ## Done when
 
-- [ ] `agent-v3` loads, and its committed replay and reliability reports reproduce.
-- [ ] The dataset audit shows 0 overlaps, 0 leaks, and at least one reachable held-out
+- [x] `agent-v3` loads, and its committed reliability report reproduces. There is no v3
+      scorer v1 replay report: no rule sits in v3 until it is frozen.
+- [x] The dataset audit shows 0 overlaps, 0 leaks, and at least one reachable held-out
       case in every live category except `unsupported`, which the router stops by design.
 - [ ] Every label is `agreed`, or `disputed` with a recorded resolution.
 - [ ] The owner has decided D7. Until then the rule cannot pass on any split.

@@ -15,6 +15,7 @@ from typing import Callable, Literal
 
 from footballai_v2.copilot.agent.loop import AgentLimits
 from footballai_v2.copilot.agent.tools import ToolName
+from footballai_v2.copilot.errors import ProviderFailureKind, ProviderUnavailableError
 from footballai_v2.copilot.evaluation.agent_benchmark import BenchmarkCase, label_oracle_policy
 from footballai_v2.copilot.evaluation.agent_models import (
     Step,
@@ -106,6 +107,26 @@ def _malformed_output(_case: BenchmarkCase) -> Policy:
     return lambda _request: say("I would rather describe the run in my own words.")
 
 
+def _invalid_tool_arguments(_case: BenchmarkCase) -> Policy:
+    """Gives every tool it needs an argument none takes, then selects what it has: nothing."""
+
+    def policy(request: AgentModelRequest) -> Step:
+        if _turn(request):
+            return select(*tool_result_claims(request.messages))
+        return call(*_offered_tools(request), arguments={"verbose": True})
+
+    return policy
+
+
+def _operator_budget_stop(_case: BenchmarkCase) -> Policy:
+    """The operator's spend cap, raised before anything is sent. Nobody's quality failure."""
+
+    def policy(_request: AgentModelRequest) -> Step:
+        return Step(error=ProviderUnavailableError("spend cap reached", kind=ProviderFailureKind.BUDGET_EXHAUSTED))
+
+    return policy
+
+
 @dataclass(frozen=True, slots=True)
 class Control:
     name: str
@@ -142,6 +163,22 @@ CONTROLS: tuple[Control, ...] = (
     ),
     Control("malformed_output", "negative_control", "Finishes with prose, not the selection", _malformed_output),
 )
+# M3-B0.2 adds two. The v2 report keeps the twelve above, so it still reproduces byte for byte.
+CONTROLS_V3: tuple[Control, ...] = (
+    *CONTROLS,
+    Control(
+        "invalid_tool_arguments",
+        "negative_control",
+        "Calls the offered tools with an argument none takes, then selects what came back",
+        _invalid_tool_arguments,
+    ),
+    Control(
+        "operator_budget_stop",
+        "negative_control",
+        "The operator's spend cap stops every question before anything is sent",
+        _operator_budget_stop,
+    ),
+)
 
 
-__all__ = ["CONTROLS", "Control", "SLOW_TURN_SECONDS", "UNREGISTERED_TOOL"]
+__all__ = ["CONTROLS", "CONTROLS_V3", "Control", "SLOW_TURN_SECONDS", "UNREGISTERED_TOOL"]

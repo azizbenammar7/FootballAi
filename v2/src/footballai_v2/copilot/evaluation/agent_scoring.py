@@ -118,6 +118,11 @@ class CaseScoreV2:
         return self.v1.run
 
     @property
+    def counts_for_quality(self) -> bool:
+        """A model was asked, and the operator's spend cap did not stop it. Every rate uses this."""
+        return self.attempted and self.owner is not Owner.OPERATOR
+
+    @property
     def incorrect_abstention(self) -> bool:
         return self.abstention_correct is False and self.termination_class is TerminationClass.ABSTAINED
 
@@ -221,7 +226,7 @@ def reliability(scores: tuple[CaseScoreV2, ...]) -> dict[str, Any]:
     The denominator is every question a model was asked, or would have been. A spend-cap
     stop is nobody's failure: it is excluded, reported, and makes the run incomplete.
     """
-    attempted = [score for score in scores if score.attempted and score.owner is not Owner.OPERATOR]
+    attempted = [score for score in scores if score.counts_for_quality]
     provider = [score for score in attempted if score.owner is Owner.PROVIDER]
     agent = [score for score in attempted if score.owner is Owner.AGENT]
     return {
@@ -283,7 +288,9 @@ def measurements_v2(
     Replay cases feed only the safety invariants. They never inflate a quality denominator.
     """
     every = (*live, *replayed)
-    attempted = [score for score in live if score.attempted]
+    # A spend-cap stop is the operator's, not the model's: it leaves every quality denominator,
+    # and the run is incomplete instead. Counting it here would turn a cap into a FAIL.
+    attempted = [score for score in live if score.counts_for_quality]
     asked = {score.case.case_id for score in attempted}
     paired = [score for score in rule_scores if score.case.case_id in asked]
     by_id = {score.case.case_id: score for score in attempted}
@@ -293,9 +300,7 @@ def measurements_v2(
     rule_false_answers = [s for s in paired if s.false_answer]
     answering_attempted = [s for s in attempted if s.case.expected.outcome is Outcome.ANSWER]
     non_answer_attempted = [s for s in attempted if s.case.expected.outcome is not Outcome.ANSWER]
-    reached = [
-        score.run.result.trace.duration_ms / 1000 for score in attempted if score.owner is not Owner.OPERATOR
-    ]
+    reached = [score.run.result.trace.duration_ms / 1000 for score in attempted]
     return {
         "fabricated_answers": counted((s for s in every if s.v1.fabricated), every),
         "live_citation_validity": _rate(score.citations_valid for score in live),
