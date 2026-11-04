@@ -3,7 +3,8 @@
 Writes three files next to this script, all derived from the dataset and the server's
 claim catalog, so a reviewer never sees a hand-copied label:
 
-- ``worksheet.csv``: one row per label, all 142, with empty human decision columns.
+- ``worksheet.csv``: one row per label, all 142, with every field of ``expected`` and
+  empty human decision columns.
 - ``DISPUTED_CASES.md``: the cases the AI pre-review triage disputed or called close,
   each with its evidence and empty HUMAN DECISION and HUMAN RATIONALE fields.
 - ``FIXTURE_CLAIMS.md``: every fixture's claims in plain English, and which tool owns each.
@@ -13,13 +14,15 @@ no row is ever written with a decision. Run from the repository root:
 
     PYTHONPATH=v2/src python evaluation/copilot/agent-v3/review/build_review_package.py
 
-It refuses to overwrite a worksheet or dossier that already holds human text.
+It refuses to overwrite a worksheet or dossier that already holds human text, including
+text in a column it does not write.
 """
 
 from __future__ import annotations
 
 import csv
 import io
+import json
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -28,6 +31,7 @@ from typing import Any
 from footballai_v2.cli.copilot_agent_benchmark import review_sheet
 from footballai_v2.copilot.agent.tools import READ_ONLY_TOOLS
 from footballai_v2.copilot.evaluation.agent_benchmark import Split, load_benchmark
+from footballai_v2.copilot.models import OutputNature
 
 
 HERE = Path(__file__).resolve().parent
@@ -37,7 +41,20 @@ DOSSIER = HERE / "DISPUTED_CASES.md"
 CLAIMS = HERE / "FIXTURE_CLAIMS.md"
 
 DECISIONS = ("ACCEPT", "CORRECT", "REJECT", "NEEDS DISCUSSION")
-HUMAN_COLUMNS = ("HUMAN_DECISION", "HUMAN_RATIONALE", "HUMAN_CORRECTION", "REVIEWER", "REVIEW_DATE")
+# Label fields with their own correction and rationale columns, so a reviewer can change
+# one without rewriting the whole label in HUMAN_CORRECTION.
+FIELD_COLUMNS = {
+    "output_nature": ("HUMAN_OUTPUT_NATURE_CORRECTION", "HUMAN_OUTPUT_NATURE_RATIONALE"),
+    "forbidden_text": ("HUMAN_FORBIDDEN_TEXT_CORRECTION", "HUMAN_FORBIDDEN_TEXT_RATIONALE"),
+}
+HUMAN_COLUMNS = (
+    "HUMAN_DECISION",
+    "HUMAN_RATIONALE",
+    "HUMAN_CORRECTION",
+    *(column for pair in FIELD_COLUMNS.values() for column in pair),
+    "REVIEWER",
+    "REVIEW_DATE",
+)
 LABEL_COLUMNS = (
     "split",
     "case_id",
@@ -52,6 +69,8 @@ LABEL_COLUMNS = (
     "permitted_claims",
     "required_tools",
     "forbidden_tools",
+    "output_nature",
+    "forbidden_text",
     "author_rationale",
     "author_evidence",
     "cases_sha256",
@@ -319,6 +338,69 @@ def _join(items: Any) -> str:
     return "; ".join(items) if items else ""
 
 
+def encode_text_list(items: Any) -> str:
+    """A list of phrases as one CSV cell, losslessly: JSON, so commas, quotes, semicolons,
+    and line breaks survive, and an empty list is ``[]`` rather than a blank cell."""
+    if items is None or isinstance(items, str):
+        raise ValueError(f"forbidden_text must be a list of phrases, got {items!r}")
+    return json.dumps(list(items), ensure_ascii=False)
+
+
+def decode_text_list(cell: str) -> list[str]:
+    """The inverse of :func:`encode_text_list`. Refuses anything the dataset could not hold.
+
+    An empty phrase is refused because the scorer checks ``phrase in answer``, and every
+    answer contains the empty string: it would mark every answer as fabricated.
+    """
+    try:
+        value = json.loads(cell)
+    except json.JSONDecodeError as error:
+        raise ValueError(f"not a JSON list of phrases: {cell!r}") from error
+    if not isinstance(value, list) or not all(isinstance(item, str) and item for item in value):
+        raise ValueError(f"not a JSON list of non-empty phrases: {cell!r}")
+    if len(set(value)) != len(value):
+        raise ValueError(f"a phrase is listed twice: {cell!r}")
+    return value
+
+
+def _output_nature(value: Any) -> str:
+    if value not in {nature.value for nature in OutputNature}:
+        raise ValueError(f"output_nature must be one of {[n.value for n in OutputNature]}, got {value!r}")
+    return str(value)
+
+
+def field_correction_problems(row: dict[str, str]) -> list[str]:
+    """What is wrong with a row's field-specific corrections. Empty when nothing is.
+
+    A correction needs its own reason and a decision that is not ACCEPT, must name a value
+    the dataset can hold, and must differ from the current label.
+    """
+    problems = []
+    decision = (row.get("HUMAN_DECISION") or "").strip()
+    for field_name, (correction_column, rationale_column) in FIELD_COLUMNS.items():
+        correction = (row.get(correction_column) or "").strip()
+        if not correction:
+            continue
+        if decision in ("", "ACCEPT"):
+            problems.append(f"{correction_column}: a correction needs a decision of CORRECT, REJECT, or NEEDS DISCUSSION")
+        if not (row.get(rationale_column) or "").strip():
+            problems.append(f"{correction_column}: a correction needs a rationale in {rationale_column}")
+        parse = _output_nature if field_name == "output_nature" else decode_text_list
+        try:
+            proposed = parse(correction)
+        except ValueError as error:
+            problems.append(f"{correction_column}: {field_name} {error}")
+            continue
+        try:
+            current = parse(row.get(field_name) or "")
+        except ValueError:
+            problems.append(f"{field_name}: the label cell itself is damaged. Rebuild the worksheet")
+            continue
+        if proposed == current:
+            problems.append(f"{correction_column}: the same as the current label. Leave it blank to keep the label")
+    return problems
+
+
 def _sheets() -> dict[str, dict[str, Any]]:
     dataset = load_benchmark(DATASET)
     return {split.value: review_sheet(dataset, split) for split in (Split.DEV, Split.HELDOUT)}
@@ -369,6 +451,8 @@ def build_rows(sheets: dict[str, dict[str, Any]] | None = None) -> list[dict[str
                     "permitted_claims": _join(case["permitted_claims"]),
                     "required_tools": _join(case["required_tools"]),
                     "forbidden_tools": _join(case["forbidden_tools"]),
+                    "output_nature": _output_nature(case["output_nature"]),
+                    "forbidden_text": encode_text_list(case["forbidden_text"]),
                     "author_rationale": case["rationale"],
                     "author_evidence": case["evidence"],
                     "cases_sha256": sheet["cases_sha256"],
@@ -388,6 +472,13 @@ def render_csv(rows: list[dict[str, str]]) -> str:
     writer.writeheader()
     writer.writerows(rows)
     return buffer.getvalue()
+
+
+def _code_cell(text: str) -> str:
+    """``text`` as inline code in a Markdown table cell: a pipe would end the cell."""
+    fence = "``" if "`" in text else "`"
+    pad = " " if fence == "``" else ""
+    return f"{fence}{pad}{text.replace('|', chr(92) + '|')}{pad}{fence}"
 
 
 def _bullets(items: Any) -> list[str]:
@@ -413,6 +504,8 @@ def render_dossier(sheets: dict[str, dict[str, Any]] | None = None) -> str:
         "",
         "Decisions: `ACCEPT` (the label is right), `CORRECT` (right idea, a field needs changing: say",
         "which), `REJECT` (the outcome is wrong), `NEEDS DISCUSSION` (you cannot decide alone).",
+        "`ACCEPT` covers every field in the table, including output nature and forbidden text. A",
+        "change to either of those two goes in its own worksheet columns (see the review README).",
         "",
         "| Priority | Case | Kind | Question |",
         "|---:|---|---|---|",
@@ -448,6 +541,8 @@ def render_dossier(sheets: dict[str, dict[str, Any]] | None = None) -> str:
             f"| Forbidden tools | {_join(f'`{t}`' for t in case['forbidden_tools']) or 'none'} |",
             f"| Required claims | {_join(f'`{c}`' for c in case['required_claims']) or 'none'} |",
             f"| Permitted claims | {_join(f'`{c}`' for c in case['permitted_claims']) or 'none'} |",
+            f"| Expected output nature | `{_output_nature(case['output_nature'])}` |",
+            f"| Forbidden text (JSON list) | {_code_cell(encode_text_list(case['forbidden_text']))} |",
             f"| Author's rationale | {case['rationale']} |",
             f"| Author's evidence | {case['evidence']} |",
             "",
@@ -521,11 +616,28 @@ def render_claims(sheets: dict[str, dict[str, Any]] | None = None) -> str:
     return "\n".join(lines) + "\n"
 
 
+# The columns this script writes itself. Text anywhere else is a person's.
+GENERATED_COLUMNS = tuple(column for column in COLUMNS if column not in HUMAN_COLUMNS)
+
+
 def _has_human_decision(path: Path) -> bool:
+    """True when any cell outside the generated columns holds text.
+
+    That covers every human column, in this layout or an older one, a column a reviewer
+    added, and cells past the end of the header (which ``csv`` files under ``None``).
+    """
     if not path.is_file():
         return False
-    with path.open(newline="", encoding="utf-8") as handle:
-        return any(row.get(column, "").strip() for row in csv.DictReader(handle) for column in HUMAN_COLUMNS)
+    # utf-8-sig: a spreadsheet may add a byte-order mark, which must not hide the header.
+    with path.open(newline="", encoding="utf-8-sig") as handle:
+        for row in csv.DictReader(handle):
+            for column, value in row.items():
+                if column in GENERATED_COLUMNS:
+                    continue
+                cells = value if isinstance(value, list) else [value]
+                if any((cell or "").strip() for cell in cells):
+                    return True
+    return False
 
 
 HUMAN_TEMPLATE = (

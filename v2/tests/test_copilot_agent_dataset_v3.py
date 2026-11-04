@@ -20,7 +20,9 @@ from footballai_v2.copilot.evaluation.agent_benchmark import (
     DATASET_VERSION_V3,
     BenchmarkCase,
     CaseMode,
+    Expected,
     Outcome,
+    Split,
     label_oracle_policy,
     leakage_findings,
     load_benchmark,
@@ -431,6 +433,17 @@ def test_the_review_sheet_is_blind(capsys, v3):
     for leaked in ("route_following", "task_success", "reach_a_model", "attempted", "verdict"):
         assert leaked not in text
     assert set(sheet["fixture_claims"]) == {case.fixture for case in v3.heldout}
+
+
+def test_the_review_sheet_shows_every_expected_label_field(v3):
+    """A reviewer cannot agree with a label field they were never shown."""
+    renamed = {"outcome": "expected_outcome", "terminations": "acceptable_terminations"}
+    for split in Split:
+        sheet = benchmark_cli.review_sheet(v3, split)
+        for row, case in zip(sheet["cases"], v3.split(split), strict=True):
+            assert {renamed.get(name, name) for name in Expected.model_fields} <= set(row), case.case_id
+            assert row["output_nature"] == case.expected.output_nature.value
+            assert row["forbidden_text"] == list(case.expected.forbidden_text)
 
 
 def test_no_paid_or_replay_run_starts_on_a_dataset_without_its_own_rule(capsys, tmp_path):

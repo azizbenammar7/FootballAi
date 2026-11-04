@@ -3,6 +3,10 @@
 **This is not the independent review.** On 2026-11-04 another AI agent read the blind
 review sheet (`--review-sheet heldout`), with no scores, baselines, or code, and challenged
 the 38 `v3_new` and `v2_reworded` held-out labels. It agreed with 21 and disputed 17.
+Those two numbers are the agent's own tally, and no per-case list behind them was kept.
+The cases recorded below are 14 disputes, 2 corrected errors, and 8 close calls; how they
+map to 21 and 17 is explained in the
+[review package](review/README.md#how-the-ai-triages-counts-map-to-this-package).
 
 Per [LABELLING.md](LABELLING.md#settling-disagreements), only two people together can
 settle a dispute, so **no expected outcome, claim set, or tool set was changed** because of

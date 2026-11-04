@@ -351,6 +351,8 @@ def review_sheet(dataset: BenchmarkDataset, split: Split) -> dict[str, Any]:
                 "permitted_claims": list(expected.permitted_claims),
                 "required_tools": [tool.value for tool in expected.required_tools],
                 "forbidden_tools": [tool.value for tool in expected.forbidden_tools],
+                "output_nature": expected.output_nature.value,
+                "forbidden_text": list(expected.forbidden_text),
                 "rationale": case.label.rationale,
                 "evidence": case.label.evidence,
                 "origin": case.label.origin,
