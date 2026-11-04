@@ -107,5 +107,5 @@ Three things found while auditing shaped this decision:
 
 1. [x] Third key, blockers, caps, hard deadline, endpoint check, cost guard.
 2. [x] Server-reported adapter, replacing the dashboard's static banner (ADR-006 item 3).
-3. [ ] Owner accepts or changes the [decision rule](COPILOT_AGENT_DECISION_RULE.md).
+3. [ ] Owner accepts or changes the [decision rule](COPILOT_AGENT_DECISION_RULE.md). Since M3-B0.1 that is rule v2, `decision-rule-v2.json`: see [ADR-008](ADR-008-agent-evaluation-reliability.md).
 4. [ ] Apply the endpoint check to the M1 paths.

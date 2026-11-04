@@ -4,7 +4,8 @@ Replay needs no SDK, key, or network, and writes a byte-reproducible report. Scr
 and a rule stand in for a model, so it checks the labels, the scorer, and the safety
 machinery. It measures no model: its verdict is always ``NOT_A_MODEL_EVALUATION``.
 
-A paid run needs an approval record for exactly that run. See
+A paid run needs an approval record for exactly that stage and run, and applies decision
+rule v2 with scorer v2. Rule v1 and scorer v1 stay for the committed baseline. See
 docs/v2/COPILOT_AGENT_REAL_MODEL.md. Exit codes: 2 refused, 3 preflight failed, 4
 stopped early, with a report.
 """
@@ -36,10 +37,12 @@ from footballai_v2.copilot.evaluation.agent_benchmark import (
 )
 from footballai_v2.copilot.evaluation.agent_harness import EVALUATION_SETTINGS
 from footballai_v2.copilot.evaluation.agent_live import (
+    STAGE_SPLITS,
     LiveRefused,
     PlannedCase,
     agent_preflight,
     check_approval,
+    current_provenance,
     endpoint_kind,
     load_approval,
     plan_benchmark,
@@ -54,7 +57,19 @@ from footballai_v2.copilot.evaluation.agent_models import (
     skip_retrieval_policy,
     wrong_tool_policy,
 )
-from footballai_v2.copilot.evaluation.agent_rule import DecisionRule, RuleStatus, evaluate_rule, load_rule
+from footballai_v2.copilot.evaluation.agent_rule import (
+    RULE_FILE_V2,
+    DecisionRule,
+    RuleStatus,
+    evaluate_rule,
+    load_rule,
+)
+from footballai_v2.copilot.evaluation.agent_scoring import (
+    SCORER_VERSION,
+    measurements_v2,
+    score_case_v2,
+    score_metrics_v2,
+)
 from footballai_v2.copilot.evaluation.fixtures import build_fixture_run
 from footballai_v2.copilot.evaluation.live import PreflightFailed, real_settings
 from footballai_v2.copilot.evaluation.metrics import proportion
@@ -239,7 +254,9 @@ def build_live_report(
     plan: tuple[PlannedCase, ...],
     model: str,
     endpoint: str,
+    provenance: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """Scored by scorer v2 against ``rule`` (rule v2). Scorer v1's numbers sit beside, for comparison."""
     cases = dataset.split(split)
     asked = tuple(score.case for score in run.scores)
     planned_ids = {item.case.case_id for item in plan}
@@ -255,6 +272,9 @@ def build_live_report(
     hostile = _replayed(_replay_cases(cases), dataset)
     completed = run.stop_reason is None and len(run.scores) == len(plan)
     traces = [score.run.result.trace for score in run.scores]
+    scored_v2 = tuple(score_case_v2(score.case, score.run) for score in scored)
+    hostile_v2 = tuple(score_case_v2(score.case, score.run) for score in hostile)
+    following_v2 = tuple(score_case_v2(score.case, score.run) for score in following)
     return {
         "schema": REPORT_SCHEMA,
         "mode": "live",
@@ -264,6 +284,9 @@ def build_live_report(
         "cases_sha256": dataset.sha256(split),
         "decision_rule_sha256": rule_sha256,
         "instruction_version": AGENT_INSTRUCTION_VERSION,
+        "scorer_version": SCORER_VERSION,
+        "provenance": {**(provenance or {}), "model": model, "cases_sha256": dataset.sha256(split),
+                       "decision_rule_sha256": rule_sha256},
         "live_model_requests": guard.requests_sent,
         "real_model_quality_measured": endpoint == "anthropic_api",
         "stop_reason": run.stop_reason,
@@ -277,12 +300,13 @@ def build_live_report(
             "requests_charged_at_worst_case": guard.requests_at_worst_case,
             "note": "The guard's charge, not a bill. A timed-out request is charged at its worst case.",
         },
-        "metrics": score_metrics(scored),
-        "hostile_replay": score_metrics(hostile),
+        "metrics": score_metrics_v2(scored_v2),
+        "metrics_scorer_v1": score_metrics(scored),
+        "hostile_replay": score_metrics_v2(hostile_v2),
         "operations": summarize_traces(traces, latency_measured=True, first_use=run.first_use),
         "decision_rule": evaluate_rule(
             rule,
-            measurements(scored, hostile, following),
+            measurements_v2(scored_v2, hostile_v2, following_v2, latency_measured=True),
             mode="live",
             endpoint=endpoint,
             split=split.value,
@@ -311,7 +335,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--split", choices=[split.value for split in Split], default=Split.DEV.value)
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--preflight", action="store_true", help="check the model and count tokens. Sends no generation")
-    parser.add_argument("--allow-paid-calls", action="store_true", help="needs --approval and both caps")
+    parser.add_argument("--allow-paid-calls", action="store_true", help="needs --stage, --approval, and both caps")
+    parser.add_argument("--stage", choices=sorted(STAGE_SPLITS), help="the approved stage: B, C, or D")
     parser.add_argument("--approval", type=Path, help="an approval record for exactly this run")
     parser.add_argument("--max-requests", type=int, default=0, help="billed model calls this run may send")
     parser.add_argument("--max-cost-usd", type=float, default=0.0)
@@ -339,12 +364,19 @@ def _check_output(args: argparse.Namespace, split: Split) -> None:
         raise LiveRefused("output_exists")
 
 
-def _paid_run(args: argparse.Namespace, dataset: BenchmarkDataset, rule: DecisionRule, rule_sha: str) -> int:
+def _paid_run(args: argparse.Namespace, dataset: BenchmarkDataset) -> int:
     split = Split(args.split)
     if args.approval is None:
         raise LiveRefused("not_approved")
+    if args.stage is None:
+        raise LiveRefused("stage_required")
+    rule, rule_sha = load_rule(args.dataset, RULE_FILE_V2)
+    if rule.scorer_version != SCORER_VERSION:
+        raise LiveRefused("rule_other_scorer")
+    provenance = current_provenance()
     check_approval(
         load_approval(args.approval),
+        stage=args.stage,
         split=split,
         model=args.model,
         max_requests=args.max_requests,
@@ -352,6 +384,7 @@ def _paid_run(args: argparse.Namespace, dataset: BenchmarkDataset, rule: Decisio
         cases_sha256=dataset.sha256(split),
         rule_sha256=rule_sha,
         rule_accepted=rule.status is RuleStatus.ACCEPTED,
+        provenance=provenance,
     )
     _check_output(args, split)
     settings = real_settings(args.model)
@@ -359,7 +392,9 @@ def _paid_run(args: argparse.Namespace, dataset: BenchmarkDataset, rule: Decisio
     agent_preflight(plan, settings)  # free, and required: a paid run never starts on an unverified model
     guard = BudgetGuard(args.max_requests, args.max_cost_usd, MODEL_PRICES[args.model])
     run = run_benchmark_live(plan, dataset, settings, guard)
-    report = build_live_report(dataset, split, rule, rule_sha, run, guard, plan, args.model, endpoint_kind())
+    report = build_live_report(
+        dataset, split, rule, rule_sha, run, guard, plan, args.model, endpoint_kind(), provenance
+    )
     _emit(report, args.output)
     return 4 if run.stop_reason is not None else 0
 
@@ -373,7 +408,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     try:
         if args.allow_paid_calls:
-            return _paid_run(args, dataset, rule, rule_sha)
+            return _paid_run(args, dataset)
         if args.preflight:
             split = Split(args.split)
             settings = real_settings(args.model)

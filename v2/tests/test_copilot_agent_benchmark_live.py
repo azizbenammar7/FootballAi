@@ -17,7 +17,7 @@ pytest.importorskip("anthropic")
 from footballai_v2.cli import copilot_agent_benchmark as cli
 from footballai_v2.copilot.evaluation import agent_live as live_module
 from footballai_v2.copilot.evaluation.agent_benchmark import Split, load_benchmark
-from footballai_v2.copilot.evaluation.agent_rule import load_rule
+from footballai_v2.copilot.evaluation.agent_rule import RULE_FILE_V2, load_rule
 
 from test_copilot_agent_sdk_contract import reply
 from test_copilot_sdk_contract import CANARY, MODEL, error_body, local_api  # noqa: F401  (a fixture)
@@ -33,22 +33,26 @@ def paid(local_api, monkeypatch, tmp_path):
     monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
     local_api.routes["/v1/models"] = (200, MODEL)
     local_api.routes["/v1/messages/count_tokens"] = (200, {"input_tokens": 500})
+    # The working tree under test may hold uncommitted edits: pin a known commit, and a clean tree.
+    monkeypatch.setattr(live_module, "source_state", lambda: ("a" * 40, True))
     dataset = load_benchmark(DATASET_DIR)
-    _rule, rule_sha = load_rule(DATASET_DIR)
+    _rule, rule_sha = load_rule(DATASET_DIR, RULE_FILE_V2)
+    pins = {key: value for key, value in live_module.current_provenance().items() if key != "source_tree_clean"}
 
     def record(**changes):
         values = {
-            "schema": "footballai.copilot-agent-live-approval/v1",
+            "schema": "footballai.copilot-agent-live-approval/v2",
             "status": "approved",
             "approved_by": "test",
             "approved_on": "2026-11-02",
-            "stage": "readiness",
+            "stage": "development",
             "split": "dev",
             "model": "claude-haiku-5-5",
             "max_model_requests": 200,
             "max_cost_usd": 2.0,
             "decision_rule_sha256": rule_sha,
             "cases_sha256": dataset.sha256(Split.DEV),
+            **pins,
             **changes,
         }
         path = tmp_path / "approval.json"
@@ -58,11 +62,11 @@ def paid(local_api, monkeypatch, tmp_path):
     return record
 
 
-def run(capsys, approval, *extra, requests="200", cost="2.0", output_path=None):
+def run(capsys, approval, *extra, requests="200", cost="2.0", output_path=None, stage="development"):
     path = output_path or Path(approval).with_name("report.json")
     code = cli.main(
-        ["--dataset", str(DATASET_DIR), "--allow-paid-calls", "--approval", approval, "--max-requests", requests,
-         "--max-cost-usd", cost, "--output", str(path), *extra]
+        ["--dataset", str(DATASET_DIR), "--allow-paid-calls", "--approval", approval, "--stage", stage,
+         "--max-requests", requests, "--max-cost-usd", cost, "--output", str(path), *extra]
     )
     output = capsys.readouterr().out
     return code, json.loads(output) if output.startswith("{") else output
@@ -200,7 +204,10 @@ def test_questions_the_router_stops_still_count_in_every_denominator(local_api, 
 
 
 def test_a_paid_run_must_keep_its_report(local_api, paid, capsys):
-    code = cli.main(["--dataset", str(DATASET_DIR), "--allow-paid-calls", "--approval", paid(), "--max-requests", "5", "--max-cost-usd", "0.1"])
+    code = cli.main(
+        ["--dataset", str(DATASET_DIR), "--allow-paid-calls", "--approval", paid(), "--stage", "development",
+         "--max-requests", "5", "--max-cost-usd", "0.1"]
+    )
     assert code == 2
     assert "output_required" in capsys.readouterr().out
     assert local_api.requests == []
@@ -218,7 +225,7 @@ def test_a_paid_run_never_overwrites_a_report(local_api, paid, capsys, tmp_path)
 
 def test_a_decision_report_has_one_fixed_home_so_it_cannot_be_rerun_elsewhere(local_api, paid, capsys, monkeypatch):
     monkeypatch.setattr(cli, "check_approval", lambda *_args, **_kwargs: None)
-    code, output = run(capsys, paid(), "--split", "heldout")
+    code, output = run(capsys, paid(), "--split", "heldout", stage="decision")
     assert code == 2
     assert "decision_report_path" in output
     assert local_api.requests == []
@@ -257,3 +264,31 @@ def test_an_interrupt_still_writes_the_report(local_api, paid, capsys, monkeypat
     code, report = run(capsys, paid())
     assert code == 4
     assert report["stop_reason"] == "interrupted"
+
+
+def test_a_report_names_the_code_that_scored_it(local_api, paid, capsys):
+    local_api.body = EMPTY_FINAL
+    _code, report = run(capsys, paid())
+    assert report["scorer_version"] == "agent-scorer/v2"
+    assert report["decision_rule"]["rule_version"] == "agent-rule/v2-proposed"
+    provenance = report["provenance"]
+    assert provenance["source_commit"] == "a" * 40 and provenance["source_tree_clean"] is True
+    assert provenance["sdk_version"] and len(provenance["system_instructions_sha256"]) == 64
+    assert report["metrics"]["termination_accounting"]["questions"] == 50
+    assert "outcome_accuracy" in report["metrics_scorer_v1"]  # the old numbers, beside the new
+
+
+def test_a_modified_source_tree_sends_nothing(local_api, paid, capsys, monkeypatch):
+    approval = paid()
+    monkeypatch.setattr(live_module, "source_state", lambda: ("a" * 40, False))
+    code, output = run(capsys, approval)
+    assert code == 2
+    assert "source_tree_modified" in output
+    assert local_api.requests == []
+
+
+def test_a_probe_approval_cannot_start_a_development_run(local_api, paid, capsys):
+    code, output = run(capsys, paid(stage="protocol_probe", max_model_requests=5), requests="5")
+    assert code == 2
+    assert "approval_other_stage" in output
+    assert local_api.requests == []

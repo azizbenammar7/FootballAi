@@ -269,6 +269,22 @@ Hostile replay failed closed on 18 of 18 development and 8 of 8 held-out cases. 
 `label_oracle` misses 5 development cases: the router stops or narrows them, so no model
 could get them right. That is the cost of the closed vocabulary, shown on purpose.
 
+### Scorer v2 and the reliability report (M3-B0.1)
+
+The table above is scorer v1, kept byte for byte. A paid run is scored by
+`agent-scorer/v2` against `decision-rule-v2.json`. v2 judges relevance and completeness
+apart from citations, gives every termination one class and owner, and states the
+opportunities behind every count. See [ADR-008](ADR-008-agent-evaluation-reliability.md).
+
+```bash
+PYTHONPATH=v2/src python -m footballai_v2.cli.copilot_agent_reliability --dataset evaluation/copilot/agent-v2
+```
+
+This writes nothing unless given `--output`, needs no SDK, key, or network, and a test
+compares it with `scorer-v2-report.json`. It holds scorer v1 beside v2 on the same runs,
+twelve controls under both rules, and a dataset audit. The control matrix is in
+[the decision rule](COPILOT_AGENT_DECISION_RULE.md#negative-controls).
+
 ## Limitations
 
 - **No model has been measured.** Tool choice, relevance, and latency are unknown.
@@ -306,34 +322,44 @@ input tokens:
 PYTHONPATH=v2/src python -m footballai_v2.cli.copilot_agent_benchmark --dataset evaluation/copilot/agent-v2 --preflight --split dev
 ```
 
-**Make an approval record.** Copy the template outside the repository, and fill it for one
-stage. `stage` is `readiness` for dev or `decision` for held-out. The hashes come from:
+**Make one approval record per stage.** Copy the template outside the repository, and
+fill it for exactly one stage: `protocol_probe` (B), `development` (C), or `decision` (D).
+Commit everything first: the runner refuses if tracked files under `v2/src` or
+`evaluation/copilot` differ from `source_commit`. The hashes come from:
 
 ```bash
-shasum -a 256 evaluation/copilot/agent-v2/decision-rule.json evaluation/copilot/agent-v2/cases-dev.json evaluation/copilot/agent-v2/cases-heldout.json
+shasum -a 256 evaluation/copilot/agent-v2/decision-rule-v2.json evaluation/copilot/agent-v2/cases-dev.json evaluation/copilot/agent-v2/cases-heldout.json
 ```
 
-**Stage B. Protocol probe.** Five requests, and it stops itself with exit code 4. This
-answers whether the API accepts these requests at all:
+The remaining pins are what the runner will compare against:
 
 ```bash
-PYTHONPATH=v2/src python -m footballai_v2.cli.copilot_agent_benchmark --dataset evaluation/copilot/agent-v2 --allow-paid-calls --approval /path/to/approval-b.json --split dev --max-requests 5 --max-cost-usd 0.02 --output /path/to/probe.json
+PYTHONPATH=v2/src python -c "import json; from footballai_v2.copilot.evaluation.agent_live import current_provenance; print(json.dumps(current_provenance(), indent=2))"
+```
+
+**Stage B. Protocol probe.** At most five requests, and it stops itself with exit code 4.
+This answers whether the API accepts these requests at all:
+
+```bash
+PYTHONPATH=v2/src python -m footballai_v2.cli.copilot_agent_benchmark --dataset evaluation/copilot/agent-v2 --allow-paid-calls --stage protocol_probe --approval /path/to/approval-b.json --split dev --max-requests 5 --max-cost-usd 0.02 --output /path/to/probe.json
 ```
 
 Review it before going on. If strict tools and `output_config.format` are refused, stop.
 The fallback is the terminal strict tool in
 [ARCHITECTURE_TARGET.md](../portfolio/ARCHITECTURE_TARGET.md).
 
-**Stage C. Readiness.** Prompt and tool-description work may follow this:
+**Stage C. Development evaluation.** Prompt and tool-description work may follow this.
+Any such change is a new commit and new hashes, so Stage D needs its own record:
 
 ```bash
-PYTHONPATH=v2/src python -m footballai_v2.cli.copilot_agent_benchmark --dataset evaluation/copilot/agent-v2 --allow-paid-calls --approval /path/to/approval-c.json --split dev --max-requests 155 --max-cost-usd 0.60 --output evaluation/copilot/agent-v2/live-dev.json
+PYTHONPATH=v2/src python -m footballai_v2.cli.copilot_agent_benchmark --dataset evaluation/copilot/agent-v2 --allow-paid-calls --stage development --approval /path/to/approval-c.json --split dev --max-requests 155 --max-cost-usd 0.60 --output evaluation/copilot/agent-v2/live-dev.json
 ```
 
-**Stage D. Decision.** Needs the rule accepted first, and changes nothing afterwards:
+**Stage D. Held-out decision.** Needs rule v2 accepted first, and changes nothing
+afterwards. On the current dataset rule v2 cannot pass: see D7 and M3-B0.2.
 
 ```bash
-PYTHONPATH=v2/src python -m footballai_v2.cli.copilot_agent_benchmark --dataset evaluation/copilot/agent-v2 --allow-paid-calls --approval /path/to/approval-d.json --split heldout --max-requests 120 --max-cost-usd 0.45 --output evaluation/copilot/agent-v2/live-heldout.json
+PYTHONPATH=v2/src python -m footballai_v2.cli.copilot_agent_benchmark --dataset evaluation/copilot/agent-v2 --allow-paid-calls --stage decision --approval /path/to/approval-d.json --split heldout --max-requests 120 --max-cost-usd 0.45 --output evaluation/copilot/agent-v2/live-heldout.json
 ```
 
 A paid run must name `--output`, and never replaces a report. Exit codes: `2` refused, `3`

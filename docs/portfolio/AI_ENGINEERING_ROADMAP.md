@@ -2,10 +2,10 @@
 
 | | |
 |---|---|
-| **Status** | Active. M1 awaiting approval. M2 merged. M3-A implemented and in review. M3-B needs separate authorization |
+| **Status** | Active. M1 awaiting approval. M2 merged. M3-A merged (PR #57). M3-B0.1 scorer hardening in review. M3-B0.2 dataset remediation next. M3-B needs separate authorization per stage |
 | **Owner** | Aziz Ben Ammar |
 | **Baseline** | `main` at `2c83cb3`, audited 2026-11-01 |
-| **Next milestone** | M3-B, controlled live agent evaluation, and M1. Each needs its own authorization |
+| **Next milestone** | M3-B0.2, dataset remediation and second-person label review. Then M3-B and M1, each stage with its own authorization |
 | **Final milestone** | [LINKEDIN DEMO & PORTFOLIO RELEASE](#m5--linkedin-demo--portfolio-release) |
 | **Publish by** | 2026-12-13 (target), with a scope decision on 2026-11-29 |
 | **Related** | [Demo plan](LINKEDIN_DEMO_PLAN.md) · [Post draft](LINKEDIN_POST_DRAFT.md) · [Current architecture](ARCHITECTURE_CURRENT.md) · [Target architecture](ARCHITECTURE_TARGET.md) |
@@ -51,6 +51,7 @@ chatbot, and it is true.
 | Grounded Copilot | **VALIDATED** | Citations, abstention, and browser checks, with the offline deterministic selector |
 | Offline scripted agent | **VALIDATED** | [Browser validation](../v2/COPILOT_AGENT.md#browser-validation), mutation tests, and baselines |
 | Real-model path | **BUILT, LOCALLY TESTED, OFF BY DEFAULT** | [Guide](../v2/COPILOT_AGENT_REAL_MODEL.md). Tested with the pinned SDK against 127.0.0.1 only |
+| Agent scorer and decision rule | **HARDENED, OFFLINE ONLY** | [ADR-008](../v2/ADR-008-agent-evaluation-reliability.md). Twelve controls, scorer v2. Rule v2 proposed, and cannot pass on the current held-out split |
 | Actual LLM tool calling | **NOT YET VALIDATED** | Never run live. Needs separate approval |
 | LinkedIn release | **PLANNED** | Nothing recorded or published |
 
@@ -65,7 +66,7 @@ chatbot, and it is true.
 | Deterministic baseline | VERIFIED, reproduced 2026-11-01 |
 | Real LLM in the copilot | IMPLEMENTED, **never run live** |
 | Tool-using agent | IMPLEMENTED offline. M2 merged. **No model has driven it.** A local-only endpoint reaches it, scripted by default. M3-A adds a gated real path, in review |
-| Agent evaluation and traces | Deterministic only. 114-case benchmark and runner in M3-A, in review. Real-model evaluation is **PLANNED** |
+| Agent evaluation and traces | Deterministic only. 114-case benchmark and runner merged in M3-A. Scorer v2, rule v2, and twelve controls in M3-B0.1. Real-model evaluation is **PLANNED** |
 | Question box in the dashboard | IMPLEMENTED in M2-A, merged. Browser-checked locally on 2026-11-01 |
 | Observability on `main` | JSON logs and health endpoints only. P6 is not merged |
 | RAG, MCP, multi-agent | Not planned. No need has been shown |
@@ -348,16 +349,26 @@ flowchart LR
 - **Code changes:** agent evaluation runner, trace records, dataset v2 cases.
 - **Tests:** as below. CI stays deterministic.
 - **Definition of done:**
-  - [x] Real-model path, cost guard, runner, traces, and benchmark. (M3-A, in review)
-  - [x] Held-out set written, separate from development cases. (M3-A, in review)
-  - [ ] Dataset reviewed by a second person.
-  - [ ] Agent decision rule accepted **before** any agent run.
+  - [x] Real-model path, cost guard, runner, traces, and benchmark. (M3-A, merged)
+  - [x] Held-out set written, separate from development cases. (M3-A, merged)
+  - [x] Scorer and rule shown able to fail: twelve controls, scorer v2, rule v2. (M3-B0.1, in review)
+  - [ ] Held-out leakage and coverage fixed: 7 overlaps, 1 tool-description leak, no
+        reachable adversarial or cross-run case. (M3-B0.2)
+  - [ ] Dataset reviewed by a second person. (M3-B0.2)
+  - [ ] Agent decision rule accepted **before** any agent run. Rule v2 cannot pass until
+        the owner decides criterion 4 (D7).
   - [ ] Paid run approved, completed, and reported. (M3-B)
   - [ ] Report states limitations and every failed case. (M3-B)
 - **Demo contribution:** the evaluation shot, and real numbers for the post.
 - **PR boundary:** M3-A holds the runner and traces. M3-B holds the results.
-- **M3-A state:** implemented with **zero paid requests**. No real model quality has been
+- **M3-A state:** merged with **zero paid requests**. No real model quality has been
   measured. See [the guide](../v2/COPILOT_AGENT_REAL_MODEL.md).
+- **M3-B0.1 state:** in review, with **zero paid requests**. The M3-B0 review found that
+  rule v1 let the deterministic baseline, and a script that picks off-topic claims, pass
+  every measurable roadmap criterion. One criterion could not fail at all, and limit stops
+  were left out of the failure rate. Scorer v2 and rule v2 fix the scoring, and the
+  dataset problems go to [M3-B0.2](../v2/COPILOT_AGENT_DATASET_REMEDIATION.md).
+  **This is evaluation engineering, not a model result.**
 
 **Metrics:**
 
@@ -401,9 +412,11 @@ acceptable, even as examples.
 | Real-model evaluation | Manual, never CI | Budgeted, approved | Quality |
 
 **Proposed agent decision rule.** Not accepted yet. It must be accepted before any
-agent run so that the result cannot choose its own bar. The full version, with
-denominators, sample limits, three proposed additions, and the human approval gate, is in
-[COPILOT_AGENT_DECISION_RULE.md](../v2/COPILOT_AGENT_DECISION_RULE.md).
+agent run so that the result cannot choose its own bar. Rule v2, with denominators,
+opportunities, sample limits, four proposed additions, the negative-control matrix, and
+the human approval gate, is in
+[COPILOT_AGENT_DECISION_RULE.md](../v2/COPILOT_AGENT_DECISION_RULE.md). Criterion 2 below
+cannot fail against `route_following`, so rule v2 proposes replacing it (D7).
 
 1. Zero fabricated answers, 100% citation validity, and 100% output-nature accuracy.
 2. No new false answer compared with the deterministic route, on the same cases.
@@ -485,8 +498,8 @@ release.
 | Permission to keep the original test-assignment wording in the README heading | M5 README | Owner | Open |
 | Dashboard question box | Every question on camera | M2-A | Merged |
 | Agent endpoint and trace view | Tier C storyboard | M2-C | Merged |
-| Agent decision rule | M3-B paid run | Owner | Proposed, with six open decisions |
-| Second-person label review | M3-B credibility | Owner | Open |
+| Agent decision rule | M3-B paid run | Owner | Rule v2 proposed, with ten open decisions (D1–D10). Cannot pass until D7 is decided |
+| Second-person label review | M3-B credibility | Owner | Open. Planned in M3-B0.2 |
 
 ## Later, not now
 

@@ -375,7 +375,8 @@ def test_every_measurement_a_criterion_names_exists(dataset, rule):
         ("max_rate", 0.05, {"rate": 0.0, "n": 5}, 20, "insufficient_sample"),
         ("max_seconds", 8.0, {"p95_seconds": 7.9, "n": 20}, 20, "pass"),
         ("max_seconds", 8.0, {"p95_seconds": 8.1, "n": 20}, 20, "fail"),
-        ("max_seconds", 8.0, {"p95_seconds": None, "n": 0}, 20, "not_measured"),
+        # M3-B0.1: nothing reached a model, so nothing could fail it. Never a pass, as before.
+        ("max_seconds", 8.0, {"p95_seconds": None, "n": 0}, 20, "not_evaluable"),
         ("min_rate", 0.9, None, 20, "not_measured"),
     ],
 )
@@ -456,20 +457,29 @@ def test_the_replay_report_gives_no_verdict(report):
 # -- the approval gate ------------------------------------------------------------------
 
 
+PINS = dict(
+    scorer_version="agent-scorer/v2", instruction_version="copilot.agent-instructions/v1",
+    system_instructions_sha256="s" * 64, tool_definitions_sha256="t" * 64, sdk_version="2.3.0",
+    source_commit="a" * 40,
+)
+
+
 def approval(**changes):
     values = dict(
         status="approved", approved_by="owner", approved_on="2026-11-03", model="claude-haiku-5-5",
-        max_model_requests=120, max_cost_usd=0.5, **DECISION,
+        max_model_requests=120, max_cost_usd=0.5, **DECISION, **PINS,
     )
-    return LiveApproval.model_validate({"schema": "footballai.copilot-agent-live-approval/v1", **{**values, **changes}})
+    return LiveApproval.model_validate({"schema": "footballai.copilot-agent-live-approval/v2", **{**values, **changes}})
 
 
 def check(record=None, **changes):
+    record = record or approval()
     arguments = dict(
-        split=Split.HELDOUT, model="claude-haiku-5-5", max_requests=120, max_cost_usd=0.5, cases_sha256="c" * 64,
-        rule_sha256="r" * 64, rule_accepted=True, environ=ENVIRONMENT,
+        stage=record.stage, split=Split.HELDOUT, model="claude-haiku-5-5", max_requests=120, max_cost_usd=0.5,
+        cases_sha256="c" * 64, rule_sha256="r" * 64, rule_accepted=True, environ=ENVIRONMENT,
+        provenance={**PINS, "source_tree_clean": True},
     )
-    check_approval(record or approval(), **{**arguments, **changes})
+    check_approval(record, **{**arguments, **changes})
 
 
 def test_a_complete_approval_passes():
@@ -504,14 +514,14 @@ def test_every_condition_is_enforced(record, changes, code):
     assert caught.value.code == code
 
 
-def test_a_readiness_run_may_not_read_the_held_out_split():
+def test_a_development_run_may_not_read_the_held_out_split():
     with pytest.raises(LiveRefused) as caught:
-        check(approval(stage="readiness"), rule_accepted=False)
-    assert caught.value.code == "readiness_cannot_read_heldout"
+        check(approval(stage="development"), rule_accepted=False)
+    assert caught.value.code == "stage_needs_dev"
 
 
-def test_a_readiness_run_on_development_cases_needs_no_accepted_rule():
-    check(approval(stage="readiness", split=Split.DEV), split=Split.DEV, rule_accepted=False)
+def test_a_development_run_on_development_cases_needs_no_accepted_rule():
+    check(approval(stage="development", split=Split.DEV), split=Split.DEV, rule_accepted=False)
 
 
 def test_a_decision_run_must_be_held_out():
@@ -546,7 +556,7 @@ def test_the_cli_refuses_the_template_itself(monkeypatch, capsys):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "canary-value-not-real")
     code = cli.main(
         ["--dataset", str(DATASET_DIR), "--allow-paid-calls", "--approval", str(DATASET_DIR / "live-approval.template.json"),
-         "--max-requests", "1", "--max-cost-usd", "0.01"]
+         "--stage", "protocol_probe", "--max-requests", "1", "--max-cost-usd", "0.01"]
     )
     assert code == 2
     assert "not_approved" in capsys.readouterr().out
@@ -555,7 +565,7 @@ def test_the_cli_refuses_the_template_itself(monkeypatch, capsys):
 def test_an_unreadable_approval_is_refused(tmp_path, capsys):
     bad = tmp_path / "approval.json"
     bad.write_text("{", encoding="utf-8")
-    code = cli.main(["--dataset", str(DATASET_DIR), "--allow-paid-calls", "--approval", str(bad)])
+    code = cli.main(["--dataset", str(DATASET_DIR), "--allow-paid-calls", "--approval", str(bad), "--stage", "development"])
     assert code == 2
     assert "unreadable_approval" in capsys.readouterr().out
 
