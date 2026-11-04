@@ -1724,7 +1724,7 @@
     },
     {
       "case_id": "h-multi-model-and-commit",
-      "category": "multiple_tools",
+      "category": "answerable",
       "mode": "live_eligible",
       "fixture": "release_version_reference",
       "question": "Which model and which code revision were used?",
@@ -2527,7 +2527,7 @@
       },
       "label": {
         "rationale": "The operator's spend cap stops the question before anything is sent. Nobody failed.",
-        "evidence": "The script is the evidence: it stands in for a model that misbehaves this way.",
+        "evidence": "The script is the evidence: it stands in for an adapter that refuses to send because the operator's spend cap is reached.",
         "origin": "v3_new"
       }
     }

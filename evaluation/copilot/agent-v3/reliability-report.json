@@ -9,7 +9,7 @@
     "dataset_version": "copilot-agent-eval/v3",
     "cases_sha256": {
       "dev": "80351d6aaf0e1dca8523a688d8fbd1b5f726cd9408b49a0ccf28d8a2fbd1e8d6",
-      "heldout": "3b089da45e0c5467f8a42d4643475523c542749b520858c594d34413b8c5f20d"
+      "heldout": "d0caff5fadcbca8a42a098ad64667d3793d346abee8dcc50b832ddf709688d71"
     },
     "fixtures_sha256": "30b8efc2cbe99686d1e8d3862e3a9dcba2f83463f9239045e20c921c89806b7b",
     "decision_rule_v2": {
@@ -119,8 +119,8 @@
         "stopped_before_a_model": 2
       },
       "answerable": {
-        "live": 22,
-        "reach_a_model": 19,
+        "live": 23,
+        "reach_a_model": 20,
         "stopped_before_a_model": 3
       },
       "corrupted_evidence": {
@@ -139,8 +139,8 @@
         "stopped_before_a_model": 3
       },
       "multiple_tools": {
-        "live": 6,
-        "reach_a_model": 6,
+        "live": 5,
+        "reach_a_model": 5,
         "stopped_before_a_model": 0
       },
       "unsupported": {

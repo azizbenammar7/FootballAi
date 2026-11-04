@@ -14,6 +14,7 @@ It replays the immutable `v2` fixtures, pinned by hash, and is scored by
 | `cases-heldout.json` | 74 held-out cases, for the decision rule once the owner freezes it |
 | `LABELLING.md` | The labelling rules, the reviewer's instructions, and how disputes are settled |
 | `LABEL_REVISIONS.md` | Every label change, with its reason |
+| `PRE_REVIEW_TRIAGE.md` | An AI agent's blind challenge of 38 labels: 17 disputes, none applied. Input for the human reviewer, **not** a review |
 | `reliability-report.json` | Coverage, leakage audit, fourteen controls under rule v2 and the three D7 options, and the routing probes. A test regenerates it byte for byte |
 
 There is **no decision rule in this directory** on purpose. v3 is not frozen: the owner

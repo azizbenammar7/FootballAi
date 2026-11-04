@@ -3,7 +3,7 @@
 | Status on 2026-11-04 | |
 |---|---|
 | Dataset | `copilot-agent-eval/v3`, in [`evaluation/copilot/agent-v3/`](../../evaluation/copilot/agent-v3/). 68 dev, 74 held-out |
-| Held-out hash | `3b089da45e0c5467f8a42d4643475523c542749b520858c594d34413b8c5f20d` (not frozen) |
+| Held-out hash | `d0caff5fadcbca8a42a098ad64667d3793d346abee8dcc50b832ddf709688d71` (not frozen) |
 | Label review | **INDEPENDENT HUMAN REVIEW PENDING.** 0 of 142 reviewed. No second reviewer named |
 | Blind evaluation | **No.** Every held-out case was inspected by its author. See [Held-out limits](#held-out-limits) |
 | Live model requests | **0** |
@@ -79,7 +79,7 @@ Three denominators, never mixed:
 | Requested class | Where it is tested | Reaches a model |
 |---|---|---|
 | Relevance, off-topic claims | `h-g4-model-hash`, `h-g4-weights-hash`, `h-g4-active-median`: the router offers a plausible wrong claim | Yes, 3 |
-| Completeness, multiple claims | 6 `multiple_tools` cases, `h-multi-assigned-ground-truth` | Yes, 7 |
+| Completeness, multiple claims | 5 `multiple_tools` cases, plus `h-multi-assigned-ground-truth` and `h-multi-model-and-commit` (two claims, one tool) | Yes, 7 |
 | Correct abstention, false answers | 10 `zero_tool_abstention` cases, 2 injections labelled abstain | Yes, 12 |
 | Incorrect abstention | Every answer case. `always_abstain` fails A and B | Yes, 36 |
 | Missing evidence | `h-gap-diagnostics-missing`, `h-gap-artifact-missing` | Yes, 2. Three more stop before a model by design |

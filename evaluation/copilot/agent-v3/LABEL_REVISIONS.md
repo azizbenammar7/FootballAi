@@ -5,6 +5,7 @@ here with its reason, and the file hashes before and after.
 
 | Date | Split | Cases | Change | Reason | By | Reviewed |
 |---|---|---|---|---|---|---|
+| 2026-11-04 | held-out | `h-multi-model-and-commit`, `h-fail-operator-budget` | Category `multiple_tools` → `answerable` (one tool owns both claims, as for `h-multi-assigned-ground-truth`). Replay evidence text corrected: a spend cap is not a misbehaving model. Outcomes, claims, and tools unchanged | Authoring errors found by the AI pre-review triage. Not a review decision | Author | No |
 | 2026-11-04 | held-out | `h-bad-corrupt-completed` | Question changed from "Did the analysis finish?" before the first commit | The router does not know "finish", so no model could be asked it. Found by the coverage check, not by any score | Author | No |
 | 2026-11-04 | both | all 142 | First version | M3-B0.2. Dev is v2 dev unchanged. Held-out: 36 v2 cases unchanged, 10 reworded for leakage, 28 new | Author | **No. INDEPENDENT HUMAN REVIEW PENDING** |
 
