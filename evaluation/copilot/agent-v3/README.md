@@ -15,6 +15,7 @@ It replays the immutable `v2` fixtures, pinned by hash, and is scored by
 | `LABELLING.md` | The labelling rules, the reviewer's instructions, and how disputes are settled |
 | `LABEL_REVISIONS.md` | Every label change, with its reason |
 | `PRE_REVIEW_TRIAGE.md` | An AI agent's blind challenge of 38 labels: 17 disputes, none applied. Input for the human reviewer, **not** a review |
+| `review/` | The human review package (M3-B0.3): a worksheet for all 142 labels, a dossier for the 24 disputed and close-call cases, and every fixture's claims in plain English. [Start here](review/README.md). 0 of 142 reviewed |
 | `reliability-report.json` | Coverage, leakage audit, fourteen controls under rule v2 and the three D7 options, and the routing probes. A test regenerates it byte for byte |
 
 There is **no decision rule in this directory** on purpose. v3 is not frozen: the owner

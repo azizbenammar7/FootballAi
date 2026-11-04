@@ -43,6 +43,10 @@ live model run", nothing more.
 
 ## Reviewer instructions
 
+**Use the [review package](review/README.md)** (M3-B0.3): a spreadsheet for all 142 labels
+with ACCEPT / CORRECT / REJECT / NEEDS DISCUSSION columns, written for a reviewer who is not a
+developer. The steps below are the same review from the command line.
+
 You need the question, the fixture's claims, and the label. You must **not** see scores,
 baselines, or whether a model can reach the case.
 

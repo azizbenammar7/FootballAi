@@ -16,6 +16,8 @@
 | Second-person label review | **Not done.** 0 of 114 v2 labels and 0 of 142 v3 labels reviewed |
 | Approval records | None |
 | Dataset v3 (M3-B0.2) | **Built, not frozen.** 48 held-out questions reach a model. Criterion 4 still has 0 opportunities; D has 12. [Results and the D7 package](COPILOT_AGENT_DATASET_V3.md#d7-decision-package) |
+| D7 decision package (M3-B0.3) | **Ready for the owner. Not accepted.** Exact proposed values, thresholds, and controls: [COPILOT_AGENT_D7_DECISION.md](COPILOT_AGENT_D7_DECISION.md) |
+| M3-B1 plan (M3-B0.3) | **Not authorized.** Recalculated pins, caps, and stop conditions for v3: [COPILOT_AGENT_M3B1_PROTOCOL_PROBE.md](COPILOT_AGENT_M3B1_PROTOCOL_PROBE.md) |
 
 Why v2 exists: [ADR-008](ADR-008-agent-evaluation-reliability.md). The dataset work it
 leaves: [M3-B0.2 plan](COPILOT_AGENT_DATASET_REMEDIATION.md).
@@ -74,7 +76,7 @@ The live report repeats every pin in its `provenance` block.
 | D4 | Cold-start latency: accept it, or run the held-out split twice | Decide after Stage C measures first-use latency |
 | D5 | Change the output schema so one grammar serves every question | Only if Stage C shows first-use timeouts |
 | D6 | Approve stages and caps | See [Proposed stages](#proposed-stages-and-caps) |
-| D7 | **Criterion 4 cannot fail.** Keep it, drop it, or replace it with D | **Replace it with D**, binding. Kept as it is, the rule can never pass. Dropped, `route_following` passes. Measured on v3: [D7 package](COPILOT_AGENT_DATASET_V3.md#d7-decision-package) |
+| D7 | **Criterion 4 cannot fail.** Keep it, drop it, or replace it with D | **Replace it with D**, binding. Kept as it is, the rule can never pass. Dropped, `route_following` passes. Measured on v3: [D7 package](COPILOT_AGENT_DATASET_V3.md#d7-decision-package). Exact values: [D7 decision](COPILOT_AGENT_D7_DECISION.md) |
 | D8 | Citation validity `min_n`: 20 (v1) or 15 (v2 proposal) | **15.** Only 20 held-out answer cases reach a model, so 20 means "answer all of them", a coverage check that B already makes. On v3, 36 reach a model, so 20 would also work |
 | D9 | Adopt scorer v2 as the scorer of record for paid runs | **Yes** |
 | D10 | Run M3-B0.2 before Stage C or D | **Yes, before Stage B,** so no live result can shape a held-out label |
@@ -83,6 +85,12 @@ To accept, edit `decision-rule-v2.json`: set `status` to `accepted`, and fill `a
 and `accepted_on`. Set `binding` on what you want to count. That changes the file's hash,
 which every approval record must then name. **Do not edit `decision-rule.json`.** A paid
 run never reads it.
+
+> **Correction (M3-B0.3): this does not work for dataset v3.** `agent-v2/decision-rule-v2.json`
+> is hash-pinned by a test and embedded in two committed reports, and a paid run reads the rule
+> from the dataset directory it runs, where the `dataset_not_frozen` gate also needs a
+> `decision-rule.json`. An accepted v3 rule must be a new file in `agent-v3`. See
+> [where an accepted rule must live](COPILOT_AGENT_D7_DECISION.md#where-an-accepted-rule-must-live-two-findings).
 
 ## Rule v2, proposed
 
@@ -288,5 +296,8 @@ bounds at the prices verified on 2026-11-02, for `claude-haiku-5-5`.
 
 Worst case for all billed stages is under $1.00. Set a monthly spend limit in the Console
 as well. M3-B0.2 changes the question counts, so these caps must be recalculated after it.
+**Recalculated for v3** in [the M3-B1 plan](COPILOT_AGENT_M3B1_PROTOCOL_PROBE.md#request-limits-and-cost-upper-bounds):
+Stage D on v3 is 48 questions, up to 240 requests, and $0.81 at worst, above the approval
+schema's 200-request ceiling.
 
 Instructions: [M3-B runbook](COPILOT_AGENT_REAL_MODEL.md#m3-b-runbook).
