@@ -24,11 +24,14 @@ from footballai_v2.copilot.models import OutputNature
 
 AGENT_CASES_FILE = "cases.json"
 AGENT_CASES_SCHEMA = "footballai.copilot-agent-eval-cases/v1"
+# Factories, so every replay raises its own exception and no traceback or telemetry is shared.
 _FAILURES = {
-    "timeout": ProviderTimeoutError("scripted timeout"),
-    "server_error": ProviderUnavailableError("scripted failure", kind=ProviderFailureKind.SERVER_ERROR),
-    "rate_limited": ProviderUnavailableError("scripted failure", kind=ProviderFailureKind.RATE_LIMITED),
-    "adapter_defect": RuntimeError("scripted defect canary-exception-text"),
+    "timeout": lambda: ProviderTimeoutError("scripted timeout"),
+    "server_error": lambda: ProviderUnavailableError("scripted failure", kind=ProviderFailureKind.SERVER_ERROR),
+    "rate_limited": lambda: ProviderUnavailableError("scripted failure", kind=ProviderFailureKind.RATE_LIMITED),
+    "adapter_defect": lambda: RuntimeError("scripted defect canary-exception-text"),
+    # The operator's spend cap, raised by the adapter before anything is sent.
+    "operator_budget": lambda: ProviderUnavailableError("scripted spend cap", kind=ProviderFailureKind.BUDGET_EXHAUSTED),
 }
 
 
@@ -66,7 +69,7 @@ class ScriptStep(_Strict):
         if self.text is not None:
             return say(self.text, takes_seconds=self.takes_seconds)
         if self.failure is not None:
-            return Step(error=_FAILURES[self.failure], takes_seconds=self.takes_seconds)
+            return Step(error=_FAILURES[self.failure](), takes_seconds=self.takes_seconds)
         if self.tool_use_without_id:
             block = tool_use_block("get_run_status", {}, None)
             return Step((thinking_block(), block), self.stop_reason)

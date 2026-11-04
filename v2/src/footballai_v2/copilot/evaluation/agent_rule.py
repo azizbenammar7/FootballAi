@@ -155,12 +155,17 @@ def _overall(rule: DecisionRule, results: list[CriterionResult], completed: bool
 
 
 def diagnostic_criteria(
-    rule: DecisionRule, measurements: dict[str, Any], *, binding: frozenset[str] | None = None
+    rule: DecisionRule,
+    measurements: dict[str, Any],
+    *,
+    binding: frozenset[str] | None = None,
+    completed: bool = True,
 ) -> dict[str, Any]:
     """Every criterion applied to a scripted control, for testing the rule itself.
 
     Never a model verdict: ``evaluate_rule`` stays the only way to one. The verdict here is
     what an accepted rule *would* say, with ``binding`` naming the criteria that count.
+    ``completed`` is False when the operator's spend cap stopped any question.
     """
     results = [apply_criterion(criterion, measurements.get(criterion.measurement)) for criterion in rule.criteria]
     chosen = binding if binding is not None else frozenset(c.criterion_id for c in rule.criteria if c.binding)
@@ -169,7 +174,7 @@ def diagnostic_criteria(
     )
     by_id = {criterion.criterion_id: criterion for criterion in rule.criteria}
     return {
-        "verdict_if_accepted": _overall(as_bound, results, completed=True).value,
+        "verdict_if_accepted": _overall(as_bound, results, completed=completed).value,
         "criteria": [
             {
                 "criterion": item.criterion_id,

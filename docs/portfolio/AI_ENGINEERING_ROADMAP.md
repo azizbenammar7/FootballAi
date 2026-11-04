@@ -2,10 +2,10 @@
 
 | | |
 |---|---|
-| **Status** | Active. M1 awaiting approval. M2 merged. M3-A merged (PR #57). M3-B0.1 scorer hardening in review. M3-B0.2 dataset remediation next. M3-B needs separate authorization per stage |
+| **Status** | Active. M1 awaiting approval. M2 merged. M3-A merged (PR #57). M3-B0.1 merged (PR #59). M3-B0.2 dataset v3 in review: built offline, label review and D7 pending. M3-B needs separate authorization per stage |
 | **Owner** | Aziz Ben Ammar |
 | **Baseline** | `main` at `2c83cb3`, audited 2026-11-01 |
-| **Next milestone** | M3-B0.2, dataset remediation and second-person label review. Then M3-B and M1, each stage with its own authorization |
+| **Next milestone** | Close M3-B0.2: second-person label review of v3, and the owner's D7 decision. Then M3-B and M1, each stage with its own authorization |
 | **Final milestone** | [LINKEDIN DEMO & PORTFOLIO RELEASE](#m5--linkedin-demo--portfolio-release) |
 | **Publish by** | 2026-12-13 (target), with a scope decision on 2026-11-29 |
 | **Related** | [Demo plan](LINKEDIN_DEMO_PLAN.md) · [Post draft](LINKEDIN_POST_DRAFT.md) · [Current architecture](ARCHITECTURE_CURRENT.md) · [Target architecture](ARCHITECTURE_TARGET.md) |
@@ -51,9 +51,10 @@ chatbot, and it is true.
 | Grounded Copilot | **VALIDATED** | Citations, abstention, and browser checks, with the offline deterministic selector |
 | Offline scripted agent | **VALIDATED** | [Browser validation](../v2/COPILOT_AGENT.md#browser-validation), mutation tests, and baselines |
 | Real-model path | **BUILT, LOCALLY TESTED, OFF BY DEFAULT** | [Guide](../v2/COPILOT_AGENT_REAL_MODEL.md). Tested with the pinned SDK against 127.0.0.1 only |
-| Agent scorer and decision rule | **HARDENED, OFFLINE ONLY** | [ADR-008](../v2/ADR-008-agent-evaluation-reliability.md). Twelve controls, scorer v2. Rule v2 proposed, and cannot pass on the current held-out split |
+| Agent scorer and decision rule | **HARDENED, OFFLINE ONLY** | [ADR-008](../v2/ADR-008-agent-evaluation-reliability.md). Fourteen controls, scorer v2. Rule v2 proposed, and cannot pass until the owner decides D7 |
+| Agent evaluation dataset v3 | **BUILT, OFFLINE ONLY. NOT REVIEWED, NOT FROZEN** | [Dataset v3](../v2/COPILOT_AGENT_DATASET_V3.md). 0 leaks; 48 held-out questions reach a model. INDEPENDENT HUMAN REVIEW PENDING |
 | Actual LLM tool calling | **NOT YET VALIDATED** | Never run live. Needs separate approval |
-| LinkedIn release | **PLANNED** | Nothing recorded or published |
+| LinkedIn release | **PLANNED** | Nothing recorded or published. Still needed: architecture diagram, 60–90 s product video, agent trace shot, evaluation results, technical post, README. The v3 report is offline evaluation engineering and must not be posted as model performance |
 
 ## Actual versus planned
 
@@ -66,7 +67,7 @@ chatbot, and it is true.
 | Deterministic baseline | VERIFIED, reproduced 2026-11-01 |
 | Real LLM in the copilot | IMPLEMENTED, **never run live** |
 | Tool-using agent | IMPLEMENTED offline. M2 merged. **No model has driven it.** A local-only endpoint reaches it, scripted by default. M3-A adds a gated real path, in review |
-| Agent evaluation and traces | Deterministic only. 114-case benchmark and runner merged in M3-A. Scorer v2, rule v2, and twelve controls in M3-B0.1. Real-model evaluation is **PLANNED** |
+| Agent evaluation and traces | Deterministic only. 114-case benchmark and runner merged in M3-A. Scorer v2, rule v2, and twelve controls in M3-B0.1. 142-case dataset v3 and two more controls in M3-B0.2, in review. Real-model evaluation is **PLANNED** |
 | Question box in the dashboard | IMPLEMENTED in M2-A, merged. Browser-checked locally on 2026-11-01 |
 | Observability on `main` | JSON logs and health endpoints only. P6 is not merged |
 | RAG, MCP, multi-agent | Not planned. No need has been shown |
@@ -351,10 +352,10 @@ flowchart LR
 - **Definition of done:**
   - [x] Real-model path, cost guard, runner, traces, and benchmark. (M3-A, merged)
   - [x] Held-out set written, separate from development cases. (M3-A, merged)
-  - [x] Scorer and rule shown able to fail: twelve controls, scorer v2, rule v2. (M3-B0.1, in review)
-  - [ ] Held-out leakage and coverage fixed: 7 overlaps, 1 tool-description leak, no
-        reachable adversarial or cross-run case. (M3-B0.2)
-  - [ ] Dataset reviewed by a second person. (M3-B0.2)
+  - [x] Scorer and rule shown able to fail: twelve controls, scorer v2, rule v2. (M3-B0.1, merged)
+  - [x] Held-out leakage and coverage fixed in dataset v3: 10 leaks reworded, 0 left;
+        7 injections and 2 cross-run questions reach a model. (M3-B0.2, in review)
+  - [ ] Dataset reviewed by a second person. (M3-B0.2. INDEPENDENT HUMAN REVIEW PENDING)
   - [ ] Agent decision rule accepted **before** any agent run. Rule v2 cannot pass until
         the owner decides criterion 4 (D7).
   - [ ] Paid run approved, completed, and reported. (M3-B)
@@ -369,6 +370,13 @@ flowchart LR
   were left out of the failure rate. Scorer v2 and rule v2 fix the scoring, and the
   dataset problems go to [M3-B0.2](../v2/COPILOT_AGENT_DATASET_REMEDIATION.md).
   **This is evaluation engineering, not a model result.**
+- **M3-B0.2 state:** in review, with **zero paid requests**. [Dataset v3](../v2/COPILOT_AGENT_DATASET_V3.md)
+  replaces the leaking held-out questions and adds cases a model can reach: 36 answer and
+  12 non-answer. It confirms criterion 4 has no opportunities on any dataset, and measures
+  the three D7 options: only replacing 4 with D fails the deterministic baseline and every
+  negative control. It found and fixed a scorer defect that let a spend cap read as a model
+  failure, and found two router defects (R1, R2), documented and not fixed. Not blind,
+  not reviewed. Open: second-person review, D7, and freezing v3. Then Stage A and B.
 
 **Metrics:**
 
@@ -499,7 +507,8 @@ release.
 | Dashboard question box | Every question on camera | M2-A | Merged |
 | Agent endpoint and trace view | Tier C storyboard | M2-C | Merged |
 | Agent decision rule | M3-B paid run | Owner | Rule v2 proposed, with ten open decisions (D1–D10). Cannot pass until D7 is decided |
-| Second-person label review | M3-B credibility | Owner | Open. Planned in M3-B0.2 |
+| Second-person label review | M3-B credibility | Owner | Open. Dataset v3 and a blind review sheet are ready. No reviewer named |
+| Router narrowing R1, R2 | Answer quality on two question shapes | Owner | Found in M3-B0.2. Pinned by strict `xfail` tests. Needs a routing version bump |
 
 ## Later, not now
 
