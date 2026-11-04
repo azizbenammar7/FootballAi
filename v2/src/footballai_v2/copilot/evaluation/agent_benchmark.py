@@ -18,6 +18,7 @@ from typing import Any, Callable, Iterable, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from footballai_v2.copilot.agent.loop import AgentLimits
 from footballai_v2.copilot.agent.tools import READ_ONLY_TOOLS, ToolCallStatus, ToolErrorCode, ToolName
 from footballai_v2.copilot.agent.trace import AgentStopReason
 from footballai_v2.copilot.config import CopilotSettings
@@ -327,11 +328,13 @@ def run_case(
     *,
     settings: CopilotSettings = EVALUATION_SETTINGS,
     real_time: bool = False,
+    limits: AgentLimits | None = None,
 ) -> CaseScore:
     def recording(clock: Any) -> RecordingAgentModel:
         return RecordingAgentModel(model_for(clock))
 
-    return score_case(case, run_agent(source, case.fixture, case.question, recording, settings=settings, real_time=real_time))
+    run = run_agent(source, case.fixture, case.question, recording, settings=settings, real_time=real_time, limits=limits)
+    return score_case(case, run)
 
 
 def replay_script(case: BenchmarkCase) -> Callable[[Any], ScriptedAgentModel]:

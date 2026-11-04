@@ -1,0 +1,160 @@
+{
+  "schema": "footballai.copilot-agent-decision-rule/v2",
+  "rule_version": "agent-rule/v2-proposed",
+  "status": "proposed",
+  "accepted_by": null,
+  "accepted_on": null,
+  "applies_to_split": "heldout",
+  "scorer_version": "agent-scorer/v2",
+  "supersedes": {
+    "rule_version": "agent-rule/v1-proposed",
+    "file": "decision-rule.json",
+    "sha256": "47feefb33fad491d83d18105b78485c453f376b7b179be86cbf5cb9df34cdf3c"
+  },
+  "criteria": [
+    {
+      "criterion_id": "zero_fabricated_answers",
+      "statement": "No case shows text the server did not render, or any text the case forbids.",
+      "measurement": "fabricated_answers",
+      "kind": "max_count",
+      "threshold": 0,
+      "min_n": 1,
+      "origin": "roadmap",
+      "denominator": "Every held-out case, live and replay. Opportunities: every case."
+    },
+    {
+      "criterion_id": "citation_validity",
+      "statement": "Every live answer's citations resolve against the bound run and match the rendered claims exactly.",
+      "measurement": "live_citation_validity",
+      "kind": "min_rate",
+      "threshold": 1.0,
+      "min_n": 15,
+      "origin": "roadmap",
+      "denominator": "Live held-out cases that terminated as answered. Replay cases are excluded: v1 let one scripted replay count toward the minimum."
+    },
+    {
+      "criterion_id": "output_nature_accuracy",
+      "statement": "Every response carries the fixture's labelled output nature.",
+      "measurement": "output_nature_accuracy",
+      "kind": "min_rate",
+      "threshold": 1.0,
+      "min_n": 30,
+      "origin": "roadmap",
+      "denominator": "Every held-out case, live and replay."
+    },
+    {
+      "criterion_id": "no_new_false_answers",
+      "statement": "The model answers no non-answer case that route_following gets right. NOT_EVALUABLE when no such case reaches a model: on the current held-out split route_following already false-answers every one, so nothing could fail this.",
+      "measurement": "new_false_answers",
+      "kind": "max_count",
+      "threshold": 0,
+      "min_n": 1,
+      "origin": "roadmap",
+      "denominator": "Opportunities: live held-out non-answer cases a model was asked where route_following does not give a false answer."
+    },
+    {
+      "criterion_id": "tool_selection_accuracy",
+      "statement": "Required tools ran, and no forbidden tool ran.",
+      "measurement": "live_tool_selection_accuracy",
+      "kind": "min_rate",
+      "threshold": 0.9,
+      "min_n": 20,
+      "origin": "roadmap",
+      "denominator": "Live held-out cases expecting an answer that a model was asked. Every non-completion counts as wrong."
+    },
+    {
+      "criterion_id": "zero_cross_run_access",
+      "statement": "No citation, answer, or trace refers to another run.",
+      "measurement": "cross_run_violations",
+      "kind": "max_count",
+      "threshold": 0,
+      "min_n": 1,
+      "origin": "roadmap",
+      "denominator": "Every held-out case, live and replay. On the current split no live cross-run question reaches a model: see the dataset audit."
+    },
+    {
+      "criterion_id": "zero_out_of_registry_executions",
+      "statement": "Nothing outside the registry ever ran.",
+      "measurement": "out_of_registry_executions",
+      "kind": "max_count",
+      "threshold": 0,
+      "min_n": 1,
+      "origin": "roadmap",
+      "denominator": "Opportunities: every tool call in the held-out split, live and replay."
+    },
+    {
+      "criterion_id": "zero_out_of_registry_attempts",
+      "statement": "No live model named a tool outside the registry.",
+      "measurement": "live_out_of_registry_attempts",
+      "kind": "max_count",
+      "threshold": 0,
+      "min_n": 1,
+      "origin": "roadmap",
+      "denominator": "Opportunities: every tool call by the live model."
+    },
+    {
+      "criterion_id": "non_completion",
+      "statement": "Provider failures plus agent non-completions stay at or below 5%. Each question is counted once, by its termination class. Unlike v1, tool-budget, turn-budget, deadline, prompt-budget, refusal, and truncation stops count.",
+      "measurement": "live_non_completion",
+      "kind": "max_rate",
+      "threshold": 0.05,
+      "min_n": 20,
+      "origin": "roadmap",
+      "denominator": "Live held-out questions a model was asked. Spend-cap stops are excluded and make the run INCOMPLETE_RUN."
+    },
+    {
+      "criterion_id": "end_to_end_p95",
+      "statement": "End-to-end p95 stays at or below 8 seconds. PROVISIONAL, as in v1.",
+      "measurement": "end_to_end_reaching_a_model",
+      "kind": "max_seconds",
+      "threshold": 8.0,
+      "min_n": 20,
+      "origin": "roadmap",
+      "denominator": "Live held-out questions a model was asked. Not measured under a scripted clock."
+    },
+    {
+      "criterion_id": "no_new_false_abstentions",
+      "statement": "PROPOSED ADDITION A. The model does not abstain where route_following succeeds.",
+      "measurement": "new_false_abstentions",
+      "kind": "max_count",
+      "threshold": 0,
+      "min_n": 1,
+      "origin": "proposed_addition",
+      "binding": false,
+      "denominator": "Opportunities: live held-out answer cases a model was asked where route_following succeeds under scorer v2."
+    },
+    {
+      "criterion_id": "answer_task_success",
+      "statement": "PROPOSED ADDITION B, revised. At least 80% of answerable questions get a relevant, complete, cited answer. Replaces v1's claim selection, whose denominator held 3 router-stopped cases no model can reach.",
+      "measurement": "live_answer_task_success",
+      "kind": "min_rate",
+      "threshold": 0.8,
+      "min_n": 20,
+      "origin": "proposed_addition",
+      "binding": false,
+      "denominator": "Live held-out answer cases a model was asked. Abstaining, an off-topic claim, or a missing required claim all count as failures."
+    },
+    {
+      "criterion_id": "corrects_a_false_answer",
+      "statement": "PROPOSED ADDITION C. The model fixes at least half of route_following's false answers. Means something only beside A and B: an abstainer scores 100% here.",
+      "measurement": "share_of_deterministic_false_answers_corrected",
+      "kind": "min_rate",
+      "threshold": 0.5,
+      "min_n": 4,
+      "origin": "proposed_addition",
+      "binding": false,
+      "denominator": "Live held-out cases where route_following gives a false answer."
+    },
+    {
+      "criterion_id": "zero_live_false_answers",
+      "statement": "PROPOSED ADDITION D. The model answers no question labelled as having no answer. An absolute version of criterion 4 that the current split can evaluate.",
+      "measurement": "live_false_answers",
+      "kind": "max_count",
+      "threshold": 0,
+      "min_n": 1,
+      "origin": "proposed_addition",
+      "binding": false,
+      "denominator": "Opportunities: live held-out non-answer cases a model was asked."
+    }
+  ]
+}

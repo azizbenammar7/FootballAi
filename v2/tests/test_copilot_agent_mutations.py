@@ -303,6 +303,145 @@ API_MUTANTS = {
 }
 
 
+SCORING = Path("v2/src/footballai_v2/copilot/evaluation/agent_scoring.py")
+RULE = Path("v2/src/footballai_v2/copilot/evaluation/agent_rule.py")
+LIVE = Path("v2/src/footballai_v2/copilot/evaluation/agent_live.py")
+SCORING_TARGETS = ["v2/tests/test_copilot_agent_scoring_v2.py"]
+
+# M3-B0.1. Each mutant names the test that must catch it, so a mutant cannot pass by
+# breaking something else: (file, original, mutated, the test that must fail).
+SCORING_MUTANTS = {
+    "an_off_topic_claim_is_still_relevant": (
+        SCORING,
+        "relevant = bool(answering_claims & shown) and content <= permitted",
+        "relevant = bool(answering_claims & shown)",
+        "test_the_right_claim_padded_with_an_off_topic_one_is_irrelevant",
+    ),
+    "the_always_shown_label_counts_as_an_answer": (
+        SCORING,
+        "answering_claims = required - {OUTPUT_NATURE_CLAIM_ID} or required",
+        "answering_claims = required",
+        "test_the_always_shown_label_does_not_make_an_answer_relevant",
+    ),
+    "completeness_is_judged_for_a_false_answer": (
+        SCORING,
+        "        if expecting:  # completeness is only judged where an answer was wanted\n            complete = required <= shown",
+        "        complete = required <= shown",
+        "test_completeness_is_not_judged_for_a_question_with_no_answer",
+    ),
+    "a_turnless_stop_leaves_the_tool_denominator": (
+        SCORING,
+        "        tools_correct = False  # stopped before its first turn: nothing right was run",
+        "        pass",
+        "test_a_question_stopped_before_its_first_turn_counts_as_wrong_tool_selection",
+    ),
+    "latency_includes_operator_stops": (
+        SCORING,
+        "for score in attempted if score.owner is not Owner.OPERATOR",
+        "for score in attempted",
+        "test_latency_leaves_out_operator_stops",
+    ),
+    "untracked_code_is_ignored": (
+        LIVE,
+        "return head or None, not changed and not untracked_code",
+        "return head or None, not changed",
+        "test_an_untracked_module_under_the_source_tree_is_a_modified_tree",
+    ),
+    "a_partial_answer_is_a_success": (
+        SCORING,
+        "task_success = bool(answered and relevant and complete and v1.citations_valid) and safe",
+        "task_success = bool(answered and relevant and v1.citations_valid) and safe",
+        "test_a_relevant_but_partial_answer_is_incomplete",
+    ),
+    "an_answerable_abstention_is_not_judged": (
+        SCORING,
+        "abstention_correct = False if termination is TerminationClass.ABSTAINED else None",
+        "abstention_correct = None",
+        "test_abstaining_on_an_answerable_question_is_an_incorrect_abstention",
+    ),
+    "a_tool_budget_stop_is_nobodys_failure": (
+        SCORING,
+        "AgentStopReason.TOOL_BUDGET_EXHAUSTED: (TerminationClass.TOOL_BUDGET_EXHAUSTED, Owner.AGENT)",
+        "AgentStopReason.TOOL_BUDGET_EXHAUSTED: (TerminationClass.TOOL_BUDGET_EXHAUSTED, Owner.NONE)",
+        "test_budget_turn_and_deadline_stops_count_as_agent_non_completion",
+    ),
+    "a_deadline_is_blamed_on_the_provider": (
+        SCORING,
+        "AgentStopReason.DEADLINE_EXCEEDED: (TerminationClass.DEADLINE_EXCEEDED, Owner.AGENT)",
+        "AgentStopReason.DEADLINE_EXCEEDED: (TerminationClass.DEADLINE_EXCEEDED, Owner.PROVIDER)",
+        "test_each_injected_fault_is_classified_once_and_owned",
+    ),
+    "a_refusal_is_a_provider_failure": (
+        SCORING,
+        "AgentStopReason.MODEL_REFUSAL: (TerminationClass.MODEL_REFUSAL, Owner.AGENT)",
+        "AgentStopReason.MODEL_REFUSAL: (TerminationClass.MODEL_REFUSAL, Owner.PROVIDER)",
+        "test_each_injected_fault_is_classified_once_and_owned",
+    ),
+    "operator_stops_join_the_denominator": (
+        SCORING,
+        "attempted = [score for score in scores if score.attempted and score.owner is not Owner.OPERATOR]",
+        "attempted = [score for score in scores if score.attempted]",
+        "test_no_termination_disappears_and_none_is_counted_twice",
+    ),
+    "invalid_arguments_are_not_counted": (
+        SCORING,
+        "call.error_code is ToolErrorCode.INVALID_ARGUMENTS for call in trace.tool_calls",
+        "False for call in trace.tool_calls",
+        "test_invalid_tool_arguments_are_an_event_not_a_termination",
+    ),
+    "new_false_answers_count_every_paired_case": (
+        SCORING,
+        "            rule_right_non_answers,\n        ),\n        \"live_tool_selection_accuracy\"",
+        "            paired,\n        ),\n        \"live_tool_selection_accuracy\"",
+        "test_finding_b_new_false_answers_has_no_opportunities_on_heldout",
+    ),
+    "replay_counts_toward_live_citations": (
+        SCORING,
+        '"live_citation_validity": _rate(score.citations_valid for score in live)',
+        '"live_citation_validity": _rate(score.citations_valid for score in every)',
+        "test_finding_e_replay_no_longer_counts_toward_citation_validity",
+    ),
+    "no_opportunities_reads_as_a_pass": (
+        RULE,
+        "    if n == 0:\n        return result(\"not_evaluable\", \"no_opportunities\")",
+        "    if False:\n        return result(\"not_evaluable\", \"no_opportunities\")",
+        "test_every_criterion_status_carries_a_reason",
+    ),
+    "not_evaluable_reads_as_a_thin_sample": (
+        RULE,
+        'if statuses & {"not_evaluable", "not_measured"}:',
+        'if statuses & {"not_measured"}:',
+        "test_not_evaluable_outranks_a_thin_sample",
+    ),
+    "the_approval_ignores_the_commit": (
+        LIVE,
+        '"approval_other_commit": bool(provenance.get("source_commit"))\n        and approval.source_commit == provenance.get("source_commit"),',
+        '"approval_other_commit": True,',
+        "test_each_pin_is_enforced",
+    ),
+    "the_approval_ignores_a_modified_tree": (
+        LIVE,
+        '"source_tree_modified": provenance.get("source_tree_clean") is True,',
+        '"source_tree_modified": True,',
+        "test_each_pin_is_enforced",
+    ),
+    "the_approval_ignores_the_scorer": (
+        LIVE,
+        '"approval_other_scorer": approval.scorer_version == provenance.get("scorer_version"),',
+        '"approval_other_scorer": True,',
+        "test_each_pin_is_enforced",
+    ),
+    "a_probe_has_no_cap": (
+        LIVE,
+        "or approval.max_model_requests <= PROTOCOL_PROBE_MAX_REQUESTS,",
+        "or True,",
+        "test_each_stage_has_its_own_bounds",
+    ),
+}
+# A mutant that "fails" this way broke the module, not the property under test.
+WRONG_REASONS = ("SyntaxError", "IndentationError", "ImportError", "ModuleNotFoundError", "NameError")
+
+
 @pytest.fixture(scope="module")
 def mirror(tmp_path_factory):
     root = tmp_path_factory.mktemp("mutants")
@@ -323,7 +462,7 @@ def mirror(tmp_path_factory):
     return root
 
 
-def run_tests(root: Path, targets: list[str] = TARGETS) -> subprocess.CompletedProcess[str]:
+def run_tests(root: Path, targets: list[str] = TARGETS, *, stop_at_first: bool = True) -> subprocess.CompletedProcess[str]:
     env = {
         **os.environ,
         "PYTHONPATH": str(root / "v2/src"),
@@ -331,7 +470,7 @@ def run_tests(root: Path, targets: list[str] = TARGETS) -> subprocess.CompletedP
     }
     for name in ("ANTHROPIC_API_KEY", "ANTHROPIC_BASE_URL", "CI", "GITHUB_ACTIONS"):
         env.pop(name, None)
-    command = [sys.executable, "-m", "pytest", *targets, "-x", "-q", "-p", "no:cacheprovider", "--no-header"]
+    command = [sys.executable, "-m", "pytest", *targets, *(["-x"] if stop_at_first else []), "-q", "-p", "no:cacheprovider", "--no-header", "-rf"]
     return subprocess.run(command, cwd=root, env=env, capture_output=True, text=True)
 
 
@@ -346,11 +485,36 @@ def assert_caught(root: Path, name: str, mutant: tuple[Path, str, str], targets:
     finally:
         path.write_text(source, encoding="utf-8")
     assert result.returncode == 1, f"{name} survived (exit {result.returncode}):\n{result.stdout[-1500:]}"
+    wrong = [marker for marker in WRONG_REASONS if marker in result.stdout]
+    assert not wrong, f"{name} failed for the wrong reason ({wrong}):\n{result.stdout[-1500:]}"
+
+
+def assert_caught_by(root: Path, name: str, mutant: tuple[Path, str, str, str], targets: list[str]) -> None:
+    """Without ``-x``, so the named test is seen failing even when another fails first."""
+    relative, original, mutated, expected_test = mutant
+    path = root / relative
+    source = path.read_text(encoding="utf-8")
+    assert source.count(original) == 1, f"{name} no longer matches the source exactly once"
+    path.write_text(source.replace(original, mutated), encoding="utf-8")
+    try:
+        result = run_tests(root, targets, stop_at_first=False)
+    finally:
+        path.write_text(source, encoding="utf-8")
+    assert result.returncode == 1, f"{name} survived (exit {result.returncode}):\n{result.stdout[-1500:]}"
+    wrong = [marker for marker in WRONG_REASONS if marker in result.stdout]
+    assert not wrong, f"{name} failed for the wrong reason ({wrong}):\n{result.stdout[-1500:]}"
+    failed = [line for line in result.stdout.splitlines() if line.startswith("FAILED ")]
+    assert any(f"::{expected_test}" in line for line in failed), f"{name}: {expected_test} did not fail:\n{failed}"
 
 
 def test_an_unmodified_copy_passes(mirror):
-    result = run_tests(mirror, [*TARGETS, *API_TARGETS, *REAL_TARGETS])
+    result = run_tests(mirror, [*TARGETS, *API_TARGETS, *REAL_TARGETS, *SCORING_TARGETS])
     assert result.returncode == 0, result.stdout[-2000:]
+
+
+@pytest.mark.parametrize("name", SCORING_MUTANTS)
+def test_scoring_mutant_is_caught_by_the_test_named_for_it(mirror, name):
+    assert_caught_by(mirror, name, SCORING_MUTANTS[name], SCORING_TARGETS)
 
 
 @pytest.mark.parametrize("name", MUTANTS)

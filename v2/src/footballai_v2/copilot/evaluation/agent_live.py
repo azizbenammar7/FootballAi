@@ -2,15 +2,21 @@
 
 ``plan_benchmark`` needs no SDK, key, or network. ``agent_preflight`` needs a key and
 sends no ``messages.create``. Only ``run_benchmark_live`` can spend money, and it needs
-an approval record naming this model, these caps, this dataset, and this decision
-rule. Every model call goes through ``BudgetedAgentModel``. Replay cases are never sent.
+an approval record for one stage, naming this model, these caps, this dataset, this
+decision rule, and the exact code that will score it: scorer version, prompt and tool
+hashes, SDK version, and source commit. Every model call goes through
+``BudgetedAgentModel``. Replay cases are never sent.
 
 Nothing here runs in CI, and no test sends a request anywhere but 127.0.0.1.
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
+import subprocess
+from importlib import metadata
 from dataclasses import dataclass
 from pathlib import Path
 from types import SimpleNamespace
@@ -18,6 +24,7 @@ from typing import Any, Literal, Mapping
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from footballai_v2.copilot.agent.tools import tool_definitions
 from footballai_v2.copilot.agent.trace import AgentStopReason
 from footballai_v2.copilot.budget import BudgetedAgentModel, BudgetGuard
 from footballai_v2.copilot.config import MAX_AGENT_COST_USD, MAX_AGENT_REQUESTS, CopilotSettings
@@ -33,6 +40,8 @@ from footballai_v2.copilot.evaluation.agent_benchmark import (
 from footballai_v2.copilot.evaluation.agent_models import ScriptedAgentModel, route_following_policy
 from footballai_v2.copilot.evaluation.live import _FATAL_KINDS, MAX_CONSECUTIVE_FAILURES, PreflightFailed, preflight
 from footballai_v2.copilot.evaluation.agent_rule import ANTHROPIC_ENDPOINT
+from footballai_v2.copilot.evaluation.agent_scoring import SCORER_VERSION
+from footballai_v2.copilot.grounding import AGENT_INSTRUCTION_VERSION, AGENT_SYSTEM_INSTRUCTIONS
 from footballai_v2.copilot.pricing import MODEL_PRICES, agent_question_worst_case_usd
 from footballai_v2.copilot.provider import (
     AgentModelRequest,
@@ -42,8 +51,13 @@ from footballai_v2.copilot.provider import (
 )
 
 
-APPROVAL_SCHEMA = "footballai.copilot-agent-live-approval/v1"
+APPROVAL_SCHEMA = "footballai.copilot-agent-live-approval/v2"
 LOOPBACK_ENDPOINT = "loopback_test_double"
+# Stage B only asks whether the API accepts these requests. More than this is not a probe.
+PROTOCOL_PROBE_MAX_REQUESTS = 5
+STAGE_SPLITS = {"protocol_probe": "dev", "development": "dev", "decision": "heldout"}
+_REPOSITORY = Path(__file__).resolve().parents[5]
+_SCORED_PATHS = ("v2/src", "evaluation/copilot")
 
 
 class LiveRefused(Exception):
@@ -63,13 +77,74 @@ class LiveApproval(BaseModel):
     status: Literal["not_approved", "approved"]
     approved_by: str | None
     approved_on: str | None
-    stage: Literal["readiness", "decision"]
+    stage: Literal["protocol_probe", "development", "decision"]
     split: Split
     model: str
     max_model_requests: int = Field(ge=0, le=MAX_AGENT_REQUESTS)
     max_cost_usd: float = Field(ge=0, le=MAX_AGENT_COST_USD)
     decision_rule_sha256: str
     cases_sha256: str
+    # What decides a score besides the data and the rule. v1 approvals pinned none of it.
+    scorer_version: str
+    instruction_version: str
+    system_instructions_sha256: str
+    tool_definitions_sha256: str
+    sdk_version: str
+    source_commit: str
+
+
+def _sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def prompt_fingerprint() -> dict[str, str]:
+    """The prompt and tools a model would see, by hash."""
+    return {
+        "instruction_version": AGENT_INSTRUCTION_VERSION,
+        "system_instructions_sha256": _sha256(AGENT_SYSTEM_INSTRUCTIONS.encode()),
+        "tool_definitions_sha256": _sha256(json.dumps(tool_definitions(), sort_keys=True).encode()),
+    }
+
+
+def _git(repository: Path, *args: str) -> str:
+    return subprocess.run(
+        ["git", *args], cwd=repository, capture_output=True, text=True, check=True, timeout=10
+    ).stdout.strip()
+
+
+def source_state(repository: Path = _REPOSITORY) -> tuple[str | None, bool]:
+    """HEAD, and whether the code that scores a run is exactly that commit.
+
+    Tracked changes under ``v2/src`` or ``evaluation/copilot`` make it unclean, and so does
+    any untracked file under ``v2/src``, which could be imported in place of tracked code.
+    An untracked report under ``evaluation/copilot`` (a stage's own output) does not.
+    """
+    try:
+        head = _git(repository, "rev-parse", "HEAD")
+        changed = _git(repository, "status", "--porcelain", "--untracked-files=no", "--", *_SCORED_PATHS)
+        untracked_code = _git(repository, "status", "--porcelain", "--untracked-files=all", "--", _SCORED_PATHS[0])
+    except (OSError, subprocess.SubprocessError):
+        return None, False
+    return head or None, not changed and not untracked_code
+
+
+def sdk_version() -> str | None:
+    try:
+        return metadata.version("anthropic")
+    except metadata.PackageNotFoundError:
+        return None
+
+
+def current_provenance() -> dict[str, Any]:
+    """Everything an approval must match, read from the code that would run now."""
+    commit, clean = source_state()
+    return {
+        "scorer_version": SCORER_VERSION,
+        **prompt_fingerprint(),
+        "sdk_version": sdk_version(),
+        "source_commit": commit,
+        "source_tree_clean": clean,
+    }
 
 
 def endpoint_kind(environ: Mapping[str, str] | None = None) -> str:
@@ -90,6 +165,7 @@ def load_approval(path: Path) -> LiveApproval:
 def check_approval(
     approval: LiveApproval,
     *,
+    stage: str,
     split: Split,
     model: str,
     max_requests: int,
@@ -97,9 +173,14 @@ def check_approval(
     cases_sha256: str,
     rule_sha256: str,
     rule_accepted: bool,
+    provenance: Mapping[str, Any],
     environ: Mapping[str, str] | None = None,
 ) -> None:
-    """Every condition the owner set for a paid run. All must hold, checked before any call."""
+    """Every condition the owner set for a paid run. All must hold, checked before any call.
+
+    Each stage needs its own record: a probe approval cannot start a development run, and
+    neither can start a decision. ``provenance`` is ``current_provenance()``.
+    """
     environment = os.environ if environ is None else environ
     if environment.get("CI") or environment.get("GITHUB_ACTIONS"):
         raise LiveRefused("continuous_integration")
@@ -117,9 +198,20 @@ def check_approval(
         "requests_over_approval": 0 < max_requests <= approval.max_model_requests,
         "cost_over_approval": 0 < max_cost_usd <= approval.max_cost_usd,
         # A readiness probe may precede acceptance. A decision never can.
-        "rule_not_accepted": approval.stage == "readiness" or rule_accepted,
-        "decision_needs_heldout": approval.stage == "readiness" or split is Split.HELDOUT,
-        "readiness_cannot_read_heldout": approval.stage == "decision" or split is Split.DEV,
+        "approval_other_stage": approval.stage == stage,
+        "rule_not_accepted": approval.stage != "decision" or rule_accepted,
+        "decision_needs_heldout": approval.stage != "decision" or split.value == STAGE_SPLITS["decision"],
+        "stage_needs_dev": approval.stage == "decision" or split.value == STAGE_SPLITS[approval.stage],
+        "probe_over_its_cap": approval.stage != "protocol_probe"
+        or approval.max_model_requests <= PROTOCOL_PROBE_MAX_REQUESTS,
+        "approval_other_scorer": approval.scorer_version == provenance.get("scorer_version"),
+        "approval_other_prompt": approval.instruction_version == provenance.get("instruction_version")
+        and approval.system_instructions_sha256 == provenance.get("system_instructions_sha256"),
+        "approval_other_tools": approval.tool_definitions_sha256 == provenance.get("tool_definitions_sha256"),
+        "approval_other_sdk": approval.sdk_version == provenance.get("sdk_version"),
+        "approval_other_commit": bool(provenance.get("source_commit"))
+        and approval.source_commit == provenance.get("source_commit"),
+        "source_tree_modified": provenance.get("source_tree_clean") is True,
     }
     for code, holds in conditions.items():
         if not holds:
@@ -230,6 +322,12 @@ def run_benchmark_live(
 __all__ = [
     "APPROVAL_SCHEMA",
     "LOOPBACK_ENDPOINT",
+    "PROTOCOL_PROBE_MAX_REQUESTS",
+    "STAGE_SPLITS",
+    "current_provenance",
+    "prompt_fingerprint",
+    "sdk_version",
+    "source_state",
     "LiveApproval",
     "LiveBenchmarkRun",
     "LiveRefused",

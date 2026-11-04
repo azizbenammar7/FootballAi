@@ -12,7 +12,7 @@ import time
 from dataclasses import dataclass
 from typing import Any, Callable, Iterable
 
-from footballai_v2.copilot.agent.loop import AgentResult, ReadOnlyAgent
+from footballai_v2.copilot.agent.loop import AgentLimits, AgentResult, ReadOnlyAgent
 from footballai_v2.copilot.agent.tools import READ_ONLY_TOOLS, ToolCallStatus, ToolName
 from footballai_v2.copilot.agent.trace import AgentStopReason
 from footballai_v2.copilot.config import CopilotSettings
@@ -79,11 +79,15 @@ def run_agent(
     *,
     settings: CopilotSettings = EVALUATION_SETTINGS,
     real_time: bool = False,
+    limits: AgentLimits | None = None,
 ) -> AgentRun:
+    """``limits`` may only tighten the defaults, so fault injection can reach every stop."""
     repository, storage, run_id = build_fixture_run(dataset.fixtures.fixtures[fixture_name], dataset.fixtures)
     clock = time.monotonic if real_time else StepClock()
     model = model_for(clock)
-    agent = ReadOnlyAgent(repository, storage, model, settings, routing=routing_for(dataset.version), clock=clock)
+    agent = ReadOnlyAgent(
+        repository, storage, model, settings, limits=limits, routing=routing_for(dataset.version), clock=clock
+    )
     evidence = RunEvidenceService(repository, storage, settings).build(run_id)
     result = agent.answer(run_id, question)
     return AgentRun(result, model, build_claim_catalog(evidence), evidence, run_id)

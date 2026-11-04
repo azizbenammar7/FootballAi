@@ -1,13 +1,19 @@
 {
-  "schema": "footballai.copilot-agent-live-approval/v1",
+  "schema": "footballai.copilot-agent-live-approval/v2",
   "status": "not_approved",
   "approved_by": null,
   "approved_on": null,
-  "stage": "readiness",
+  "stage": "protocol_probe",
   "split": "dev",
   "model": "claude-haiku-5-5",
   "max_model_requests": 0,
   "max_cost_usd": 0,
   "decision_rule_sha256": "",
-  "cases_sha256": ""
+  "cases_sha256": "",
+  "scorer_version": "",
+  "instruction_version": "",
+  "system_instructions_sha256": "",
+  "tool_definitions_sha256": "",
+  "sdk_version": "",
+  "source_commit": ""
 }
