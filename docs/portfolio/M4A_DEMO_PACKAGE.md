@@ -55,7 +55,7 @@ Set the capture to 1920×1080 at 100% browser zoom. Hide bookmarks, browser exte
 
 The existing generated-fixture browser spec (`v2/dashboard/tests/e2e/agent-copilot.spec.ts`) is a repeatable smoke path: it uploads a newly generated video, waits for the worker, checks citations and actual trace names, verifies the pass question abstains, and asserts no console errors. It is separate from the launch script and stores its ignored screenshot under `v2/dashboard/test-results/`.
 
-Three 1920×1080 Chromium screenshots from the isolated launcher were captured and visually inspected on 2026-11-05: [first screen](captures/tier-a-first-screen.png), [supported answer and executed tool](captures/tier-a-supported.png), and [pass-statistic abstention](captures/tier-a-abstention.png). They show only the generated run and no credentials, accounts or private footage. **No video recording exists yet.** For a phone-sized final video, crop or zoom each UI shot around the copilot; a full 1920-pixel screen reduced to 375 pixels makes text too small.
+Three 1920×1080 Chromium screenshots from the isolated launcher were captured and visually inspected on 2026-11-05: [first screen](captures/tier-a-first-screen.png), [supported answer and executed tool](captures/tier-a-supported.png), and [pass-statistic abstention](captures/tier-a-abstention.png). They show only the generated run and no credentials, accounts or private footage. A private 60-second rehearsal video now exists; see [M4-B private rehearsal](#m4-b-private-rehearsal-2026-11-05). For a phone-sized final video, crop or zoom each UI shot around the copilot; a full 1920-pixel screen reduced to 375 pixels makes text too small.
 
 ## Screenshot capture and privacy checklist
 
@@ -82,6 +82,21 @@ Three 1920×1080 Chromium screenshots from the isolated launcher were captured a
 | Scripted tool trace | `copilot/evaluation/agent_models.py`, `copilot/agent/tools.py`, `components/AgentTraceView.tsx`; browser tool-name assertion |
 | Pass abstention | `copilot/grounding.py` router; browser unsupported-question assertion |
 
-## Remaining before final recording
+## M4-B private rehearsal, 2026-11-05
 
-Complete final CI and security gates, and record the video privately. Obtain footage rights only if upgrading to Tier B. Complete independent labels and measured live evaluation only if upgrading to Tier C. Publication remains a separate owner decision.
+**Status:** recorded and verified privately. **Not published.** The video file is kept outside Git.
+
+- **Source.** One continuous, real-time Chromium take of a fresh `run_portfolio_demo.sh` launch, at `main` `cd630733`. The edit maps video time 1:1 to capture time: there is no speed change, no time cut and no synthesized frame. Titles, captions, highlight rings and fact cards are labelled overlays. Their values are read from the recorded API responses.
+- **Video.** 60.0 s, 1920×1080, H.264 High, 30 fps, no audio track. It decodes cleanly from start to end. Frames were inspected at full size and at 375 px wide.
+- **Shown live.**
+  - Generated run, `succeeded`, labelled `Synthetic demo_fast · no YOLO inference`.
+  - Supported answer with 6 citations.
+  - `OFFLINE SCRIPTED AGENT` executing `get_tracking_diagnostics`.
+  - The pass-statistic question abstains as `unsupported_question` with no tool call.
+  - Measured browser round-trips of 132, 176 and 173 ms.
+- **Reproducibility.** The workflow passed in three clean temporary launches: two rehearsal captures and the final take. All three had zero console errors and zero HTTP errors. A fourth clean launch ran a DOM text privacy scan across all five screens and found nothing.
+- **Recording note.** Headless Chromium screencasts are 1× unless Chromium is launched with `--force-device-scale-factor=2`. Use that flag for crisp zoomed shots.
+
+## Remaining before publication
+
+Owner review of the private cut and the post copy. Obtain footage rights only if upgrading to Tier B. Complete independent labels and measured live evaluation only if upgrading to Tier C. Publication remains a separate owner decision.
