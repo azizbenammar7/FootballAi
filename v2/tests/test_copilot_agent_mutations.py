@@ -499,6 +499,35 @@ DATASET_MUTANTS = {
         "test_no_paid_or_replay_run_starts_on_a_dataset_without_its_own_rule",
     ),
 }
+
+REVIEW_BUILDER = Path("evaluation/copilot/agent-v3/review/build_review_package.py")
+REVIEW_TARGETS = ["v2/tests/test_copilot_agent_review_package.py"]
+REVIEW_MUTANTS = {
+    "whitespace_only_phrase_allowed": (
+        REVIEW_BUILDER,
+        "isinstance(item, str) and item.strip() for item in value",
+        "isinstance(item, str) and item for item in value",
+        "test_f1_whitespace_only_forbidden_phrase_is_rejected",
+    ),
+    "accept_allows_general_correction": (
+        REVIEW_BUILDER,
+        '    if decision == "ACCEPT":\n        for column in',
+        '    if False:\n        for column in',
+        "test_f2_accept_cannot_hold_a_correction_or_its_reason",
+    ),
+    "codex_identity_allowed": (
+        REVIEW_BUILDER,
+        "(?:codex|anthropic",
+        "(?:anthropic",
+        "test_f3_machine_names_are_rejected_by_review_workflow",
+    ),
+    "invalid_calendar_date_allowed": (
+        REVIEW_BUILDER,
+        "if parsed_date is None or parsed_date.isoformat() != written_date:",
+        "if not written_date.strip():",
+        "test_f4_invalid_dates_are_rejected_by_review_workflow",
+    ),
+}
 # A mutant that "fails" this way broke the module, not the property under test.
 WRONG_REASONS = ("SyntaxError", "IndentationError", "ImportError", "ModuleNotFoundError", "NameError")
 
@@ -581,6 +610,11 @@ def test_scoring_mutant_is_caught_by_the_test_named_for_it(mirror, name):
 @pytest.mark.parametrize("name", DATASET_MUTANTS)
 def test_dataset_mutant_is_caught_by_the_test_named_for_it(mirror, name):
     assert_caught_by(mirror, name, DATASET_MUTANTS[name], DATASET_TARGETS)
+
+
+@pytest.mark.parametrize("name", REVIEW_MUTANTS)
+def test_review_mutant_is_caught_by_the_test_named_for_it(mirror, name):
+    assert_caught_by(mirror, name, REVIEW_MUTANTS[name], REVIEW_TARGETS)
 
 
 @pytest.mark.parametrize("name", MUTANTS)

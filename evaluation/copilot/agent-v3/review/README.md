@@ -103,10 +103,14 @@ Fill these columns. Leave every other column alone.
 | `REVIEWER` | Your name. A person's name, never a tool's |
 | `REVIEW_DATE` | `YYYY-MM-DD` |
 
-Leave a field-correction column blank to keep that field. A field correction needs a
+Leave a field-correction column blank to keep that field. `ACCEPT` means no correction in
+any correction column and no field-specific correction rationale. A field correction needs a
 decision of `CORRECT`, `REJECT`, or `NEEDS DISCUSSION`, never `ACCEPT`, and must differ from
-the current value. Each phrase in a forbidden-text list must be non-empty and listed once:
-an empty phrase would match every reply.
+the current value. Each phrase in a forbidden-text list must contain a non-whitespace
+character and be listed once: an empty or whitespace-only phrase would match irrelevant text.
+The date must be a real calendar date in exactly `YYYY-MM-DD` format. The automated name
+check catches common AI tool identities, but it cannot verify that a reviewer is human;
+the author must still obtain a genuinely independent person's review.
 
 | Decision | Means |
 |---|---|

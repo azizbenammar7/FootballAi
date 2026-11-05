@@ -23,8 +23,11 @@ from __future__ import annotations
 import csv
 import io
 import json
+import re
 import sys
+import unicodedata
 from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -356,7 +359,7 @@ def decode_text_list(cell: str) -> list[str]:
         value = json.loads(cell)
     except json.JSONDecodeError as error:
         raise ValueError(f"not a JSON list of phrases: {cell!r}") from error
-    if not isinstance(value, list) or not all(isinstance(item, str) and item for item in value):
+    if not isinstance(value, list) or not all(isinstance(item, str) and item.strip() for item in value):
         raise ValueError(f"not a JSON list of non-empty phrases: {cell!r}")
     if len(set(value)) != len(value):
         raise ValueError(f"a phrase is listed twice: {cell!r}")
@@ -398,6 +401,51 @@ def field_correction_problems(row: dict[str, str]) -> list[str]:
             continue
         if proposed == current:
             problems.append(f"{correction_column}: the same as the current label. Leave it blank to keep the label")
+    return problems
+
+
+MACHINE_REVIEWER = re.compile(
+    r"\b(?:codex|anthropic|chatgpt|gpt|openai|copilot|llm|bot)\b"
+    r"|\bai\s+(?:agent|triage|model|review)\b"
+)
+MODEL_NAME_REVIEWER = re.compile(
+    r"(?:claude|gemini)(?:\s+(?:ai|review(?:\s+agent)?|agent|model|opus|sonnet|haiku|pro))?"
+)
+
+
+def review_row_problems(row: dict[str, str]) -> list[str]:
+    """Validate a worksheet row without changing it or treating AI triage as a review."""
+    problems = field_correction_problems(row)
+    decision = (row.get("HUMAN_DECISION") or "").strip()
+    if decision and decision not in DECISIONS:
+        problems.append(f"HUMAN_DECISION: unknown decision {decision!r}")
+    for correction_column, rationale_column in FIELD_COLUMNS.values():
+        if (row.get(rationale_column) or "").strip() and not (row.get(correction_column) or "").strip():
+            problems.append(f"{rationale_column}: a rationale needs a correction in {correction_column}")
+    if decision == "ACCEPT":
+        for column in ("HUMAN_CORRECTION", *(column for pair in FIELD_COLUMNS.values() for column in pair)):
+            if row.get(column):
+                problems.append(f"{column}: ACCEPT cannot propose a correction")
+    reviewer = (row.get("REVIEWER") or "").strip()
+    if reviewer:
+        normalized = " ".join(unicodedata.normalize("NFKC", reviewer).casefold().split())
+        if (len([char for char in normalized if char.isalpha()]) < 2
+                or not all(char.isalpha() or char.isspace() or char in "-'.’" for char in normalized)
+                or MACHINE_REVIEWER.search(normalized)
+                or MODEL_NAME_REVIEWER.fullmatch(normalized)):
+            problems.append("REVIEWER: enter an independent person's name, not an AI tool identity")
+    if decision:
+        if not reviewer:
+            problems.append("REVIEWER: a completed review needs a person's name")
+        written_date = row.get("REVIEW_DATE") or ""
+        try:
+            parsed_date = date.fromisoformat(written_date)
+        except ValueError:
+            parsed_date = None
+        if parsed_date is None or parsed_date.isoformat() != written_date:
+            problems.append("REVIEW_DATE: a completed review needs a real YYYY-MM-DD calendar date")
+        if decision != "ACCEPT" and not (row.get("HUMAN_RATIONALE") or "").strip():
+            problems.append("HUMAN_RATIONALE: a changed or disputed label needs a reason")
     return problems
 
 

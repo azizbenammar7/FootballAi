@@ -77,23 +77,7 @@ def test_the_worksheet_columns_are_the_documented_ones(builder, committed_rows):
 
 def test_a_recorded_decision_is_one_a_person_may_make(builder, committed_rows):
     for row in committed_rows:
-        decision = row["HUMAN_DECISION"].strip()
-        if not decision:
-            continue
-        assert decision in builder.DECISIONS, f"{row['case_id']}: {decision!r}"
-        assert row["REVIEWER"].strip() and row["REVIEW_DATE"].strip(), f"{row['case_id']}: who and when"
-        if decision != "ACCEPT":
-            assert row["HUMAN_RATIONALE"].strip(), f"{row['case_id']}: a change needs a reason"
-
-
-def test_no_ai_agent_is_recorded_as_a_reviewer(committed_rows):
-    """An AI check is pre-review triage. It must never appear as the second person."""
-    machine = re.compile(
-        r"claude|anthropic|chatgpt|\bgpt|openai|gemini|copilot|\bllm\b|\bbot\b|\bai (agent|triage|model|review)",
-        re.IGNORECASE,
-    )
-    for row in committed_rows:
-        assert not machine.search(row["REVIEWER"]), f"{row['case_id']}: {row['REVIEWER']!r}"
+        assert builder.review_row_problems(row) == [], row["case_id"]
 
 
 def test_the_dossier_matches_the_case_files_outside_the_human_fields(builder, sheets):
@@ -367,6 +351,84 @@ def test_a_forbidden_text_correction_is_a_valid_json_list(builder, blank_row, ce
 def test_every_committed_field_correction_is_well_formed(builder, committed_rows):
     for row in committed_rows:
         assert builder.field_correction_problems(row) == [], row["case_id"]
+
+
+# M3-B0.4 regressions: exercise the checks the worksheet validation command runs.
+@pytest.mark.parametrize("phrase", ["", " ", "   ", "\t", "\n"])
+def test_f1_whitespace_only_forbidden_phrase_is_rejected(builder, blank_row, phrase):
+    row = _with(blank_row, HUMAN_DECISION="CORRECT", HUMAN_FORBIDDEN_TEXT_CORRECTION=json.dumps([phrase]),
+                HUMAN_FORBIDDEN_TEXT_RATIONALE="This phrase should be banned.", HUMAN_RATIONALE="Change the phrase list.",
+                REVIEWER="Jane Doe", REVIEW_DATE="2026-11-05")
+    with pytest.raises(AssertionError):
+        test_a_recorded_decision_is_one_a_person_may_make(builder, [row])
+
+
+@pytest.mark.parametrize("cell", ['["a", "a"]', "[1]", "not json", '[""]'])
+def test_f1_other_invalid_forbidden_corrections_stay_rejected(builder, blank_row, cell):
+    row = _with(blank_row, HUMAN_DECISION="CORRECT", HUMAN_FORBIDDEN_TEXT_CORRECTION=cell,
+                HUMAN_FORBIDDEN_TEXT_RATIONALE="This phrase should be banned.", HUMAN_RATIONALE="Change the phrase list.",
+                REVIEWER="Jane Doe", REVIEW_DATE="2026-11-05")
+    with pytest.raises(AssertionError):
+        test_a_recorded_decision_is_one_a_person_may_make(builder, [row])
+
+
+@pytest.mark.parametrize("phrase", ["player 7", "10.5 km"])
+def test_f1_spaces_inside_real_phrases_stay_valid(builder, phrase):
+    assert builder.decode_text_list(json.dumps([phrase])) == [phrase]
+
+
+@pytest.mark.parametrize("column,value", [
+    ("HUMAN_CORRECTION", "Change the outcome"),
+    ("HUMAN_OUTPUT_NATURE_CORRECTION", "verified_real"),
+    ("HUMAN_FORBIDDEN_TEXT_CORRECTION", "[]"),
+    ("HUMAN_CORRECTION", " "),
+    ("HUMAN_OUTPUT_NATURE_CORRECTION", "\t"),
+    ("HUMAN_FORBIDDEN_TEXT_CORRECTION", "   "),
+    ("HUMAN_OUTPUT_NATURE_RATIONALE", "The provenance is different"),
+    ("HUMAN_FORBIDDEN_TEXT_RATIONALE", "The phrase is too broad"),
+])
+def test_f2_accept_cannot_hold_a_correction_or_its_reason(builder, blank_row, column, value):
+    row = _with(blank_row, HUMAN_DECISION="ACCEPT", REVIEWER="Jane Doe", REVIEW_DATE="2026-11-05", **{column: value})
+    with pytest.raises(AssertionError):
+        test_a_recorded_decision_is_one_a_person_may_make(builder, [row])
+
+
+@pytest.mark.parametrize("name", ["Codex", "Codex review agent", "OpenAI Codex", "Claude", "ChatGPT"])
+def test_f3_machine_names_are_rejected_by_review_workflow(builder, blank_row, name):
+    row = _with(blank_row, HUMAN_DECISION="ACCEPT", REVIEWER=name, REVIEW_DATE="2026-11-05")
+    with pytest.raises(AssertionError):
+        test_a_recorded_decision_is_one_a_person_may_make(builder, [row])
+
+
+@pytest.mark.parametrize("name", ["Aisha Ben Ali", "Ai Nakamura", "Jai Patel", "Claude Dupont", "Gemini Smith"])
+def test_f3_real_names_with_ai_letters_are_allowed(builder, blank_row, name):
+    row = _with(blank_row, HUMAN_DECISION="ACCEPT", REVIEWER=name, REVIEW_DATE="2026-11-05")
+    test_a_recorded_decision_is_one_a_person_may_make(builder, [row])
+
+
+@pytest.mark.parametrize("date", ["tomorrow", "2026/11/05", "2026-2-5", "2026-02-30", "2025-13-01", "2025-02-29", "", "   "])
+def test_f4_invalid_dates_are_rejected_by_review_workflow(builder, blank_row, date):
+    row = _with(blank_row, HUMAN_DECISION="ACCEPT", REVIEWER="Jane Doe", REVIEW_DATE=date)
+    with pytest.raises(AssertionError):
+        test_a_recorded_decision_is_one_a_person_may_make(builder, [row])
+
+
+@pytest.mark.parametrize("date", ["2026-11-05", "2024-02-29"])
+def test_f4_real_iso_calendar_dates_are_allowed(builder, blank_row, date):
+    row = _with(blank_row, HUMAN_DECISION="ACCEPT", REVIEWER="Jane Doe", REVIEW_DATE=date)
+    test_a_recorded_decision_is_one_a_person_may_make(builder, [row])
+
+
+@pytest.mark.parametrize("decision", ["CORRECT", "REJECT", "NEEDS DISCUSSION"])
+def test_non_accept_review_with_a_reason_and_correction_remains_valid(builder, blank_row, decision):
+    row = _with(blank_row, HUMAN_DECISION=decision, HUMAN_RATIONALE="The label needs discussion.",
+                HUMAN_CORRECTION="Change the label as described.", REVIEWER="Jane Doe", REVIEW_DATE="2026-11-05")
+    test_a_recorded_decision_is_one_a_person_may_make(builder, [row])
+
+
+def test_accept_with_no_correction_remains_valid(builder, blank_row):
+    row = _with(blank_row, HUMAN_DECISION="ACCEPT", REVIEWER="Jane Doe", REVIEW_DATE="2026-11-05")
+    test_a_recorded_decision_is_one_a_person_may_make(builder, [row])
 
 
 # --- Overwrite protection ---------------------------------------------------------------------
