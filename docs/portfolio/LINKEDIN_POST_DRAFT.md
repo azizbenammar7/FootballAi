@@ -1,103 +1,21 @@
-# LinkedIn post draft
+# LinkedIn post draft — Tier A only
 
-| | |
-|---|---|
-| **Status** | Draft. **Do not publish.** It describes the Tier C target, which does not exist yet |
-| **Owner** | Aziz Ben Ammar |
-| **Date** | 2026-11-01 |
-| **Next step** | Revise after the [release gate](LINKEDIN_DEMO_PLAN.md#release-gate) passes |
-| **Readers** | AI, LLM, agent, MLOps, and cloud platform engineers, and recruiters |
+**Draft, not authorized for publication.** Written for the generated local fixture. Confirm final footage, screenshots and CI before posting. The code link is [FootballAI on GitHub](https://github.com/azizbenammar7/FootballAi); use the eventual merged commit when publication is separately approved.
 
-Every `{{PLACEHOLDER}}` is a future measurement or link. A placeholder must be
-replaced with a real result or the sentence must be deleted. Never estimate one.
-
-## Before publishing
-
-Sentences in **Tier C only** blocks describe an agent that does not exist. Delete
-them for Tier A or B, and use the replacement text below.
-
-| Tier | Replace the agent paragraph with |
-|---|---|
-| **A** | "The copilot runs in a deterministic mode today, with no language model. Every answer is built from verified, server-written claims, or it refuses." |
-| **B** | "A real Claude model selects which verified claims answer a question. It writes none of them. I measured it against a deterministic baseline before keeping it." |
-
-If M1 fails the decision rule, say so: "I tested a real model against an acceptance
-rule I set in advance. It didn't meet it, so the deterministic selector stayed."
-
-## Draft
-
-> **Most AI demos show what a model can say. I wanted to build one that shows what it refuses to say.**
+> I built FootballAI to make video-analysis claims inspectable.
 >
-> FootballAI analyses football video, then answers questions about that analysis, only from evidence it can verify.
+> A FastAPI API accepts an analysis, a queue hands it to a worker, and each attempt registers versioned artifacts with SHA-256 integrity checks. A React dashboard shows the run, its provenance and its limitations.
 >
-> Why build it? Football video is messy, and it is easy to produce confident numbers that nobody can check. I wanted a project that forced me to engineer, evaluate, and secure an AI application, not only call a model.
+> The attached **local demo uses a generated synthetic fixture**. Its `demo_fast` outputs are deterministic placeholders, not YOLO inference or football match measurements. Separately, I validated the YOLOv8m and ByteTrack path locally on private footage; that footage is excluded from this public demo.
 >
-> **How it works**
+> On top of the run evidence, a read-only copilot builds answers from server-written claims and citations. The demo's agent mode uses a **fixed offline script**, not a language model, to choose among five approved evidence tools. Its trace shows the tool that actually ran. Ask for a statistic the system does not measure, such as player 7's successful passes, and it abstains.
 >
-> Video goes through an asynchronous pipeline: FastAPI, a queue, and a worker running YOLOv8 and ByteTrack. Each run produces immutable, versioned, checksummed artifacts. The system runs locally, and the platform has been validated on Azure Container Apps with a synthetic analysis profile.
+> The engineering work I wanted to show: asynchronous execution, clean storage and queue boundaries, immutable evidence, explicit model modes, server-side grounding, and tests for unsupported questions and trace behavior. The real Anthropic agent path exists behind a local gate, but its live quality has not been measured. Independent review of the v3 evaluation labels is also pending (0/142).
 >
-> **[Tier C only]** On top sits a read-only AI agent. It chooses which approved evidence tools to call, and it can never write a fact itself. The server writes every sentence from validated evidence and attaches citations.
+> This is a portfolio demonstration of a bounded local system. It does not verify player identities, possession, pass recognition, tactical understanding or tracking accuracy.
 >
-> Ask how many passes player 7 made, and it refuses, because pass recognition doesn't exist in this system.
+> Code, architecture and evaluation materials: https://github.com/azizbenammar7/FootballAi
 >
-> **What I measured**
->
-> • A real full-match video of about 96 minutes ran end to end on a laptop, in about 4.5 hours.
-> • It also produced 8,099 raw track IDs for about 22 players. So the product says "temporary tracklet", never "player".
-> • The copilot failed closed on 10 of 10 scripted invalid model replies.
-> • {{AGENT_DATASET_SIZE}} evaluation cases, {{TOOL_SELECTION_ACCURACY}} tool-selection accuracy, {{CITATION_VALIDITY}} citation validity, {{FALSE_ANSWER_COUNT}} false answers.
-> • {{P95_LATENCY}} p95 latency and about {{COST_PER_QUESTION}} per question, at list price.
->
-> These numbers come from a dataset I wrote myself, so treat them as engineering evidence, not proof of production reliability.
->
-> **What I learned**
->
-> 1. A valid citation proves a field exists, not that the sentence beside it is true. Reviewing my first design, I reproduced a fully cited answer about distance and goals the system can't measure. So I took the writing away from the model.
-> 2. Measure the baseline first. My deterministic system had three false answers, and knowing that made every later result meaningful.
-> 3. Set the acceptance rule before the experiment, so the result can't choose its own bar.
->
-> **What it is not**
->
-> It isn't a production application, it has no user authentication, and the demo runs locally. It doesn't identify players, and its tracking is heavily fragmented. Those limits are shown in the product, on purpose.
->
-> **Stack:** Python, FastAPI, React, PostgreSQL, Azure Blob Storage, Service Bus, Container Apps, Terraform, GitHub Actions with OIDC, YOLOv8, ByteTrack, and the Claude API.
->
-> I'm a final-year Computer Engineering student looking for an AI Engineering or AI Platform internship in France for 2027.
->
-> Video below. Code and evaluation reports: {{GITHUB_REPOSITORY_URL}}
+> #AIEngineering #ComputerVision #MLOps #FastAPI #React
 
-## Architecture diagram caption
-
-> FootballAI's verified architecture: an asynchronous computer-vision pipeline produces immutable evidence, and a read-only copilot answers only from it.
-
-Use this only on the current, verified diagram. If the target diagram is used, add:
-"Dashed components are planned."
-
-## Suggested hashtags
-
-`#AIEngineering` `#LLMOps` `#AgenticAI` `#MLOps` `#ComputerVision`
-
-Drop `#AgenticAI` unless the agent is validated.
-
-## Facts to re-check before publishing
-
-| Sentence | Check |
-|---|---|
-| "about 96 minutes", "about 4.5 hours" | 95.65-minute video, 16,084 seconds. One run on Apple MPS, with the older `v1_compat/1.0.0` pipeline. The report calls it the 94-minute run |
-| "8,099 raw track IDs" | One run. Same report |
-| "10 of 10" | Scripted contract cases, no real model. Re-run before publishing |
-| "three false answers" | Baseline v1. Update if the dataset changes |
-| "validated on Azure Container Apps" | `demo_fast` at P4. Do not imply real YOLO or the copilot in the cloud |
-| Lesson 1 | Recorded in the ADR-003 amendment: "Player 7 ran 10.5 km and scored twice." came back `supported` with 8 valid citations, in a reproduction against the original code during review |
-| "Claude API" in the stack | Remove if no live model call has happened |
-| Internship sentence | Keep or remove by personal preference |
-
-## Claims that must not appear
-
-- "Production-ready", "production-grade", or "enterprise" for the application.
-- "Football tactical intelligence" or "autonomous coach".
-- "Identifies players", or player statistics of any kind.
-- "Real-time" analysis.
-- "Accurate" tracking or detection. No such accuracy is measured.
-- Any comparison with other products or models.
-- "Agent" or "LLM" for anything the release did not actually run.
+Do not add a model performance number, Azure availability claim, public try-it link or rights-cleared real-footage claim until separately verified. The final video should keep `LOCAL DEMO · SYNTHETIC FIXTURE` visible throughout UI footage.

@@ -1,0 +1,18 @@
+%% Recording overview of architecture-current.mmd. Full evidence is in ARCHITECTURE_CURRENT.md.
+flowchart LR
+    APP["React → FastAPI<br/>3 provider-neutral ports<br/>LOCAL VERIFIED"]
+    CV["Async CV worker<br/>YOLO + ByteTrack · LOCAL<br/>demo_fast · SYNTHETIC"]
+    ANSWER["Evidence → 5-tool agent<br/>Server citations · SCRIPTED<br/>LOCAL VERIFIED"]
+    CLOUD["Postgres · Blob · Bus<br/>AZURE LAST EVIDENCE"]
+    CI["CI/security<br/>staging gate"]
+    LLM["Anthropic path<br/>UNVERIFIED LIVE"]
+    APP --> CV --> ANSWER
+    APP -. adapter boundary .-> CLOUD
+    CI -. delivery .-> CLOUD
+    ANSWER -. gated .-> LLM
+    classDef local fill:#123c2b,stroke:#55d29d,color:#ffffff;
+    classDef historical fill:#25406a,stroke:#84b5ff,color:#ffffff;
+    classDef caution fill:#5a3b17,stroke:#ffce73,color:#ffffff;
+    class APP,CV,ANSWER local;
+    class CLOUD,CI historical;
+    class LLM caution;

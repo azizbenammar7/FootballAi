@@ -11,7 +11,7 @@ test.beforeAll(() => {
   execFileSync('ffmpeg', ['-v', 'error', '-f', 'lavfi', '-i', 'color=c=0x195f3b:s=320x180:d=1', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', fixturePath])
 })
 
-async function openCompletedRun(page: Page) {
+async function openCompletedRun(page: Page, expectedName = 'Generated agent fixture') {
   await page.goto('/analyses/new')
   await page.getByLabel('Football video').setInputFiles(fixturePath)
   await page.getByLabel('Match name *').fill('Generated agent fixture')
@@ -23,6 +23,8 @@ async function openCompletedRun(page: Page) {
   const runId = /\/runs\/([0-9a-f-]+)\//.exec(page.url())?.[1]
   await page.goto(`/runs/${runId}`)
   await expect(page.getByRole('heading', { name: 'AI Analysis Explanation' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: expectedName })).toBeVisible()
+  await expect(page.getByText('Synthetic demo_fast · no YOLO inference')).toBeVisible()
 }
 
 async function ask(page: Page, question: string) {
@@ -83,4 +85,17 @@ test('grounded explanation still works beside the agent', async ({ page }) => {
   await expect(page.locator('.explain-answer')).toContainText('succeeded')
   await expect(page.locator('.agent-trace')).toHaveCount(0)
   await expect(page.locator('.explain-adapter')).toHaveCount(0)
+})
+
+test('a long match name fits the mobile run detail', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.route(/\/api\/v1\/runs\/[0-9a-f-]+$/, async (route) => {
+    const response = await route.fetch()
+    const detail = await response.json()
+    detail.provenance.parameters.match_name = 'A'.repeat(160)
+    await route.fulfill({ response, json: detail })
+  })
+  await openCompletedRun(page, 'A'.repeat(160))
+  const width = await page.evaluate(() => document.documentElement.scrollWidth)
+  expect(width).toBeLessThanOrEqual(375)
 })

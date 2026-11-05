@@ -11,6 +11,36 @@
   separate execution worker, a safe legacy importer, and a React workflow for
   upload, live progress, cancellation, retry, and results.
 
+## AI engineering portfolio demo
+
+![Current FootballAI architecture](docs/portfolio/architecture-current.svg)
+
+FootballAI demonstrates a React dashboard, FastAPI backend, and asynchronous
+worker connected through `AnalysisRepository`, `ObjectStorage`, and `JobQueue`
+ports. Local adapters support an isolated demo; PostgreSQL, Azure Blob Storage,
+and Service Bus adapters exist for the cloud execution boundary. Analysis
+attempts register immutable, SHA-256-checked artifacts. The evidence service
+allows only approved run fields into a claim catalog, and the server renders
+answers and citations from those claims.
+
+The local **Read-Only Agent** has five approved evidence tools and a visible
+execution trace. Its portfolio mode uses an **offline fixed script**, not a
+language model. A gated Anthropic adapter exists, but live agent quality has
+not been measured. The real YOLOv8m and ByteTrack profile was exercised
+locally on private footage; the public-safe Tier-A demo uses a generated
+`demo_fast` fixture whose output is synthetic and never presented as YOLO
+inference. Azure staging was validated historically with `demo_fast`; current
+cloud availability is not claimed.
+
+For a private, no-key, loopback-only rehearsal, follow the prerequisites in the
+[M4-A demo package](docs/portfolio/M4A_DEMO_PACKAGE.md), then run
+`v2/dev/run_portfolio_demo.sh`. The [current architecture and evidence
+ledger](docs/portfolio/ARCHITECTURE_CURRENT.md) separate implemented code,
+local validation, past Azure evidence, live unknowns, and future work. This
+project shows API and worker boundaries, provider-neutral adapter design,
+artifact integrity, evidence grounding, read-only tool orchestration,
+deterministic evaluation, and explicit uncertainty.
+
 Run the complete local V2 demo (the generated `demo_fast` profile requires no
 ML model or GPU):
 

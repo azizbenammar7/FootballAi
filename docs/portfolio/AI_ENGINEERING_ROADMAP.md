@@ -1,5 +1,7 @@
 # AI engineering roadmap
 
+> **M4-A update, 2026-11-05:** This is a historical roadmap. PR #61 is merged at `ba8d098`; M3-B0.5 is a reviewer handoff, with 0/142 independent human labels reviewed. No actual live Anthropic agent quality has been measured. The current portfolio scope and source audit are in [M4-A demo package](M4A_DEMO_PACKAGE.md) and [current architecture](ARCHITECTURE_CURRENT.md). Older status tables below are retained as dated planning context.
+
 | | |
 |---|---|
 | **Status** | Active. M1 awaiting approval. M2 merged. M3-A merged (PR #57). M3-B0.1 merged (PR #59). M3-B0.2 dataset v3 in review: built offline, label review and D7 pending. M3-B0.3 review package, D7 package, and M3-B1 plan ready, nothing accepted. M3-B needs separate authorization per stage |

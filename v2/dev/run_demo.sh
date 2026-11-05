@@ -47,7 +47,7 @@ export FOOTBALLAI_V1_COMPAT_TARGET_FPS="${FOOTBALLAI_V1_COMPAT_TARGET_FPS:-5}"
 export FOOTBALLAI_V1_COMPAT_IMAGE_SIZE="${FOOTBALLAI_V1_COMPAT_IMAGE_SIZE:-1280}"
 export FOOTBALLAI_V1_COMPAT_CONFIDENCE="${FOOTBALLAI_V1_COMPAT_CONFIDENCE:-0.20}"
 v2_manifest="$(find "$v2_run_root" -name manifest.json -print -quit 2>/dev/null || true)"
-if [[ -z "$v2_manifest" ]]; then
+if [[ -z "$v2_manifest" && "${FOOTBALLAI_DEMO_SKIP_LEGACY_IMPORT:-0}" != "1" ]]; then
   PYTHONPATH=v2/src "$v2_python" -m footballai_v2.cli.import_legacy_v1 \
     --source data/processed \
     --output-root "$v2_run_root"
@@ -86,6 +86,9 @@ echo "V1 device: $v2_device"
 echo "V1 model:  $(basename "$v2_model_path")"
 echo "Run root:  ${v2_run_root}"
 echo "Queue root: ${v2_queue_root}"
+if [[ "${FOOTBALLAI_DEMO_SKIP_LEGACY_IMPORT:-0}" == "1" ]]; then
+  echo "Fixture:    generated 1-second video, synthetic demo_fast analysis"
+fi
 echo "Press Ctrl+C to stop all services."
 echo
 

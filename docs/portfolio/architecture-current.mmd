@@ -1,0 +1,37 @@
+%% M4-A current architecture; status words are visible in every node.
+%% Vertical layout keeps the SVG readable in a narrow README column.
+flowchart TB
+    UI["React dashboard<br/>IMPLEMENTED · LOCAL VERIFIED"]
+    API["FastAPI API<br/>IMPLEMENTED · LOCAL VERIFIED"]
+    PORTS["Repository · ObjectStorage · JobQueue ports<br/>IMPLEMENTED · LOCAL VERIFIED"]
+    LOCAL["Local manifest · files · queue<br/>IMPLEMENTED · LOCAL VERIFIED"]
+    AZURE["PostgreSQL · Blob · Service Bus<br/>IMPLEMENTED · AZURE LAST EVIDENCE"]
+    WORKER["Async CV worker · queued analysis<br/>IMPLEMENTED · LOCAL VERIFIED"]
+    CV["YOLOv8m detection · ByteTrack tracking<br/>LOCAL VERIFIED on private footage"]
+    SYNTH["demo_fast generated fixture<br/>SYNTHETIC · no YOLO inference"]
+    ARTIFACTS["Immutable attempts · SHA-256 artifacts<br/>IMPLEMENTED · LOCAL VERIFIED"]
+    EVIDENCE["Evidence service · claim catalog<br/>IMPLEMENTED · LOCAL VERIFIED"]
+    AGENT["Read-only agent · 5 approved tools<br/>SCRIPTED ADAPTER · LOCAL VERIFIED"]
+    GROUND["Server grounding · citations · trace<br/>IMPLEMENTED · LOCAL VERIFIED"]
+    LLM["Anthropic path<br/>IMPLEMENTED · UNVERIFIED LIVE"]
+    CI["GitHub Actions CI/security · staging gate<br/>IMPLEMENTED · AZURE LAST EVIDENCE"]
+    FUTURE["Rights-cleared real demo · reviewed labels<br/>PLANNED / BLOCKED"]
+
+    UI --> API --> PORTS --> LOCAL --> WORKER
+    PORTS -. cloud option .-> AZURE
+    AZURE -. queue .-> WORKER
+    WORKER --> CV --> ARTIFACTS
+    WORKER --> SYNTH --> ARTIFACTS
+    ARTIFACTS --> EVIDENCE --> AGENT --> GROUND
+    AGENT -. gated .-> LLM
+    CI -. delivery .-> AZURE
+    FUTURE -. future gate .-> LLM
+
+    classDef local fill:#123c2b,stroke:#55d29d,color:#ffffff;
+    classDef historical fill:#25406a,stroke:#84b5ff,color:#ffffff;
+    classDef caution fill:#5a3b17,stroke:#ffce73,color:#ffffff;
+    classDef future fill:#4b2939,stroke:#ff9dbc,color:#ffffff,stroke-dasharray:6 4;
+    class UI,API,PORTS,LOCAL,WORKER,CV,ARTIFACTS,EVIDENCE,AGENT,GROUND local;
+    class AZURE,CI historical;
+    class SYNTH,LLM caution;
+    class FUTURE future;

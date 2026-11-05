@@ -1,5 +1,7 @@
 # FootballAi V2 local demo
 
+For the **portfolio Tier-A rehearsal**, use the isolated [M4-A launcher and recording guide](../portfolio/M4A_DEMO_PACKAGE.md). It creates a fresh generated `demo_fast` run, skips legacy import, enables the offline scripted agent, forces local adapters, and binds both services to `127.0.0.1`. It never uses private footage or a paid model.
+
 From the repository root:
 
 ```bash
