@@ -2,10 +2,10 @@
 
 | | |
 |---|---|
-| **Status** | Active. M1 awaiting approval. M2 merged. M3-A merged (PR #57). M3-B0.1 merged (PR #59). M3-B0.2 dataset v3 in review: built offline, label review and D7 pending. M3-B needs separate authorization per stage |
+| **Status** | Active. M1 awaiting approval. M2 merged. M3-A merged (PR #57). M3-B0.1 merged (PR #59). M3-B0.2 dataset v3 in review: built offline, label review and D7 pending. M3-B0.3 review package, D7 package, and M3-B1 plan ready, nothing accepted. M3-B needs separate authorization per stage |
 | **Owner** | Aziz Ben Ammar |
 | **Baseline** | `main` at `2c83cb3`, audited 2026-11-01 |
-| **Next milestone** | Close M3-B0.2: second-person label review of v3, and the owner's D7 decision. Then M3-B and M1, each stage with its own authorization |
+| **Next milestone** | Close M3-B0.2: second-person label review of v3 ([package](../../evaluation/copilot/agent-v3/review/README.md)), and the owner's D7 decision ([package](../v2/COPILOT_AGENT_D7_DECISION.md)). Then M3-B1 ([plan](../v2/COPILOT_AGENT_M3B1_PROTOCOL_PROBE.md)) and M1, each stage with its own authorization |
 | **Final milestone** | [LINKEDIN DEMO & PORTFOLIO RELEASE](#m5--linkedin-demo--portfolio-release) |
 | **Publish by** | 2026-12-13 (target), with a scope decision on 2026-11-29 |
 | **Related** | [Demo plan](LINKEDIN_DEMO_PLAN.md) · [Post draft](LINKEDIN_POST_DRAFT.md) · [Current architecture](ARCHITECTURE_CURRENT.md) · [Target architecture](ARCHITECTURE_TARGET.md) |
@@ -377,6 +377,13 @@ flowchart LR
   negative control. It found and fixed a scorer defect that let a spend cap read as a model
   failure, and found two router defects (R1, R2), documented and not fixed. Not blind,
   not reviewed. Open: second-person review, D7, and freezing v3. Then Stage A and B.
+- **M3-B0.3 state:** documents only, **zero requests**. A [review package](../../evaluation/copilot/agent-v3/review/README.md)
+  for a non-developer covers all 142 labels, with a dossier for the 24 the AI triage raised,
+  and tests that refuse a decision without a person's name. The [D7 package](../v2/COPILOT_AGENT_D7_DECISION.md)
+  gives exact proposed values for option 3, and found that an accepted v3 rule must be a new
+  file in `agent-v3`, not an edit of the pinned v2 rule. The [M3-B1 plan](../v2/COPILOT_AGENT_M3B1_PROTOCOL_PROBE.md)
+  recalculates pins and caps for v3, and found that a v3 decision run can need 240 requests,
+  above the approval schema's 200. Nothing was accepted or authorized.
 
 **Metrics:**
 
@@ -477,6 +484,25 @@ cannot fail against `route_following`, so rule v2 proposes replacing it (D7).
 | 14 | Post | Owner has reviewed the final text, and no placeholder remains |
 | 15 | CI | Required checks green on the release commit |
 
+### LinkedIn deliverables: offline-ready versus live validation (2026-11-04)
+
+FootballAI is presented as an AI Engineering, Computer Vision, Cloud/MLOps, and Agentic AI
+portfolio project. What each deliverable can honestly show today:
+
+| Deliverable | Can be shown offline now | Needs live-model validation or an owner action |
+|---|---|---|
+| 60–90 s product demo | Tier A: upload, analysis, deterministic grounded copilot, abstention, scripted agent with its trace, each labelled "not a language model" | Tier B/C shots of a real model. Licensed footage (open) |
+| Architecture diagram | Yes: the system, the agent's tool boundary, and the evaluation pipeline exist in code and Mermaid | Export to SVG/PNG, and checking by eye |
+| Real CV inference evidence | Run `87da5c1b` is `verified_real` | Footage is private: a shareable, licensed clip is needed before any frame is published |
+| Grounded agent with tool trace | The trace viewer with the **scripted** agent, labelled as scripted | Any claim that a model chose the tools needs M3-B Stage C at least |
+| Honest evaluation metrics | Offline evaluation engineering: 142 labels, 14 controls, 0 leaks, the D7 analysis. Must be framed as test-harness work, never as model performance | Any model rate needs an accepted rule, a frozen dataset, and Stage D. Labels are not yet human-reviewed |
+| README and technical docs | Yes, from existing docs | Repository licence decision (open) |
+| LinkedIn post | A draft limited to the claim register | Owner review, and every number checked against a committed report |
+
+Not to be claimed: production readiness, model accuracy or reliability, any football
+metric beyond descriptive tracking diagnostics, footage rights, or a benchmark result for a
+live model. Azure staging was last verified on 2026-09-05 and is unverified now.
+
 ## Demo ladder and fallbacks
 
 Publish the highest tier that has actually passed. A lower tier is still a good
@@ -507,7 +533,8 @@ release.
 | Dashboard question box | Every question on camera | M2-A | Merged |
 | Agent endpoint and trace view | Tier C storyboard | M2-C | Merged |
 | Agent decision rule | M3-B paid run | Owner | Rule v2 proposed, with ten open decisions (D1–D10). Cannot pass until D7 is decided |
-| Second-person label review | M3-B credibility | Owner | Open. Dataset v3 and a blind review sheet are ready. No reviewer named |
+| Second-person label review | M3-B credibility | Owner | Open. [Review package](../../evaluation/copilot/agent-v3/review/README.md) ready: 0 of 142 reviewed. No reviewer named |
+| Request ceiling for a v3 decision run | M3-B Stage D | Owner | Open. Up to 240 requests needed, approval schema allows 200. [Options](../v2/COPILOT_AGENT_M3B1_PROTOCOL_PROBE.md#request-limits-and-cost-upper-bounds) |
 | Router narrowing R1, R2 | Answer quality on two question shapes | Owner | Found in M3-B0.2. Pinned by strict `xfail` tests. Needs a routing version bump |
 
 ## Later, not now
