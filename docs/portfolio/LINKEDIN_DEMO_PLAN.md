@@ -1,5 +1,7 @@
 # LinkedIn demo plan
 
+> **M4-A update, 2026-11-05:** The [current Tier-A package](M4A_DEMO_PACKAGE.md) uses a generated synthetic fixture and an offline scripted agent. The older Tier-A/B storyboard below assumes shareable real footage and is retained as historical planning context. The real-footage shot is BLOCKED by missing publication rights; the Tier-C model sequence is FUTURE / UNVERIFIED. Nothing has been recorded or published for M4-A.
+
 | | |
 |---|---|
 | **Status** | Planned. Nothing has been recorded or published |

@@ -220,11 +220,16 @@ export default function RunDetailPage() {
   if (detail.loading) return <LoadingState label="Loading run provenance…" />
   if (detail.error || !detail.data) return <ErrorState message={detail.error ?? 'Run not found.'} />
   const run = detail.data
+  const matchName = typeof run.provenance.parameters.match_name === 'string' ? run.provenance.parameters.match_name : null
+  const profile = run.provenance.parameters.pipeline_profile
+  const profileLabel = profile === 'demo_fast'
+    ? 'Synthetic demo_fast · no YOLO inference'
+    : profile === 'v1_compat' ? 'YOLOv8m + ByteTrack profile' : `Pipeline profile: ${String(profile ?? 'unknown')}`
   return (
     <div className="page">
       <div className="breadcrumbs"><Link to="/runs">Analysis runs</Link><ChevronRight /><span>{shortId(run.run_id)}</span></div>
       <div className="page-head run-hero">
-        <div><span className="eyebrow">Immutable attempt #{run.attempt_number}</span><h1>{shortId(run.run_id)}</h1><p>{run.contract_version} · created {formatDate(run.created_at)}</p></div>
+        <div><span className="eyebrow">Immutable attempt #{run.attempt_number}</span><h1>{matchName || shortId(run.run_id)}</h1><p>{shortId(run.run_id)} · {run.contract_version} · created {formatDate(run.created_at)}</p><p className="run-profile-label">{profileLabel}</p></div>
         <div className="badge-row"><StatusBadge value={run.status} /><OriginBadge value={run.origin} /></div>
       </div>
       {run.warnings.length > 0 && <AnalysisWarning warnings={run.warnings} legacy={run.origin === 'legacy_v1'} />}

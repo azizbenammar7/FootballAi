@@ -1,138 +1,43 @@
-# Current verified architecture
+# Current architecture — M4-A evidence snapshot
 
-| | |
+**Source baseline:** `main` at `ba8d098a91bc286894d999ca60b7df820e924e96` (PR #61 merged). **Reviewed:** 2026-11-05. This describes code and prior validation, not current cloud health or model quality. The [target document](ARCHITECTURE_TARGET.md) is historical design context; its planned labels do not override this source audit.
+
+![FootballAI current architecture](architecture-current.svg)
+
+The [editable Mermaid source](architecture-current.mmd) renders the narrow README SVG. A [recording overview of the same architecture](architecture-current-video.mmd) was rendered with Mermaid CLI and placed on the [1920×1080 PNG](architecture-current-1920x1080.png) slide. Status is part of each node's text, so color is supplementary. The SVG was inspected at 375 px on light and dark page backgrounds; it remains legible as a tall scrolling diagram.
+
+## Status key
+
+| Status | Meaning |
 |---|---|
-| **Status** | Evidence snapshot of `main` at `2c83cb3` |
-| **Owner** | Aziz Ben Ammar |
-| **Evidence date** | 2026-11-01 |
-| **Next review** | After M1, and before any diagram is exported |
-| **Companion** | [Target architecture](ARCHITECTURE_TARGET.md) |
+| **IMPLEMENTED** | Code exists on the source baseline. |
+| **VERIFIED LOCALLY** | Local tests, browser flow, or a recorded local run exercised it. This does not prove accuracy. |
+| **VERIFIED IN AZURE AT LAST EVIDENCE** | Historical staging validation only; current deployment state was not checked. |
+| **UNVERIFIED LIVE** | The path exists, but actual external model behavior or present cloud availability is unmeasured. |
+| **PLANNED** | Outside the current application; never shown as running. |
 
-This page shows what exists. Nothing planned appears in these diagrams. The
-planned design is in [ARCHITECTURE_TARGET.md](ARCHITECTURE_TARGET.md).
+## Runtime boundaries
 
-## Status labels
+| Boundary | Current source evidence | Status |
+|---|---|---|
+| React dashboard and run detail | `v2/dashboard/src/App.tsx`, `pages/RunDetailPage.tsx`, `components/AgentTraceView.tsx`; browser test `tests/e2e/agent-copilot.spec.ts` | IMPLEMENTED; VERIFIED LOCALLY |
+| FastAPI upload, runs, artifacts, explanation and agent routes | `v2/src/footballai_v2/api/app.py`, `api/agent_route.py` | IMPLEMENTED; VERIFIED LOCALLY |
+| Control, data and delivery ports | `storage/ports.py` (`AnalysisRepository`, `ObjectStorage`), `execution/queue/base.py` (`JobQueue`) | IMPLEMENTED; VERIFIED LOCALLY |
+| Local adapters | `storage/local_analysis_runs.py`, `execution/queue/local_filesystem.py` | IMPLEMENTED; VERIFIED LOCALLY |
+| Cloud adapters | `storage/postgres/repository.py`, `storage/object_storage/azure_blob.py`, `execution/queue/azure_service_bus.py`; `composition.py` selects adapters explicitly | IMPLEMENTED; VERIFIED IN AZURE AT LAST EVIDENCE for the split pipeline using `demo_fast`; current Azure state UNVERIFIED LIVE |
+| Async CV worker | `worker.py`, `execution/executor.py`; queue job is separate from API request | IMPLEMENTED; VERIFIED LOCALLY |
+| Real CV profile | `execution/ai1/detector.py` loads local YOLO weights; `execution/ai1/tracker.py` runs ByteTrack; `execution/adapters/v1_compat_pipeline.py` | IMPLEMENTED; VERIFIED LOCALLY on private footage; accuracy unverified |
+| Synthetic profile | `execution/adapters/demo_pipeline.py` and `cli/seed_demo_workflow.py` | IMPLEMENTED; VERIFIED LOCALLY. `demo_fast` is generated placeholder output, never YOLO inference |
+| Immutable attempts and integrity | `contracts/v1/analysis_run.py`, `execution/executor.py`, `storage/local_analysis_runs.py` enforce versioned attempts and artifact SHA-256 checks | IMPLEMENTED; VERIFIED LOCALLY |
+| Evidence and claims | `copilot/evidence.py` reads registered, integrity-checked artifacts; `copilot/grounding.py` builds an allow-listed claim catalog, router, citations and server-rendered text | IMPLEMENTED; VERIFIED LOCALLY |
+| Read-only agent | `copilot/agent/loop.py`, `agent/tools.py`, `api/agent_route.py`; exactly five no-argument tools: `get_run_status`, `get_tracking_diagnostics`, `get_artifact_metadata`, `get_model_provenance`, `get_evidence_limitations` | IMPLEMENTED; VERIFIED LOCALLY with the offline scripted adapter |
+| Live Anthropic adapter | `copilot/real_agent.py`, `copilot/provider.py`, gated by `copilot/config.py`; agent route is local/test only | IMPLEMENTED; UNVERIFIED LIVE. No actual Anthropic agent quality measured |
+| CI and deployment | `.github/workflows/ci.yml`, `security.yml`, `build-images.yml`, `deploy-staging.yml`; Terraform in `infra/terraform/environments/staging` | IMPLEMENTED; past CI and Azure staging evidence. This snapshot does not verify a current deployment |
 
-| Label | Meaning here |
-|---|---|
-| **IMPLEMENTED** | The code is on `main`. |
-| **VERIFIED** | A test, CI job, or recorded run shows it working. |
-| **DEPLOYED** | It ran in real Azure staging, with evidence. |
-| **EXPERIMENTAL** | It exists for evaluation, and is not a product capability. |
-| **PLANNED** | It does not exist. |
-| **UNVERIFIED** | It could not be checked, or the last evidence is stale. |
+The agent's five tools return only server-written claims bound to the run in the URL. The server checks selected claim IDs against what a tool returned in that request, then renders the answer and validates citations. A fixed `route_following` script chooses tools in the Tier-A demo. It is **not a language model**. Unsupported football questions can abstain before any tool or adapter call. The public trace reports actual executed tool names and distinguishes rejected calls from executed ones.
 
-## System overview
+## Limits relevant to publication
 
-```mermaid
-flowchart LR
-    user["Analyst"] --> ui["React dashboard"]
-    ui --> api["FastAPI API"]
+`verified_real` corroborates execution of the real profile and integrity of its evidence, not detection or tracking accuracy. Track IDs are temporary tracklets, not verified player identities. There is no pass, possession, shot or tactical recognition. The local real run `87da5c1b` uses 2018 World Cup broadcast footage; it is private verification only until publication rights are established. The Tier-A demo flow uses generated `demo_fast` content with conspicuous synthetic labels; no video has been recorded. No agent result from Anthropic has been measured; the v3 dataset has 0/142 second-person human labels reviewed (`docs/v2/COPILOT_AGENT_DATASET_V3.md`).
 
-    subgraph ports["Provider-neutral ports"]
-        repo["AnalysisRepository<br/>manifests or PostgreSQL"]
-        store["ObjectStorage<br/>local or Azure Blob"]
-        queue["JobQueue<br/>filesystem or Service Bus"]
-    end
-
-    api --> repo
-    api --> store
-    api --> queue
-    queue --> worker["CV worker"]
-    worker --> profiles["YOLOv8m + ByteTrack<br/>or synthetic demo_fast"]
-    worker --> store
-    worker --> repo
-
-    api --> copilot["Grounded copilot<br/>local and test only"]
-    copilot --> repo
-    copilot --> store
-    copilot -. "opt-in, never run live" .-> llm["Claude Haiku 5.5"]
-```
-
-Read it in three parts: upload and analysis run asynchronously through a queue,
-results are immutable and versioned, and the copilot reads finished runs without
-changing them.
-
-## Copilot request path
-
-```mermaid
-flowchart TD
-    q["Question"] --> evidence["RunEvidenceService<br/>integrity-checked, allow-listed evidence"]
-    evidence --> router{"Closed-vocabulary router"}
-    router -- "unknown word or no subject" --> abstain["Abstain<br/>no provider call"]
-    router -- "known words" --> catalog{"Claim catalog<br/>server-written facts"}
-    catalog -- "no claim on topic" --> abstain
-    catalog -- "eligible claims" --> select["Provider selects claim ids<br/>default: deterministic fake"]
-    select -- "unknown id" --> reject["Rejected, HTTP 422"]
-    select -- "no relevant claim" --> abstain
-    select -- "valid ids" --> render["Server renders claims and citations"]
-```
-
-The model never writes a fact. It can only choose which server-written claims
-answer the question, so it cannot invent a statistic. It can still choose claims
-that do not answer the question, which is what the evaluation measures.
-
-## Delivery path
-
-```mermaid
-flowchart LR
-    pr["Pull request"] --> gates["CI and security gates"]
-    gates --> main["main"]
-    main --> build["Build, scan, sign in with OIDC"]
-    build --> acr["Azure Container Registry"]
-    acr -. "manual, reviewer-gated" .-> staging["Azure Container Apps staging"]
-```
-
-## Component status
-
-| Area | Component | Status | Evidence |
-|---|---|---|---|
-| Frontend | React dashboard, including Run Detail and explanation panel | IMPLEMENTED, VERIFIED | Frontend CI job on `2c83cb3` |
-| Backend | FastAPI API with streaming upload, runs, retry, cancel, artifacts | IMPLEMENTED, VERIFIED | CI, split-plane integration job |
-| Contracts | `footballai.analysis-run/v1`, immutable attempts, content-addressed artifacts | IMPLEMENTED, VERIFIED | `v2/contracts/`, contract tests |
-| Storage | `AnalysisRepository`, `ObjectStorage`, `JobQueue` ports | IMPLEMENTED, VERIFIED | `v2/src/footballai_v2/storage/ports.py`, integration job |
-| Cloud adapters | PostgreSQL, Azure Blob, Service Bus adapters | IMPLEMENTED, VERIFIED, DEPLOYED at last evidence | CI against PostgreSQL and Azurite; P4 staging validation |
-| Worker | Long-lived worker with queue-driven stages | IMPLEMENTED, VERIFIED | Integration job |
-| Computer vision | YOLOv8m detection plus ByteTrack (`v1_compat`) | IMPLEMENTED, VERIFIED **locally only** | 5, 15, 45 and 94-minute runs in [`reports/v2-validation`](../../reports/v2-validation/5m-15m-45m-94m-comparison.md) |
-| Synthetic path | `demo_fast` deterministic placeholder output | IMPLEMENTED, VERIFIED, DEPLOYED at last evidence | Tests; the P4-proven cloud validation used this profile |
-| Tracking diagnostics | AI1 cached detections, independent ByteTrack, `/v2` diagnostics | IMPLEMENTED, VERIFIED on a bounded clip | [`AI1_DETECTION_TRACKING.md`](../v2/AI1_DETECTION_TRACKING.md) |
-| Identity research | AI2A evaluation layer | EXPERIMENTAL | Merged. It does not resolve identity |
-| Identity research | AI2B appearance benchmark | EXPERIMENTAL, not merged | Open [PR #37](https://github.com/azizbenammar7/FootballAi/pull/37) |
-| Copilot | Evidence service, router, claim catalog, citations, abstention | IMPLEMENTED, VERIFIED | 310 copilot tests passed, 1 skipped, run 2026-11-01 |
-| Copilot | Deterministic fake provider | IMPLEMENTED, VERIFIED | It is not a language model, and the UI says so |
-| Copilot | `AnthropicTextProvider` | IMPLEMENTED, UNVERIFIED live | Tested against the real SDK and a local server only |
-| Evaluation | 52-case v1 harness and deterministic baseline | IMPLEMENTED, VERIFIED | Reproduced 2026-11-01 |
-| Copilot | Dashboard question box and dataset v2 | IMPLEMENTED, merged | M2-A pull request |
-| Agent | Tool calling and agent loop | **IMPLEMENTED offline, merged** | `v2/src/footballai_v2/copilot/agent/`. No real model has run it |
-| Agent | Local endpoint and trace viewer | **IMPLEMENTED offline in M2-C, in review** | Scripted adapter only, local and test only. See `docs/v2/ADR-006-agent-endpoint-and-trace.md` |
-| Agent | RAG, MCP, memory | **PLANNED, does not exist** | No such code on `main` |
-| Observability | JSON logs, health and readiness endpoints | IMPLEMENTED, VERIFIED | `logging_config.py`, runtime health modules |
-| Observability | Application Insights, metric alerts, OpenTelemetry instrumentation | EXPERIMENTAL, **not on `main`** | Draft [PR #20](https://github.com/azizbenammar7/FootballAi/pull/20), conflicting. Partly applied to staging from that branch |
-| CI/CD | CI, Security, Build images on `main` | IMPLEMENTED, VERIFIED | All green on `2c83cb3`, including Build images run 41333208361 |
-| Images | PR #50 images in ACR | VERIFIED pushed, **not deployed** | Build images run 41333208361 |
-| Staging | Azure Container Apps, private PostgreSQL, Blob, Service Bus | DEPLOYED at last evidence, UNVERIFIED now | See below |
-
-## What the cloud does and does not prove
-
-- P4 proved image deployment, migration, readiness, and the split execution path
-  in real Azure, using `demo_fast`. Real YOLO inference at full-match scale was
-  only ever run locally, on Apple MPS.
-- The copilot cannot run in staging. `CopilotSettings` refuses to enable it outside
-  `local` and `test`, because the application has no authentication.
-- Live Azure state could not be read on 2026-11-01 because the CLI session needs a
-  fresh MFA sign-in. The last evidence is from 2026-09-05: older images on the API,
-  worker, and migration workloads, PostgreSQL stopped, and P6 partially applied.
-  Treat all of this as UNVERIFIED until it is read again.
-- `main` has no Application Insights or alert resources in Terraform. Those exist
-  only on the P6 branch.
-
-## Scientific limits that any diagram or claim must respect
-
-- Track IDs are temporary tracklets, not players. The 94-minute run produced 8,099
-  raw track IDs, and 97.65% of raw tracks were too short to score.
-- There is no ball tracking, pass, shot, possession, or tactical recognition.
-- Distances use one pixel-to-metre constant with no homography. They are not
-  verified physical distances.
-- Fatigue and risk values are advisory heuristics, not clinical findings.
-- `verified_real` means evidence corroborates that inference **ran**. It does not
-  validate accuracy.
+The last documented Azure staging validation (2026-09-05) exercised the pipeline with `demo_fast`, not the local real CV or copilot path. The copilot is disabled outside `local` and `test` by `copilot/config.py`. Authentication and per-run authorization are not present; no public demo endpoint is offered.

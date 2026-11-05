@@ -1,4 +1,6 @@
-# Target agentic architecture
+# Historical target architecture (2026-11-01)
+
+> **Planning snapshot, not current system state.** The agent loop, five tools, local API route and trace viewer described below as planned have since merged. The real Anthropic path is implemented but unverified live. Use [the current architecture](ARCHITECTURE_CURRENT.md) and its status-labelled diagram for any portfolio or demo claim.
 
 | | |
 |---|---|
