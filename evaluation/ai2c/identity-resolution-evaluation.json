@@ -1,0 +1,2236 @@
+{
+  "development_sweep": [
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 1.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 3.0,
+        "min_ambiguity_margin": 0.1,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 17,
+          "units_per_identity_after": 4.25,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.196079,
+          "false_negative": 41,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 5,
+          "recall": 0.108696,
+          "true_negative": 164,
+          "true_positive": 5
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.689732,
+          "scoped_labelled_rate": 0.52381,
+          "scoped_labelled_unresolved": 11,
+          "unresolved_tracklets": 309
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 1.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 3.0,
+        "min_ambiguity_margin": 0.2,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 17,
+          "units_per_identity_after": 4.25,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.196079,
+          "false_negative": 41,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 5,
+          "recall": 0.108696,
+          "true_negative": 164,
+          "true_positive": 5
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.720982,
+          "scoped_labelled_rate": 0.571429,
+          "scoped_labelled_unresolved": 12,
+          "unresolved_tracklets": 323
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 1.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 3.0,
+        "min_ambiguity_margin": 0.3,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 18,
+          "units_per_identity_after": 4.5,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.122448,
+          "false_negative": 43,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 3,
+          "recall": 0.065217,
+          "true_negative": 164,
+          "true_positive": 3
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.736607,
+          "scoped_labelled_rate": 0.571429,
+          "scoped_labelled_unresolved": 12,
+          "unresolved_tracklets": 330
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 1.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 5.0,
+        "min_ambiguity_margin": 0.1,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 17,
+          "units_per_identity_after": 4.25,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.196079,
+          "false_negative": 41,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 5,
+          "recall": 0.108696,
+          "true_negative": 164,
+          "true_positive": 5
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.671875,
+          "scoped_labelled_rate": 0.52381,
+          "scoped_labelled_unresolved": 11,
+          "unresolved_tracklets": 301
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 1.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 5.0,
+        "min_ambiguity_margin": 0.2,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 18,
+          "units_per_identity_after": 4.5,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.122448,
+          "false_negative": 43,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 3,
+          "recall": 0.065217,
+          "true_negative": 164,
+          "true_positive": 3
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.707589,
+          "scoped_labelled_rate": 0.571429,
+          "scoped_labelled_unresolved": 12,
+          "unresolved_tracklets": 317
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 1.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 5.0,
+        "min_ambiguity_margin": 0.3,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 18,
+          "units_per_identity_after": 4.5,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.122448,
+          "false_negative": 43,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 3,
+          "recall": 0.065217,
+          "true_negative": 164,
+          "true_positive": 3
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.741071,
+          "scoped_labelled_rate": 0.571429,
+          "scoped_labelled_unresolved": 12,
+          "unresolved_tracklets": 332
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 1.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 8.0,
+        "min_ambiguity_margin": 0.1,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 18,
+          "units_per_identity_after": 4.5,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.122448,
+          "false_negative": 43,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 3,
+          "recall": 0.065217,
+          "true_negative": 164,
+          "true_positive": 3
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.6875,
+          "scoped_labelled_rate": 0.52381,
+          "scoped_labelled_unresolved": 11,
+          "unresolved_tracklets": 308
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 1.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 8.0,
+        "min_ambiguity_margin": 0.2,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 18,
+          "units_per_identity_after": 4.5,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.122448,
+          "false_negative": 43,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 3,
+          "recall": 0.065217,
+          "true_negative": 164,
+          "true_positive": 3
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.734375,
+          "scoped_labelled_rate": 0.52381,
+          "scoped_labelled_unresolved": 11,
+          "unresolved_tracklets": 329
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 1.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 8.0,
+        "min_ambiguity_margin": 0.3,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 19,
+          "units_per_identity_after": 4.75,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.083333,
+          "false_negative": 44,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 2,
+          "recall": 0.043478,
+          "true_negative": 164,
+          "true_positive": 2
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.810268,
+          "scoped_labelled_rate": 0.666667,
+          "scoped_labelled_unresolved": 14,
+          "unresolved_tracklets": 363
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 2.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 3.0,
+        "min_ambiguity_margin": 0.1,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 17,
+          "units_per_identity_after": 4.25,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.196079,
+          "false_negative": 41,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 5,
+          "recall": 0.108696,
+          "true_negative": 164,
+          "true_positive": 5
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.683036,
+          "scoped_labelled_rate": 0.428571,
+          "scoped_labelled_unresolved": 9,
+          "unresolved_tracklets": 306
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 2.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 3.0,
+        "min_ambiguity_margin": 0.2,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 18,
+          "units_per_identity_after": 4.5,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.122448,
+          "false_negative": 43,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 3,
+          "recall": 0.065217,
+          "true_negative": 164,
+          "true_positive": 3
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.779018,
+          "scoped_labelled_rate": 0.571429,
+          "scoped_labelled_unresolved": 12,
+          "unresolved_tracklets": 349
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 2.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 3.0,
+        "min_ambiguity_margin": 0.3,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 19,
+          "units_per_identity_after": 4.75,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.083333,
+          "false_negative": 44,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 2,
+          "recall": 0.043478,
+          "true_negative": 164,
+          "true_positive": 2
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.850446,
+          "scoped_labelled_rate": 0.761905,
+          "scoped_labelled_unresolved": 16,
+          "unresolved_tracklets": 381
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 2.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 5.0,
+        "min_ambiguity_margin": 0.1,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 18,
+          "units_per_identity_after": 4.5,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.122448,
+          "false_negative": 43,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 3,
+          "recall": 0.065217,
+          "true_negative": 164,
+          "true_positive": 3
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.747768,
+          "scoped_labelled_rate": 0.52381,
+          "scoped_labelled_unresolved": 11,
+          "unresolved_tracklets": 335
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 2.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 5.0,
+        "min_ambiguity_margin": 0.2,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 19,
+          "units_per_identity_after": 4.75,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.083333,
+          "false_negative": 44,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 2,
+          "recall": 0.043478,
+          "true_negative": 164,
+          "true_positive": 2
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.841518,
+          "scoped_labelled_rate": 0.761905,
+          "scoped_labelled_unresolved": 16,
+          "unresolved_tracklets": 377
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 2.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 5.0,
+        "min_ambiguity_margin": 0.3,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 21,
+          "units_per_identity_after": 5.25,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": null,
+          "false_negative": 46,
+          "false_positive": 0,
+          "precision": null,
+          "predicted_positive_pairs": 0,
+          "recall": 0.0,
+          "true_negative": 164,
+          "true_positive": 0
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.892857,
+          "scoped_labelled_rate": 0.952381,
+          "scoped_labelled_unresolved": 20,
+          "unresolved_tracklets": 400
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 2.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 8.0,
+        "min_ambiguity_margin": 0.1,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 19,
+          "units_per_identity_after": 4.75,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.083333,
+          "false_negative": 44,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 2,
+          "recall": 0.043478,
+          "true_negative": 164,
+          "true_positive": 2
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.792411,
+          "scoped_labelled_rate": 0.761905,
+          "scoped_labelled_unresolved": 16,
+          "unresolved_tracklets": 355
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 2.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 8.0,
+        "min_ambiguity_margin": 0.2,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 21,
+          "units_per_identity_after": 5.25,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": null,
+          "false_negative": 46,
+          "false_positive": 0,
+          "precision": null,
+          "predicted_positive_pairs": 0,
+          "recall": 0.0,
+          "true_negative": 164,
+          "true_positive": 0
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.888393,
+          "scoped_labelled_rate": 0.952381,
+          "scoped_labelled_unresolved": 20,
+          "unresolved_tracklets": 398
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 2.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 8.0,
+        "min_ambiguity_margin": 0.3,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 21,
+          "units_per_identity_after": 5.25,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": null,
+          "false_negative": 46,
+          "false_positive": 0,
+          "precision": null,
+          "predicted_positive_pairs": 0,
+          "recall": 0.0,
+          "true_negative": 164,
+          "true_positive": 0
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.9375,
+          "scoped_labelled_rate": 0.952381,
+          "scoped_labelled_unresolved": 20,
+          "unresolved_tracklets": 420
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 3.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 3.0,
+        "min_ambiguity_margin": 0.1,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 2,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 18,
+          "units_per_identity_after": 4.5,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.122448,
+          "false_negative": 43,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 3,
+          "recall": 0.065217,
+          "true_negative": 164,
+          "true_positive": 3
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.747768,
+          "scoped_labelled_rate": 0.52381,
+          "scoped_labelled_unresolved": 11,
+          "unresolved_tracklets": 335
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 3.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 3.0,
+        "min_ambiguity_margin": 0.2,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 1,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 20,
+          "units_per_identity_after": 5.0,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.042553,
+          "false_negative": 45,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 1,
+          "recall": 0.021739,
+          "true_negative": 164,
+          "true_positive": 1
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.868304,
+          "scoped_labelled_rate": 0.761905,
+          "scoped_labelled_unresolved": 16,
+          "unresolved_tracklets": 389
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 3.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 3.0,
+        "min_ambiguity_margin": 0.3,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 1,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 21,
+          "units_per_identity_after": 5.25,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": null,
+          "false_negative": 46,
+          "false_positive": 0,
+          "precision": null,
+          "predicted_positive_pairs": 0,
+          "recall": 0.0,
+          "true_negative": 164,
+          "true_positive": 0
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.9375,
+          "scoped_labelled_rate": 0.952381,
+          "scoped_labelled_unresolved": 20,
+          "unresolved_tracklets": 420
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 3.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 5.0,
+        "min_ambiguity_margin": 0.1,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 2,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 20,
+          "units_per_identity_after": 5.0,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.042553,
+          "false_negative": 45,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 1,
+          "recall": 0.021739,
+          "true_negative": 164,
+          "true_positive": 1
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.839286,
+          "scoped_labelled_rate": 0.666667,
+          "scoped_labelled_unresolved": 14,
+          "unresolved_tracklets": 376
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 3.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 5.0,
+        "min_ambiguity_margin": 0.2,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 21,
+          "units_per_identity_after": 5.25,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": null,
+          "false_negative": 46,
+          "false_positive": 0,
+          "precision": null,
+          "predicted_positive_pairs": 0,
+          "recall": 0.0,
+          "true_negative": 164,
+          "true_positive": 0
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.946429,
+          "scoped_labelled_rate": 1.0,
+          "scoped_labelled_unresolved": 21,
+          "unresolved_tracklets": 424
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 3.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 5.0,
+        "min_ambiguity_margin": 0.3,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 21,
+          "units_per_identity_after": 5.25,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": null,
+          "false_negative": 46,
+          "false_positive": 0,
+          "precision": null,
+          "predicted_positive_pairs": 0,
+          "recall": 0.0,
+          "true_negative": 164,
+          "true_positive": 0
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.964286,
+          "scoped_labelled_rate": 1.0,
+          "scoped_labelled_unresolved": 21,
+          "unresolved_tracklets": 432
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 3.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 8.0,
+        "min_ambiguity_margin": 0.1,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 1,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 21,
+          "units_per_identity_after": 5.25,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": null,
+          "false_negative": 46,
+          "false_positive": 0,
+          "precision": null,
+          "predicted_positive_pairs": 0,
+          "recall": 0.0,
+          "true_negative": 164,
+          "true_positive": 0
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.90625,
+          "scoped_labelled_rate": 0.904762,
+          "scoped_labelled_unresolved": 19,
+          "unresolved_tracklets": 406
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 3.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 8.0,
+        "min_ambiguity_margin": 0.2,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 21,
+          "units_per_identity_after": 5.25,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": null,
+          "false_negative": 46,
+          "false_positive": 0,
+          "precision": null,
+          "predicted_positive_pairs": 0,
+          "recall": 0.0,
+          "true_negative": 164,
+          "true_positive": 0
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.959821,
+          "scoped_labelled_rate": 1.0,
+          "scoped_labelled_unresolved": 21,
+          "unresolved_tracklets": 430
+        }
+      }
+    },
+    {
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 3.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 8.0,
+        "min_ambiguity_margin": 0.3,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 21,
+          "units_per_identity_after": 5.25,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": null,
+          "false_negative": 46,
+          "false_positive": 0,
+          "precision": null,
+          "predicted_positive_pairs": 0,
+          "recall": 0.0,
+          "true_negative": 164,
+          "true_positive": 0
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.977679,
+          "scoped_labelled_rate": 1.0,
+          "scoped_labelled_unresolved": 21,
+          "unresolved_tracklets": 438
+        }
+      }
+    }
+  ],
+  "extra_clips": [
+    {
+      "dataset": {
+        "ai2a_evaluation_sha256": "30a72928ff85483bed4b4a59e9aee663b77c88af5370bf76e804d7c7f5003cf5",
+        "explicit_cannot_links_available": 330,
+        "ground_truth_sha256": "badd7cec2ee940f1c01c81dfe4fade9408803cd52a89d16f87c2b7a6b0163205",
+        "labels": {
+          "annotations": 39,
+          "confirmed": 28,
+          "identities": 33,
+          "uncertain": 6,
+          "unknown": 5
+        },
+        "review_samples_sha256": "da05f716e7896e7456a355122d0aa0bb502e18cac238d7627de0756613403648",
+        "source_id": "ai1-bounded-18s-validation",
+        "team_evidence_available": true,
+        "tracklets": 39,
+        "tracklets_sha256": "44fa5cdfe69fc9e096ee3e5d7e1c36b4ea78ce317fd17d147f592ede0be7e7ca",
+        "video_sha256": "f74349e5a9bfa57cab87f1a233f20f91e8a84ba9dfcf2ab37b6b86750f6ffe98"
+      },
+      "results": {
+        "review_only": {
+          "cross_team_violations": 0,
+          "explicit_cannot_link_violations": 0,
+          "false_merges": 0,
+          "fragmentation": {
+            "labelled_tracklets": 28,
+            "predicted_units_after_association": 28,
+            "units_per_identity_after": 1.037037,
+            "units_per_identity_before": 1.037037
+          },
+          "labelled_non_player_contamination_pairs": 0,
+          "pairwise": {
+            "f1": null,
+            "false_negative": 1,
+            "false_positive": 0,
+            "precision": null,
+            "predicted_positive_pairs": 0,
+            "recall": 0.0,
+            "true_negative": 377,
+            "true_positive": 0
+          },
+          "temporal_overlap_violations": 0,
+          "uncertain_label_disagreements": 0,
+          "unresolved": {
+            "all_eligible_tracklets": 39,
+            "rate": 1.0,
+            "scoped_labelled_rate": 1.0,
+            "scoped_labelled_unresolved": 28,
+            "unresolved_tracklets": 39
+          }
+        },
+        "review_only+ai2a_evidence": {
+          "cross_team_violations": 0,
+          "explicit_cannot_link_violations": 0,
+          "false_merges": 0,
+          "fragmentation": {
+            "labelled_tracklets": 28,
+            "predicted_units_after_association": 28,
+            "units_per_identity_after": 1.037037,
+            "units_per_identity_before": 1.037037
+          },
+          "labelled_non_player_contamination_pairs": 0,
+          "pairwise": {
+            "f1": null,
+            "false_negative": 1,
+            "false_positive": 0,
+            "precision": null,
+            "predicted_positive_pairs": 0,
+            "recall": 0.0,
+            "true_negative": 377,
+            "true_positive": 0
+          },
+          "temporal_overlap_violations": 0,
+          "uncertain_label_disagreements": 0,
+          "unresolved": {
+            "all_eligible_tracklets": 39,
+            "rate": 1.0,
+            "scoped_labelled_rate": 1.0,
+            "scoped_labelled_unresolved": 28,
+            "unresolved_tracklets": 39
+          }
+        },
+        "temporal_kinematic_selected": {
+          "cross_team_violations": 0,
+          "explicit_cannot_link_violations": 0,
+          "false_merges": 1,
+          "fragmentation": {
+            "labelled_tracklets": 28,
+            "predicted_units_after_association": 28,
+            "units_per_identity_after": 1.037037,
+            "units_per_identity_before": 1.037037
+          },
+          "labelled_non_player_contamination_pairs": 2,
+          "pairwise": {
+            "f1": null,
+            "false_negative": 1,
+            "false_positive": 1,
+            "precision": 0.0,
+            "predicted_positive_pairs": 1,
+            "recall": 0.0,
+            "true_negative": 376,
+            "true_positive": 0
+          },
+          "temporal_overlap_violations": 0,
+          "uncertain_label_disagreements": 3,
+          "unresolved": {
+            "all_eligible_tracklets": 39,
+            "rate": 0.820513,
+            "scoped_labelled_rate": 0.892857,
+            "scoped_labelled_unresolved": 25,
+            "unresolved_tracklets": 32
+          }
+        },
+        "temporal_kinematic_selected+ai2a_evidence": {
+          "cross_team_violations": 0,
+          "explicit_cannot_link_violations": 0,
+          "false_merges": 1,
+          "fragmentation": {
+            "labelled_tracklets": 28,
+            "predicted_units_after_association": 28,
+            "units_per_identity_after": 1.037037,
+            "units_per_identity_before": 1.037037
+          },
+          "labelled_non_player_contamination_pairs": 2,
+          "pairwise": {
+            "f1": null,
+            "false_negative": 1,
+            "false_positive": 1,
+            "precision": 0.0,
+            "predicted_positive_pairs": 1,
+            "recall": 0.0,
+            "true_negative": 376,
+            "true_positive": 0
+          },
+          "temporal_overlap_violations": 0,
+          "uncertain_label_disagreements": 3,
+          "unresolved": {
+            "all_eligible_tracklets": 39,
+            "rate": 0.820513,
+            "scoped_labelled_rate": 0.892857,
+            "scoped_labelled_unresolved": 25,
+            "unresolved_tracklets": 32
+          }
+        },
+        "temporal_only": {
+          "cross_team_violations": 0,
+          "explicit_cannot_link_violations": 0,
+          "false_merges": 1,
+          "fragmentation": {
+            "labelled_tracklets": 28,
+            "predicted_units_after_association": 28,
+            "units_per_identity_after": 1.037037,
+            "units_per_identity_before": 1.037037
+          },
+          "labelled_non_player_contamination_pairs": 1,
+          "pairwise": {
+            "f1": null,
+            "false_negative": 1,
+            "false_positive": 1,
+            "precision": 0.0,
+            "predicted_positive_pairs": 1,
+            "recall": 0.0,
+            "true_negative": 376,
+            "true_positive": 0
+          },
+          "temporal_overlap_violations": 0,
+          "uncertain_label_disagreements": 0,
+          "unresolved": {
+            "all_eligible_tracklets": 39,
+            "rate": 0.846154,
+            "scoped_labelled_rate": 0.928571,
+            "scoped_labelled_unresolved": 26,
+            "unresolved_tracklets": 33
+          }
+        },
+        "temporal_only+ai2a_evidence": {
+          "cross_team_violations": 0,
+          "explicit_cannot_link_violations": 0,
+          "false_merges": 1,
+          "fragmentation": {
+            "labelled_tracklets": 28,
+            "predicted_units_after_association": 28,
+            "units_per_identity_after": 1.037037,
+            "units_per_identity_before": 1.037037
+          },
+          "labelled_non_player_contamination_pairs": 1,
+          "pairwise": {
+            "f1": null,
+            "false_negative": 1,
+            "false_positive": 1,
+            "precision": 0.0,
+            "predicted_positive_pairs": 1,
+            "recall": 0.0,
+            "true_negative": 376,
+            "true_positive": 0
+          },
+          "temporal_overlap_violations": 0,
+          "uncertain_label_disagreements": 0,
+          "unresolved": {
+            "all_eligible_tracklets": 39,
+            "rate": 0.846154,
+            "scoped_labelled_rate": 0.928571,
+            "scoped_labelled_unresolved": 26,
+            "unresolved_tracklets": 33
+          }
+        }
+      }
+    }
+  ],
+  "full_match_scale_diagnostic": {
+    "artifact_summary": {
+      "abstentions": 498,
+      "automatic_links": 1025,
+      "candidate_pairs_in_gap_window": 13769,
+      "confirmed_identities": 0,
+      "confirmed_tracklets": 0,
+      "eligible_tracklets": 8441,
+      "excluded_tracklets": 0,
+      "gated_candidates": 2010,
+      "human_links": 0,
+      "identities": 887,
+      "identity_observation_share": 0.218341,
+      "identity_observation_share_note": "share of input observations assigned to any confirmed/provisional identity; not a correctness metric; null when observation counts are unavailable",
+      "provisional_identities": 887,
+      "provisional_tracklets": 1912,
+      "suspected_shot_cut_frames": [
+        4230,
+        5934,
+        7224,
+        15204,
+        20442,
+        20862,
+        28062,
+        28548,
+        30744,
+        32532,
+        36810,
+        37104,
+        37596,
+        39558,
+        44220,
+        50532,
+        50538,
+        55470,
+        64950,
+        67062,
+        69366,
+        71682,
+        72648,
+        74490,
+        74514,
+        79920,
+        85158,
+        86322,
+        98826,
+        99060,
+        111378,
+        115602,
+        117222,
+        117888,
+        118728,
+        119382,
+        121920,
+        122772,
+        124686,
+        127680,
+        128556,
+        138180,
+        138834,
+        142332,
+        145728,
+        162222,
+        163374,
+        163752,
+        165060,
+        165858,
+        167490,
+        168330
+      ],
+      "tracklets": 8441,
+      "unresolved_tracklets": 6529
+    },
+    "configuration": {
+      "eligible_semantic_classes": [
+        "person"
+      ],
+      "max_gap_seconds": 1.0,
+      "max_scale_ratio": 1.6,
+      "max_speed_heights_per_second": 3.0,
+      "min_ambiguity_margin": 0.2,
+      "mode": "temporal_kinematic",
+      "shot_cut_min_births": 8,
+      "static_allowance_heights": 1.0,
+      "team_conflict_confidence": 0.8
+    },
+    "identity_observed_seconds": {
+      "count": 887,
+      "max": 156.0,
+      "median": 25.8,
+      "p90": 63.6
+    },
+    "identity_size_distribution": {
+      "count": 887,
+      "max": 6,
+      "median": 2,
+      "p90": 3
+    },
+    "input": {
+      "duration_seconds": 5641.4,
+      "input_kind": "legacy.v1-raw-tracks",
+      "observations": 160327,
+      "sha256": "8afd3b5ac305bc276db625b3978a9962405e3fa0ac1766f5ceb7cf605a27879f",
+      "source_id": "v1-legacy-full-match",
+      "tracklets": 8441
+    },
+    "interpretation": "Diagnostic proxy only. The legacy table has no identity labels, so these counts say nothing about association correctness.",
+    "runtime": {
+      "peak_traced_python_bytes": 38476048,
+      "seconds": 0.9559
+    },
+    "units_after": 7416,
+    "units_before": 8441,
+    "unresolved_tracklet_seconds": {
+      "count": 6529,
+      "max": 131.2,
+      "median": 10.6,
+      "p90": 33.4
+    }
+  },
+  "metric_classes": {
+    "diagnostic_proxies": [
+      "artifact_summary",
+      "runtime (host dependent)"
+    ],
+    "measured": [
+      "pairwise precision/recall/F1 with TP/FP/FN/TN counts",
+      "false merges",
+      "labelled non-player contamination",
+      "cross-team violations",
+      "temporal overlap and explicit cannot-link violations",
+      "fragmentation (units per labelled identity)",
+      "unresolved rates"
+    ],
+    "not_measured": [
+      "HOTA",
+      "IDF1",
+      "ID_switches",
+      "appearance channel (AI2B cache not available)"
+    ]
+  },
+  "primary_dataset": {
+    "ai2a_evaluation_sha256": null,
+    "explicit_cannot_links_available": 0,
+    "ground_truth_sha256": "470a3c0c3be448f7ec02845a39a0b56ed5e1c0633cb739693778fc0e5dbdf786",
+    "labels": {
+      "annotations": 48,
+      "confirmed": 40,
+      "identities": 8,
+      "uncertain": 0,
+      "unknown": 8
+    },
+    "review_samples_sha256": "ce8ca6dd0d85b91b60431396035b4a8f56d73862bc2d9448b4c9f5bbefff441c",
+    "source_id": "belgium-japan-wide-90s",
+    "team_evidence_available": false,
+    "tracklets": 448,
+    "tracklets_sha256": "8c8cf6975a17217e522019371f2693c3061ac8873f6fc70f007da0d7fc78d040",
+    "video_sha256": "c8cd2f7a36e4a577e8dbadb57b61aab0afaf0c6e1958a03e636a95ea5a45ab0b"
+  },
+  "protocol": {
+    "development_identities": [
+      "TEAM_A_01",
+      "TEAM_A_03",
+      "TEAM_B_01",
+      "TEAM_B_03"
+    ],
+    "evaluation_identities": [
+      "TEAM_A_02",
+      "TEAM_A_04",
+      "TEAM_B_02",
+      "TEAM_B_04"
+    ],
+    "extra_clips_used_for_selection": false,
+    "grid": {
+      "max_gap_seconds": [
+        1.0,
+        2.0,
+        3.0
+      ],
+      "max_speed_heights_per_second": [
+        3.0,
+        5.0,
+        8.0
+      ],
+      "min_ambiguity_margin": [
+        0.1,
+        0.2,
+        0.3
+      ]
+    },
+    "selection_rule": "temporal_kinematic grid on development identities only: zero false merges and zero labelled non-player contamination, then most true-positive pairs, ties to the more conservative configuration"
+  },
+  "results": {
+    "review_only": {
+      "all_labelled_diagnostic": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 40,
+          "predicted_units_after_association": 40,
+          "units_per_identity_after": 5.0,
+          "units_per_identity_before": 5.0
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": null,
+          "false_negative": 87,
+          "false_positive": 0,
+          "precision": null,
+          "predicted_positive_pairs": 0,
+          "recall": 0.0,
+          "true_negative": 693,
+          "true_positive": 0
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 1.0,
+          "scoped_labelled_rate": 1.0,
+          "scoped_labelled_unresolved": 40,
+          "unresolved_tracklets": 448
+        }
+      },
+      "artifact_summary": {
+        "abstentions": 0,
+        "automatic_links": 0,
+        "candidate_pairs_in_gap_window": 0,
+        "confirmed_identities": 0,
+        "confirmed_tracklets": 0,
+        "eligible_tracklets": 448,
+        "excluded_tracklets": 0,
+        "gated_candidates": 0,
+        "human_links": 0,
+        "identities": 0,
+        "identity_observation_share": null,
+        "identity_observation_share_note": "share of input observations assigned to any confirmed/provisional identity; not a correctness metric; null when observation counts are unavailable",
+        "provisional_identities": 0,
+        "provisional_tracklets": 0,
+        "suspected_shot_cut_frames": [
+          12,
+          330,
+          414,
+          1008,
+          1170,
+          1452,
+          1800,
+          2034,
+          2340,
+          2394,
+          2472
+        ],
+        "tracklets": 448,
+        "unresolved_tracklets": 448
+      },
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 1.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 3.0,
+        "min_ambiguity_margin": 0.2,
+        "mode": "review_only",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 21,
+          "units_per_identity_after": 5.25,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": null,
+          "false_negative": 46,
+          "false_positive": 0,
+          "precision": null,
+          "predicted_positive_pairs": 0,
+          "recall": 0.0,
+          "true_negative": 164,
+          "true_positive": 0
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 1.0,
+          "scoped_labelled_rate": 1.0,
+          "scoped_labelled_unresolved": 21,
+          "unresolved_tracklets": 448
+        }
+      },
+      "evaluation": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 19,
+          "predicted_units_after_association": 19,
+          "units_per_identity_after": 4.75,
+          "units_per_identity_before": 4.75
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": null,
+          "false_negative": 41,
+          "false_positive": 0,
+          "precision": null,
+          "predicted_positive_pairs": 0,
+          "recall": 0.0,
+          "true_negative": 130,
+          "true_positive": 0
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 1.0,
+          "scoped_labelled_rate": 1.0,
+          "scoped_labelled_unresolved": 19,
+          "unresolved_tracklets": 448
+        }
+      },
+      "runtime": {
+        "peak_traced_python_bytes": 257056,
+        "seconds": 0.0018
+      }
+    },
+    "temporal_kinematic_a_priori": {
+      "all_labelled_diagnostic": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 40,
+          "predicted_units_after_association": 38,
+          "units_per_identity_after": 4.75,
+          "units_per_identity_before": 5.0
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.044945,
+          "false_negative": 85,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 2,
+          "recall": 0.022989,
+          "true_negative": 693,
+          "true_positive": 2
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.841518,
+          "scoped_labelled_rate": 0.775,
+          "scoped_labelled_unresolved": 31,
+          "unresolved_tracklets": 377
+        }
+      },
+      "artifact_summary": {
+        "abstentions": 225,
+        "automatic_links": 36,
+        "candidate_pairs_in_gap_window": 3934,
+        "confirmed_identities": 0,
+        "confirmed_tracklets": 0,
+        "eligible_tracklets": 448,
+        "excluded_tracklets": 0,
+        "gated_candidates": 923,
+        "human_links": 0,
+        "identities": 35,
+        "identity_observation_share": null,
+        "identity_observation_share_note": "share of input observations assigned to any confirmed/provisional identity; not a correctness metric; null when observation counts are unavailable",
+        "provisional_identities": 35,
+        "provisional_tracklets": 71,
+        "suspected_shot_cut_frames": [
+          12,
+          330,
+          414,
+          1008,
+          1170,
+          1452,
+          1800,
+          2034,
+          2340,
+          2394,
+          2472
+        ],
+        "tracklets": 448,
+        "unresolved_tracklets": 377
+      },
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 2.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 5.0,
+        "min_ambiguity_margin": 0.2,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 19,
+          "units_per_identity_after": 4.75,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.083333,
+          "false_negative": 44,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 2,
+          "recall": 0.043478,
+          "true_negative": 164,
+          "true_positive": 2
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.841518,
+          "scoped_labelled_rate": 0.761905,
+          "scoped_labelled_unresolved": 16,
+          "unresolved_tracklets": 377
+        }
+      },
+      "evaluation": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 19,
+          "predicted_units_after_association": 19,
+          "units_per_identity_after": 4.75,
+          "units_per_identity_before": 4.75
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": null,
+          "false_negative": 41,
+          "false_positive": 0,
+          "precision": null,
+          "predicted_positive_pairs": 0,
+          "recall": 0.0,
+          "true_negative": 130,
+          "true_positive": 0
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.841518,
+          "scoped_labelled_rate": 0.789474,
+          "scoped_labelled_unresolved": 15,
+          "unresolved_tracklets": 377
+        }
+      },
+      "runtime": {
+        "peak_traced_python_bytes": 594385,
+        "seconds": 0.0185
+      }
+    },
+    "temporal_kinematic_selected": {
+      "all_labelled_diagnostic": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 40,
+          "predicted_units_after_association": 36,
+          "units_per_identity_after": 4.5,
+          "units_per_identity_before": 5.0
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.108695,
+          "false_negative": 82,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 5,
+          "recall": 0.057471,
+          "true_negative": 693,
+          "true_positive": 5
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.720982,
+          "scoped_labelled_rate": 0.55,
+          "scoped_labelled_unresolved": 22,
+          "unresolved_tracklets": 323
+        }
+      },
+      "artifact_summary": {
+        "abstentions": 74,
+        "automatic_links": 65,
+        "candidate_pairs_in_gap_window": 1954,
+        "confirmed_identities": 0,
+        "confirmed_tracklets": 0,
+        "eligible_tracklets": 448,
+        "excluded_tracklets": 0,
+        "gated_candidates": 220,
+        "human_links": 0,
+        "identities": 60,
+        "identity_observation_share": null,
+        "identity_observation_share_note": "share of input observations assigned to any confirmed/provisional identity; not a correctness metric; null when observation counts are unavailable",
+        "provisional_identities": 60,
+        "provisional_tracklets": 125,
+        "suspected_shot_cut_frames": [
+          12,
+          330,
+          414,
+          1008,
+          1170,
+          1452,
+          1800,
+          2034,
+          2340,
+          2394,
+          2472
+        ],
+        "tracklets": 448,
+        "unresolved_tracklets": 323
+      },
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 1.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 3.0,
+        "min_ambiguity_margin": 0.2,
+        "mode": "temporal_kinematic",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 17,
+          "units_per_identity_after": 4.25,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": 0.196079,
+          "false_negative": 41,
+          "false_positive": 0,
+          "precision": 1.0,
+          "predicted_positive_pairs": 5,
+          "recall": 0.108696,
+          "true_negative": 164,
+          "true_positive": 5
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.720982,
+          "scoped_labelled_rate": 0.571429,
+          "scoped_labelled_unresolved": 12,
+          "unresolved_tracklets": 323
+        }
+      },
+      "evaluation": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 19,
+          "predicted_units_after_association": 19,
+          "units_per_identity_after": 4.75,
+          "units_per_identity_before": 4.75
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": null,
+          "false_negative": 41,
+          "false_positive": 0,
+          "precision": null,
+          "predicted_positive_pairs": 0,
+          "recall": 0.0,
+          "true_negative": 130,
+          "true_positive": 0
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.720982,
+          "scoped_labelled_rate": 0.526316,
+          "scoped_labelled_unresolved": 10,
+          "unresolved_tracklets": 323
+        }
+      },
+      "runtime": {
+        "peak_traced_python_bytes": 399080,
+        "seconds": 0.0111
+      }
+    },
+    "temporal_only": {
+      "all_labelled_diagnostic": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 40,
+          "predicted_units_after_association": 40,
+          "units_per_identity_after": 5.0,
+          "units_per_identity_before": 5.0
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": null,
+          "false_negative": 87,
+          "false_positive": 0,
+          "precision": null,
+          "predicted_positive_pairs": 0,
+          "recall": 0.0,
+          "true_negative": 693,
+          "true_positive": 0
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.977679,
+          "scoped_labelled_rate": 1.0,
+          "scoped_labelled_unresolved": 40,
+          "unresolved_tracklets": 438
+        }
+      },
+      "artifact_summary": {
+        "abstentions": 423,
+        "automatic_links": 5,
+        "candidate_pairs_in_gap_window": 3934,
+        "confirmed_identities": 0,
+        "confirmed_tracklets": 0,
+        "eligible_tracklets": 448,
+        "excluded_tracklets": 0,
+        "gated_candidates": 2985,
+        "human_links": 0,
+        "identities": 5,
+        "identity_observation_share": null,
+        "identity_observation_share_note": "share of input observations assigned to any confirmed/provisional identity; not a correctness metric; null when observation counts are unavailable",
+        "provisional_identities": 5,
+        "provisional_tracklets": 10,
+        "suspected_shot_cut_frames": [
+          12,
+          330,
+          414,
+          1008,
+          1170,
+          1452,
+          1800,
+          2034,
+          2340,
+          2394,
+          2472
+        ],
+        "tracklets": 448,
+        "unresolved_tracklets": 438
+      },
+      "configuration": {
+        "eligible_semantic_classes": [
+          "person"
+        ],
+        "max_gap_seconds": 2.0,
+        "max_scale_ratio": 1.6,
+        "max_speed_heights_per_second": 3.0,
+        "min_ambiguity_margin": 0.2,
+        "mode": "temporal_only",
+        "shot_cut_min_births": 8,
+        "static_allowance_heights": 1.0,
+        "team_conflict_confidence": 0.8
+      },
+      "development": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 21,
+          "predicted_units_after_association": 21,
+          "units_per_identity_after": 5.25,
+          "units_per_identity_before": 5.25
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": null,
+          "false_negative": 46,
+          "false_positive": 0,
+          "precision": null,
+          "predicted_positive_pairs": 0,
+          "recall": 0.0,
+          "true_negative": 164,
+          "true_positive": 0
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.977679,
+          "scoped_labelled_rate": 1.0,
+          "scoped_labelled_unresolved": 21,
+          "unresolved_tracklets": 438
+        }
+      },
+      "evaluation": {
+        "cross_team_violations": 0,
+        "explicit_cannot_link_violations": 0,
+        "false_merges": 0,
+        "fragmentation": {
+          "labelled_tracklets": 19,
+          "predicted_units_after_association": 19,
+          "units_per_identity_after": 4.75,
+          "units_per_identity_before": 4.75
+        },
+        "labelled_non_player_contamination_pairs": 0,
+        "pairwise": {
+          "f1": null,
+          "false_negative": 41,
+          "false_positive": 0,
+          "precision": null,
+          "predicted_positive_pairs": 0,
+          "recall": 0.0,
+          "true_negative": 130,
+          "true_positive": 0
+        },
+        "temporal_overlap_violations": 0,
+        "uncertain_label_disagreements": 0,
+        "unresolved": {
+          "all_eligible_tracklets": 448,
+          "rate": 0.977679,
+          "scoped_labelled_rate": 1.0,
+          "scoped_labelled_unresolved": 19,
+          "unresolved_tracklets": 438
+        }
+      },
+      "runtime": {
+        "peak_traced_python_bytes": 1172275,
+        "seconds": 0.0261
+      }
+    }
+  },
+  "schema": "footballai.identity-resolution-evaluation/v1",
+  "selected_configuration": {
+    "eligible_semantic_classes": [
+      "person"
+    ],
+    "max_gap_seconds": 1.0,
+    "max_scale_ratio": 1.6,
+    "max_speed_heights_per_second": 3.0,
+    "min_ambiguity_margin": 0.2,
+    "mode": "temporal_kinematic",
+    "shot_cut_min_births": 8,
+    "static_allowance_heights": 1.0,
+    "team_conflict_confidence": 0.8
+  }
+}

@@ -1,5 +1,7 @@
 # AI engineering roadmap
 
+> **Product direction, 2026-11-06:** Football-intelligence work (AI2–AI11: identity, pitch calibration, ball, events, player/team statistics, coach dashboard and grounded coach assistant) is tracked in [the football intelligence roadmap](../v2/FOOTBALL_INTELLIGENCE_ROADMAP.md). This document is unchanged otherwise.
+
 > **M4-A update, 2026-11-05:** This is a historical roadmap. PR #61 is merged at `ba8d098`; M3-B0.5 is a reviewer handoff, with 0/142 independent human labels reviewed. No actual live Anthropic agent quality has been measured. The current portfolio scope and source audit are in [M4-A demo package](M4A_DEMO_PACKAGE.md) and [current architecture](ARCHITECTURE_CURRENT.md). Older status tables below are retained as dated planning context.
 
 | | |
