@@ -197,7 +197,6 @@ class _Groups:
     def __init__(self, identifiers: Sequence[TrackletId]) -> None:
         self._parent = {item: item for item in identifiers}
         self._members = {item: [item] for item in identifiers}
-        self.human_override_pairs: set[frozenset[TrackletId]] = set()
 
     def find(self, item: TrackletId) -> TrackletId:
         root = item
@@ -207,9 +206,6 @@ class _Groups:
             self._parent[item], item = root, self._parent[item]
         return root
 
-    def members(self, item: TrackletId) -> list[TrackletId]:
-        return self._members[self.find(item)]
-
     def conflict(
         self, left: TrackletId, right: TrackletId, constraints: _Constraints, *, human: bool
     ) -> str | None:
@@ -218,8 +214,7 @@ class _Groups:
             return "already_same_identity"
         for x in self._members[left_root]:
             for y in self._members[right_root]:
-                override = human or frozenset((x, y)) in self.human_override_pairs
-                reason = constraints.violation(x, y, allow_team_override=override)
+                reason = constraints.violation(x, y, allow_team_override=human)
                 if reason is not None:
                     return reason
         return None
@@ -294,7 +289,6 @@ def resolve_identities(
             if reason is not None:
                 raise ValueError(f"correction {sequence} must_link violates a hard constraint: {reason}")
             features = _features(by_id[earlier], by_id[later])
-            groups.human_override_pairs.add(frozenset((earlier, later)))
             groups.union(earlier, later)
             links.append(IdentityLink(
                 earlier, later, LinkSource.HUMAN, sequence, features.gap_frames, features.gap_seconds,
@@ -490,8 +484,6 @@ def _build_artifact(
             identity_of[member] = (identifier, status)
 
     abstained = {item.tracklet_id for item in abstentions}
-    for item in abstentions:
-        abstained.update(candidate for candidate, _ in item.candidates)
     assignments = []
     for identifier in sorted(by_id):
         summary = by_id[identifier]

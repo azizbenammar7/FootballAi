@@ -62,10 +62,15 @@ def _resolve(args: argparse.Namespace) -> int:
         summaries = summaries_from_tracklets(artifact)
         source = source_for_tracklets(content, artifact, source_id=args.source_id, video_sha256=args.video_sha256)
     elif args.review_samples:
+        if args.source_id or args.video_sha256:
+            raise SystemExit("--source-id/--video-sha256 come from the review samples; do not pass them")
         content = args.review_samples.read_bytes()
-        summaries = summaries_from_review_samples(review_samples_from_json_bytes(content))
-        source = source_for_review_samples(content, review_samples_from_json_bytes(content))
+        review = review_samples_from_json_bytes(content)
+        summaries = summaries_from_review_samples(review)
+        source = source_for_review_samples(content, review)
     else:
+        if args.video_sha256:
+            raise SystemExit("legacy raw tracks carry no video checksum; do not pass --video-sha256")
         content = args.legacy_raw_tracks.read_bytes()
         if not args.source_id:
             raise SystemExit("--source-id is required with --legacy-raw-tracks")

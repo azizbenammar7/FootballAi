@@ -91,8 +91,8 @@ def evaluate_identities(
     precision = _ratio(counts["true_positive"], predicted_positive)
     recall = _ratio(counts["true_positive"], positives)
     f1 = (
-        round(2 * precision * recall / (precision + recall), 6)
-        if precision is not None and recall is not None and precision + recall
+        _ratio(2 * counts["true_positive"], 2 * counts["true_positive"] + counts["false_positive"] + counts["false_negative"])
+        if predicted_positive and positives
         else None
     )
 

@@ -26,7 +26,7 @@
         },
         "labelled_non_player_contamination_pairs": 0,
         "pairwise": {
-          "f1": 0.196079,
+          "f1": 0.196078,
           "false_negative": 41,
           "false_positive": 0,
           "precision": 1.0,
@@ -72,7 +72,7 @@
         },
         "labelled_non_player_contamination_pairs": 0,
         "pairwise": {
-          "f1": 0.196079,
+          "f1": 0.196078,
           "false_negative": 41,
           "false_positive": 0,
           "precision": 1.0,
@@ -118,7 +118,7 @@
         },
         "labelled_non_player_contamination_pairs": 0,
         "pairwise": {
-          "f1": 0.122448,
+          "f1": 0.122449,
           "false_negative": 43,
           "false_positive": 0,
           "precision": 1.0,
@@ -164,7 +164,7 @@
         },
         "labelled_non_player_contamination_pairs": 0,
         "pairwise": {
-          "f1": 0.196079,
+          "f1": 0.196078,
           "false_negative": 41,
           "false_positive": 0,
           "precision": 1.0,
@@ -210,7 +210,7 @@
         },
         "labelled_non_player_contamination_pairs": 0,
         "pairwise": {
-          "f1": 0.122448,
+          "f1": 0.122449,
           "false_negative": 43,
           "false_positive": 0,
           "precision": 1.0,
@@ -256,7 +256,7 @@
         },
         "labelled_non_player_contamination_pairs": 0,
         "pairwise": {
-          "f1": 0.122448,
+          "f1": 0.122449,
           "false_negative": 43,
           "false_positive": 0,
           "precision": 1.0,
@@ -302,7 +302,7 @@
         },
         "labelled_non_player_contamination_pairs": 0,
         "pairwise": {
-          "f1": 0.122448,
+          "f1": 0.122449,
           "false_negative": 43,
           "false_positive": 0,
           "precision": 1.0,
@@ -348,7 +348,7 @@
         },
         "labelled_non_player_contamination_pairs": 0,
         "pairwise": {
-          "f1": 0.122448,
+          "f1": 0.122449,
           "false_negative": 43,
           "false_positive": 0,
           "precision": 1.0,
@@ -440,7 +440,7 @@
         },
         "labelled_non_player_contamination_pairs": 0,
         "pairwise": {
-          "f1": 0.196079,
+          "f1": 0.196078,
           "false_negative": 41,
           "false_positive": 0,
           "precision": 1.0,
@@ -486,7 +486,7 @@
         },
         "labelled_non_player_contamination_pairs": 0,
         "pairwise": {
-          "f1": 0.122448,
+          "f1": 0.122449,
           "false_negative": 43,
           "false_positive": 0,
           "precision": 1.0,
@@ -578,7 +578,7 @@
         },
         "labelled_non_player_contamination_pairs": 0,
         "pairwise": {
-          "f1": 0.122448,
+          "f1": 0.122449,
           "false_negative": 43,
           "false_positive": 0,
           "precision": 1.0,
@@ -854,7 +854,7 @@
         },
         "labelled_non_player_contamination_pairs": 0,
         "pairwise": {
-          "f1": 0.122448,
+          "f1": 0.122449,
           "false_negative": 43,
           "false_positive": 0,
           "precision": 1.0,
@@ -1338,7 +1338,7 @@
           },
           "labelled_non_player_contamination_pairs": 2,
           "pairwise": {
-            "f1": null,
+            "f1": 0.0,
             "false_negative": 1,
             "false_positive": 1,
             "precision": 0.0,
@@ -1369,7 +1369,7 @@
           },
           "labelled_non_player_contamination_pairs": 2,
           "pairwise": {
-            "f1": null,
+            "f1": 0.0,
             "false_negative": 1,
             "false_positive": 1,
             "precision": 0.0,
@@ -1400,7 +1400,7 @@
           },
           "labelled_non_player_contamination_pairs": 1,
           "pairwise": {
-            "f1": null,
+            "f1": 0.0,
             "false_negative": 1,
             "false_positive": 1,
             "precision": 0.0,
@@ -1431,7 +1431,7 @@
           },
           "labelled_non_player_contamination_pairs": 1,
           "pairwise": {
-            "f1": null,
+            "f1": 0.0,
             "false_negative": 1,
             "false_positive": 1,
             "precision": 0.0,
@@ -1562,7 +1562,7 @@
     "interpretation": "Diagnostic proxy only. The legacy table has no identity labels, so these counts say nothing about association correctness.",
     "runtime": {
       "peak_traced_python_bytes": 38476048,
-      "seconds": 0.9559
+      "seconds": 0.8441
     },
     "units_after": 7416,
     "units_before": 8441,
@@ -1785,7 +1785,7 @@
         }
       },
       "runtime": {
-        "peak_traced_python_bytes": 257056,
+        "peak_traced_python_bytes": 256832,
         "seconds": 0.0018
       }
     },
@@ -1802,7 +1802,7 @@
         },
         "labelled_non_player_contamination_pairs": 0,
         "pairwise": {
-          "f1": 0.044945,
+          "f1": 0.044944,
           "false_negative": 85,
           "false_positive": 0,
           "precision": 1.0,
@@ -1928,8 +1928,8 @@
         }
       },
       "runtime": {
-        "peak_traced_python_bytes": 594385,
-        "seconds": 0.0185
+        "peak_traced_python_bytes": 594161,
+        "seconds": 0.0189
       }
     },
     "temporal_kinematic_selected": {
@@ -1945,7 +1945,7 @@
         },
         "labelled_non_player_contamination_pairs": 0,
         "pairwise": {
-          "f1": 0.108695,
+          "f1": 0.108696,
           "false_negative": 82,
           "false_positive": 0,
           "precision": 1.0,
@@ -2020,7 +2020,7 @@
         },
         "labelled_non_player_contamination_pairs": 0,
         "pairwise": {
-          "f1": 0.196079,
+          "f1": 0.196078,
           "false_negative": 41,
           "false_positive": 0,
           "precision": 1.0,
@@ -2071,8 +2071,8 @@
         }
       },
       "runtime": {
-        "peak_traced_python_bytes": 399080,
-        "seconds": 0.0111
+        "peak_traced_python_bytes": 392712,
+        "seconds": 0.0108
       }
     },
     "temporal_only": {
@@ -2214,8 +2214,8 @@
         }
       },
       "runtime": {
-        "peak_traced_python_bytes": 1172275,
-        "seconds": 0.0261
+        "peak_traced_python_bytes": 1172051,
+        "seconds": 0.0227
       }
     }
   },

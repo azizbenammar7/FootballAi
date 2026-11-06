@@ -262,9 +262,10 @@ def run_legacy_scale_diagnostic(
     (summaries, artifact), cost = _measure(build)
     sizes = [len(item.tracklet_ids) for item in artifact.identities]
     observed = [item.observed_seconds for item in artifact.identities]
+    durations = {item.tracklet_id: item.duration_seconds for item in summaries}
     unresolved = [
-        summary.duration_seconds
-        for summary, assignment in zip(summaries, artifact.assignments)
+        durations[assignment.tracklet_id]
+        for assignment in artifact.assignments
         if assignment.status is AssignmentStatus.UNRESOLVED
     ]
     units = len(artifact.identities) + artifact.summary["unresolved_tracklets"]

@@ -196,7 +196,14 @@ def source_for_tracklets(
 
 
 def summaries_from_review_samples(artifact: ReviewSamplesArtifact) -> tuple[TrackletSummary, ...]:
-    """Reconstruct exact extents and endpoint boxes from early/middle/late samples."""
+    """Reconstruct exact extents and endpoint boxes from early/middle/late samples.
+
+    Precondition: the samples were built with the default three-sample
+    selection (``build_review_samples`` always does). The format does not
+    record the sample budget, so a tracklet with only an ``early`` sample is
+    read as a single observation; a bundle built with ``max_samples=1`` would
+    understate extents and must not be used here.
+    """
     grouped: dict[TrackletId, dict[str, object]] = {}
     for sample in artifact.samples:
         grouped.setdefault(sample.tracklet_id, {})[sample.label] = sample

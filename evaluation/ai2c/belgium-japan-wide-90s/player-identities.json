@@ -1243,7 +1243,7 @@
     {
       "end_frame": 498,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 12,
       "status": "unresolved",
       "tracklet_id": "tracklet_000018"
@@ -1267,7 +1267,7 @@
     {
       "end_frame": 1578,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 12,
       "status": "unresolved",
       "tracklet_id": "tracklet_000021"
@@ -1459,7 +1459,7 @@
     {
       "end_frame": 948,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 330,
       "status": "unresolved",
       "tracklet_id": "tracklet_000116"
@@ -1859,7 +1859,7 @@
     {
       "end_frame": 654,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 504,
       "status": "unresolved",
       "tracklet_id": "tracklet_000473"
@@ -2155,7 +2155,7 @@
     {
       "end_frame": 798,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 792,
       "status": "unresolved",
       "tracklet_id": "tracklet_001005"
@@ -2331,7 +2331,7 @@
     {
       "end_frame": 1650,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 948,
       "status": "unresolved",
       "tracklet_id": "tracklet_001373"
@@ -2371,7 +2371,7 @@
     {
       "end_frame": 1836,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 972,
       "status": "unresolved",
       "tracklet_id": "tracklet_001428"
@@ -2531,7 +2531,7 @@
     {
       "end_frame": 1278,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 1092,
       "status": "unresolved",
       "tracklet_id": "tracklet_001724"
@@ -2547,7 +2547,7 @@
     {
       "end_frame": 1116,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 1098,
       "status": "unresolved",
       "tracklet_id": "tracklet_001739"
@@ -2635,7 +2635,7 @@
     {
       "end_frame": 1356,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 1134,
       "status": "unresolved",
       "tracklet_id": "tracklet_001814"
@@ -2643,7 +2643,7 @@
     {
       "end_frame": 1614,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 1146,
       "status": "unresolved",
       "tracklet_id": "tracklet_001849"
@@ -2851,7 +2851,7 @@
     {
       "end_frame": 1908,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 1236,
       "status": "unresolved",
       "tracklet_id": "tracklet_002031"
@@ -2907,7 +2907,7 @@
     {
       "end_frame": 1296,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 1254,
       "status": "unresolved",
       "tracklet_id": "tracklet_002076"
@@ -2923,7 +2923,7 @@
     {
       "end_frame": 1368,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 1254,
       "status": "unresolved",
       "tracklet_id": "tracklet_002078"
@@ -2931,7 +2931,7 @@
     {
       "end_frame": 1776,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 1254,
       "status": "unresolved",
       "tracklet_id": "tracklet_002079"
@@ -3027,7 +3027,7 @@
     {
       "end_frame": 1524,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 1338,
       "status": "unresolved",
       "tracklet_id": "tracklet_002250"
@@ -3035,7 +3035,7 @@
     {
       "end_frame": 1932,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 1344,
       "status": "unresolved",
       "tracklet_id": "tracklet_002278"
@@ -3123,7 +3123,7 @@
     {
       "end_frame": 1536,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 1452,
       "status": "unresolved",
       "tracklet_id": "tracklet_002393"
@@ -3315,7 +3315,7 @@
     {
       "end_frame": 1608,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 1566,
       "status": "unresolved",
       "tracklet_id": "tracklet_002630"
@@ -3331,7 +3331,7 @@
     {
       "end_frame": 1686,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 1572,
       "status": "unresolved",
       "tracklet_id": "tracklet_002646"
@@ -3571,7 +3571,7 @@
     {
       "end_frame": 2238,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 1758,
       "status": "unresolved",
       "tracklet_id": "tracklet_002895"
@@ -3971,7 +3971,7 @@
     {
       "end_frame": 2586,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 2094,
       "status": "unresolved",
       "tracklet_id": "tracklet_003422"
@@ -4019,7 +4019,7 @@
     {
       "end_frame": 2268,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 2226,
       "status": "unresolved",
       "tracklet_id": "tracklet_003503"
@@ -4067,7 +4067,7 @@
     {
       "end_frame": 2400,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 2340,
       "status": "unresolved",
       "tracklet_id": "tracklet_003609"
@@ -4107,7 +4107,7 @@
     {
       "end_frame": 2418,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 2340,
       "status": "unresolved",
       "tracklet_id": "tracklet_003617"
@@ -4123,7 +4123,7 @@
     {
       "end_frame": 2532,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 2340,
       "status": "unresolved",
       "tracklet_id": "tracklet_003619"
@@ -4283,7 +4283,7 @@
     {
       "end_frame": 2406,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 2406,
       "status": "unresolved",
       "tracklet_id": "tracklet_003707"
@@ -4347,7 +4347,7 @@
     {
       "end_frame": 2532,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 2442,
       "status": "unresolved",
       "tracklet_id": "tracklet_003800"
@@ -4451,7 +4451,7 @@
     {
       "end_frame": 2634,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 2484,
       "status": "unresolved",
       "tracklet_id": "tracklet_003891"
@@ -4491,7 +4491,7 @@
     {
       "end_frame": 2628,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 2496,
       "status": "unresolved",
       "tracklet_id": "tracklet_003901"
@@ -4579,7 +4579,7 @@
     {
       "end_frame": 2586,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 2568,
       "status": "unresolved",
       "tracklet_id": "tracklet_003990"
@@ -4619,7 +4619,7 @@
     {
       "end_frame": 2616,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 2616,
       "status": "unresolved",
       "tracklet_id": "tracklet_004076"
@@ -4643,7 +4643,7 @@
     {
       "end_frame": 2616,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 2616,
       "status": "unresolved",
       "tracklet_id": "tracklet_004079"
@@ -4659,7 +4659,7 @@
     {
       "end_frame": 2622,
       "player_identity_id": null,
-      "reason": "abstained_ambiguous_or_conflicting",
+      "reason": "no_accepted_candidate",
       "start_frame": 2616,
       "status": "unresolved",
       "tracklet_id": "tracklet_004082"
