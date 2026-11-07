@@ -76,6 +76,16 @@ team evidence, temporal cannot-link constraints, a candidate-pair graph, and
 label-supported metrics. It does **not** resolve persistent identities. See
 [`docs/v2/AI2A_IDENTITY_EVALUATION.md`](docs/v2/AI2A_IDENTITY_EVALUATION.md).
 
+AI2C adds a conservative identity-association layer: a versioned
+`footballai.player-identities/v1` artifact, hard constraints against impossible
+merges, first-class `UNKNOWN`/abstentions, an append-only human correction log,
+and a leakage-aware benchmark. Automatic association is off by default
+(`review_only`) and experimental when explicitly enabled; its links are
+`provisional` review candidates only: on held-out identities they recovered 0 of 41 same-player
+pairs, and on a second clip they made one false merge. See
+[`docs/v2/AI2C_PLAYER_IDENTITY.md`](docs/v2/AI2C_PLAYER_IDENTITY.md) and the
+coach-first [football intelligence roadmap](docs/v2/FOOTBALL_INTELLIGENCE_ROADMAP.md).
+
 Production Platform status: **P1 containerized service boundaries are
 implemented and locally validated** for the compiled React frontend, FastAPI
 API, and long-lived worker. Start the local stack with `make p1-build && make
