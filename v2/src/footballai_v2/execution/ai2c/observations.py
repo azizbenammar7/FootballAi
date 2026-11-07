@@ -11,6 +11,16 @@ AI2C benchmark measured a false merge on a held-out clip, so ``provisional``
 automatic identities are review candidates: a caller must opt in with
 ``include_provisional=True`` and propagate that status to anything it derives.
 ``unresolved`` observations are tracklet-only diagnostics, never player data.
+``confirmed`` means asserted by a must-link in the recorded corrections log;
+the reviewer handle there is not authenticated.
+
+``identities_sha256`` must be the SHA-256 of the canonical serialization
+(``player_identities_sha256``, equal to the file checksum of any artifact the
+resolver or CLI wrote). It is verified, so every observation's provenance names
+the artifact it was actually derived from. ``tracklets_sha256`` is checked
+against the identity artifact's recorded source; it is not recomputed from
+``tracklets`` (that would re-serialize a full match), so callers must pass the
+checksum of the file they loaded.
 """
 
 from __future__ import annotations
@@ -20,7 +30,11 @@ from typing import Iterator
 
 from footballai_v2.execution.ai1.artifacts import BoundingBox, TrackletsArtifact
 from footballai_v2.execution.ai2a.model import PlayerIdentityId, TeamLabel, TrackletId, tracklet_id
-from footballai_v2.execution.ai2c.artifact import AssignmentStatus, PlayerIdentitiesArtifact
+from footballai_v2.execution.ai2c.artifact import (
+    AssignmentStatus,
+    PlayerIdentitiesArtifact,
+    player_identities_sha256,
+)
 from footballai_v2.execution.ai2c.inputs import InputKind
 
 
@@ -66,6 +80,8 @@ def iter_player_observations(
         raise ValueError("observations can only be joined to identities resolved from AI1 tracklets")
     if identities.source.tracklets_sha256 != tracklets_sha256:
         raise ValueError("identities were resolved from a different tracklets artifact")
+    if player_identities_sha256(identities) != identities_sha256:
+        raise ValueError("identities_sha256 does not match the identities artifact checksum")
     assignments = {item.tracklet_id: item for item in identities.assignments}
     details = {item.player_identity_id: item for item in identities.identities}
     for tracklet in sorted(tracklets.tracklets, key=lambda item: item.track_id):

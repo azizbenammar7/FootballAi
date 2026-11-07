@@ -19,7 +19,7 @@ not replace, the historical portfolio roadmap in
 | YOLOv8m detection cached once, ByteTrack replayable (AI1) | Implemented |
 | Identity ground truth, cannot-links, metrics (AI2A) | Implemented, 18 s clip |
 | Appearance benchmark (AI2B) | PR #37, unmerged; does not justify a resolver |
-| Identity association, artifact, corrections (AI2C) | This milestone; automatic links provisional only |
+| Identity association, artifact, corrections (AI2C) | This milestone; `review_only` by default, automatic links experimental and provisional only |
 | Pitch calibration / homography | Not implemented. V1 uses a constant 0.086 m/px scale |
 | Ball, events, possession, passes, shots | Not implemented |
 | Per-player statistics | V1 per-*fragment* statistics only |

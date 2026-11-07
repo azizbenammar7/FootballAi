@@ -50,8 +50,23 @@ AI1 footballai.tracklets/v1  (or AI2A review samples, or legacy V1 tracks)
   -> footballai.player-identities/v1
 ```
 
-Resolver modes: `review_only` (no automatic association; the current safe
-production setting), `temporal_only`, and `temporal_kinematic` (default).
+Resolver modes:
+
+| Mode | Status | Selected how |
+|---|---|---|
+| `review_only` | **Default.** No automatic association; only human corrections create identities | `ResolverConfig()`, or the CLI without `--mode` |
+| `temporal_only` | Experimental | `ResolverConfig(mode=ResolverMode.TEMPORAL_ONLY)` or `--mode temporal_only` |
+| `temporal_kinematic` | Experimental | `SELECTED_TEMPORAL_KINEMATIC` (the benchmark-selected parameters) or `--mode temporal_kinematic` |
+
+Experimental modes never run implicitly. Their identities are always
+`provisional`, and the CLI prints a warning when one is selected.
+
+**Compatibility.** Before this safety gate, `ResolverConfig()` and `resolve`
+without `--mode` meant `temporal_kinematic`. A caller that relied on that must
+now pass the mode explicitly. Artifacts are unaffected: each records its full
+configuration, including the mode, so the committed artifacts keep their
+meaning and still reproduce byte for byte with the explicit mode. The numeric
+defaults are unchanged and only take effect in an experimental mode.
 
 `association_score` is `1 - cost` for automatic links. It orders candidates; it
 is not a calibrated probability, and human links carry no score.
@@ -93,8 +108,13 @@ configuration give the same bytes. Sections:
 
 The reader re-validates the invariants: one assignment per tracklet, identity
 membership agrees with assignments, no temporal overlap inside an identity,
-link gaps agree with extents, links form a spanning tree. A tampered artifact
-fails to load.
+link gaps agree with extents, links connect every member as a spanning tree,
+and each identity's automatic/human link counts agree with the sources of its
+actual links. Every human link must cite exactly one `applied` `must_link`
+entry in `corrections_applied` for the same pair, and the artifact must record
+the corrections log's SHA-256 in `evidence_inputs`. Relabelling an automatic
+link as human to forge a `confirmed` identity, or an identity whose links do
+not connect its tracklets, fails to load.
 
 ## Human corrections: `footballai.identity-corrections/v1`
 
@@ -104,7 +124,19 @@ earlier entry without deleting it). Sequences must be contiguous from 1, every
 entry needs a pseudonymous reviewer handle, a UTC timestamp and a reason, and
 contradictory effective decisions are rejected. A `must_link` that violates
 temporal overlap or an explicit cannot-link fails loudly. An identity whose
-links are all human is `confirmed`.
+links are all human is `confirmed`. An identity with even one automatic link
+stays `provisional`, so a human link never upgrades an automatic one.
+
+`confirmed` means *asserted by a must-link in the recorded corrections log*,
+nothing more. The reviewer field is a pseudonymous handle: it is not
+authenticated, and it does not prove that a second, independent person reviewed
+the evidence; any artifact built with corrections carries a limitation saying
+so. The resolver refuses corrections unless `evidence_inputs` records the
+SHA-256 of the log's canonical serialization (`corrections_to_json_bytes`), and
+verifies it. The CLI accepts only canonical correction files, so the recorded
+checksum is also the file's checksum. Human exclusions must likewise cite an
+applied `exclude` entry. The log records the reviewer's reason but not the
+frames or crops they looked at.
 
 ```json
 {
@@ -130,9 +162,10 @@ PYTHONPATH=v2/src .venv-test/bin/python -m footballai_v2.execution.ai2c.cli reso
 `--review-samples` resolves from AI2A review samples (exact extents and
 endpoint boxes, used for the committed benchmarks whose Parquet caches are not
 in Git). `--legacy-raw-tracks` is a diagnostic scale input. `--mode review_only`
-disables automatic association. `evaluate` scores an artifact against AI2A
-ground truth; `benchmark` runs the protocol below. Outputs are never
-overwritten without `--overwrite`.
+is the default and disables automatic association; `--mode temporal_only` and
+`--mode temporal_kinematic` are experimental opt-ins and print a warning.
+`evaluate` scores an artifact against AI2A ground truth; `benchmark` runs the
+protocol below. Outputs are never overwritten without `--overwrite`.
 
 ## Downstream contract: `footballai.player-observation/v1`
 
@@ -141,7 +174,12 @@ identities_sha256)` streams one typed observation at a time: frame, time,
 `tracklet_id`, `player_identity_id` or `None`, identity status and score, team,
 pixel box, foot pixel point, tracking confidence, `pitch_xy_m=None`,
 `pitch_calibration="uncalibrated"`, and both source checksums. It refuses an
-identity artifact resolved from different tracklets.
+identity artifact resolved from different tracklets, and it recomputes the
+identity artifact's canonical SHA-256 (`player_identities_sha256`, equal to the
+checksum of any file the resolver or CLI wrote) and refuses a mismatching
+`identities_sha256`. The tracklets checksum is checked against the identity
+artifact's provenance, not recomputed from the in-memory tracklets, so callers
+must pass the checksum of the Parquet file they actually loaded.
 
 - Default: only `confirmed` identities.
 - `include_provisional=True` is an explicit opt-in; anything derived must carry
@@ -178,7 +216,8 @@ was run.
 3/5/8 body heights/s, margin 0.1/0.2/0.3) on development identities only.
 Rule: zero development false merges and zero labelled non-player
 contamination, then most true-positive pairs, ties to the more conservative
-setting. Selected: gap 1.0 s, speed 3.0, margin 0.2 (now the default). The
+setting. Selected: gap 1.0 s, speed 3.0, margin 0.2, exposed as
+`SELECTED_TEMPORAL_KINEMATIC`, an explicit experimental opt-in, not the default. The
 a-priori setting (2.0 s, 5.0, 0.2) is reported unchanged. All 27 settings had
 zero development false merges.
 
@@ -230,6 +269,58 @@ HOTA, IDF1 and ID switches (need per-frame boxes for every visible player);
 appearance channel (no cache); calibrated confidence; anything beyond two
 short broadcast clips.
 
+## Scientific risks (safety-gate review)
+
+These were reviewed before AI3. None was fixed by retuning: no parameter was
+changed and no held-out result was revisited.
+
+- **The certain false merge (`STAFF_03` → `TEAM_A_08`, AI2A clip).**
+  `tracklet_000008` → `tracklet_000043`, 0.8 s gap, 1.57 body heights, score
+  0.54. Jersey-colour team evidence labels *both* tracklets `TEAM_A` (0.71 and
+  0.77 confidence), so no team threshold could have blocked it. The team guard
+  only fires on *disagreeing* confident labels. There is no role channel
+  (player/staff/official), so a staff member near the touchline looks like a
+  player to every automatic constraint. Mitigation: `review_only` default;
+  staff and officials can only be removed by a human `exclude`.
+- **Team and role constraints are conservative only for false merges they can
+  see.** The team guard blocks confident cross-team merges. It cannot stop
+  same-colour staff/player merges, and a weak or `UNKNOWN` label never blocks.
+  A human must-link may override a confident team conflict, by design
+  (team colour is not ground truth), so team quality ultimately rests on the
+  reviewer.
+- **Group-level transitive merging.** Every merge is re-checked against every
+  member of both groups, so hard constraints cannot be broken by chaining. Soft
+  errors still compound: AI2A identity `PID_000003` chains three tracklets
+  (`TEAM_A_09` → uncertain `STAFF_11` → uncertain `TEAM_A_17`), with a weakest
+  link score of 0.08, just inside the gate. `association_score_min` exposes
+  this; it is not a probability.
+- **Camera-cut detection** treats ≥ 8 track births in one sampled frame as a
+  cut. It misses cuts to close-ups or replays with fewer people, gradual
+  transitions and zooms; it can fire on crowded set-pieces. The threshold was
+  fixed a priori and is not validated. Image-space kinematics also ignore
+  pan/zoom, which is why gaps are capped at 1 s.
+- **Missing AI2B appearance evidence.** PR #37 is unmerged, its embedding cache
+  is not committed, and its own report did not justify a resolver. AI2C
+  therefore has no channel that survives occlusion or camera motion.
+- **The three-review-samples precondition.** Review-sample input assumes the
+  default early/middle/late selection. A bundle built with `max_samples=2` is
+  rejected (middle without late). A bundle built with `max_samples=1` cannot be
+  detected from the format and would understate extents. Only
+  `build_review_samples`, which always uses three, should produce resolver
+  input. The authoritative input remains AI1 tracklets Parquet.
+- **Evidence traceability of corrections.** A human link is traceable to one
+  correction entry, its reason, reviewer handle and time, and the log's
+  SHA-256. It is not traceable to the specific frames or crops the reviewer
+  inspected, and the handle is not authenticated (see above).
+- **Downstream exposure.** `iter_player_observations` yields only `confirmed`
+  identities by default and verifies both checksums against the identity
+  artifact. Provisional data needs `include_provisional=True` and keeps its
+  status on every observation. No current consumer (dashboard, API, agent
+  tools, statistics) reads AI2C artifacts, and the resolver is not wired into
+  the `identity_resolution` run stage, so nothing can show a provisional
+  identity as a verified player today. Any future consumer must keep these
+  defaults.
+
 ## Conclusions
 
 1. The hard-constraint, abstention, correction and artifact machinery works
@@ -238,8 +329,9 @@ short broadcast clips.
    held-out identities it recovered nothing, and on another clip it confused a
    staff member with a nearby player. The positives that matter are
    separated by seconds of camera movement, not sub-second occlusions.
-3. Automatic identities stay `provisional`; player statistics must not use them
-   without review.
+3. Automatic association is off by default (`review_only`). When explicitly
+   enabled, its identities stay `provisional`; player statistics must not use
+   them without review.
 4. Identity needs evidence that survives camera motion and long gaps: pitch
    coordinates (AI3) for metric-space gating, plus jersey-number or
    football-specific re-identification evaluated across matches.

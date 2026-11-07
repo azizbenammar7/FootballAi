@@ -22,6 +22,11 @@ Design rules:
 * ``association_score`` is ``1 - cost``: an uncalibrated ordering heuristic,
   not a probability.
 * The algorithm is deterministic: every ordering has an explicit total key.
+* Automatic association is experimental and opt-in. The default mode is
+  ``review_only``: only human corrections create identities. The benchmark
+  found no held-out true positives and one certain false merge (a staff member
+  linked to a player), so ``temporal_only`` and ``temporal_kinematic`` must be
+  requested explicitly, and their identities are always ``provisional``.
 """
 
 from __future__ import annotations
@@ -32,7 +37,7 @@ from dataclasses import asdict, dataclass, field
 from enum import Enum
 from typing import Mapping, Sequence
 
-from footballai_v2.execution.ai1.artifacts import BoundingBox
+from footballai_v2.execution.ai1.artifacts import BoundingBox, sha256_bytes
 from footballai_v2.execution.ai2a.association import CannotLink, TeamEvidence
 from footballai_v2.execution.ai2a.model import PlayerIdentityId, TeamLabel, TrackletId
 from footballai_v2.execution.ai2c.artifact import (
@@ -46,7 +51,7 @@ from footballai_v2.execution.ai2c.artifact import (
     PlayerIdentity,
     TrackletAssignment,
 )
-from footballai_v2.execution.ai2c.corrections import IdentityCorrections
+from footballai_v2.execution.ai2c.corrections import IdentityCorrections, corrections_to_json_bytes
 from footballai_v2.execution.ai2c.inputs import InputKind, SourceDescriptor, TrackletSummary
 
 
@@ -55,6 +60,8 @@ RESOLVER_VERSION = "1.0.0"
 
 
 class ResolverMode(str, Enum):
+    """``review_only`` is the safe default; the other modes are experimental."""
+
     REVIEW_ONLY = "review_only"
     TEMPORAL_ONLY = "temporal_only"
     TEMPORAL_KINEMATIC = "temporal_kinematic"
@@ -62,9 +69,12 @@ class ResolverMode(str, Enum):
 
 @dataclass(frozen=True, slots=True)
 class ResolverConfig:
-    mode: ResolverMode = ResolverMode.TEMPORAL_KINEMATIC
-    # Defaults are the configuration selected on AI2B development identities
-    # only (see benchmark.py); the a-priori values were 2.0 s and 5.0.
+    # Safe default: no automatic association. Experimental modes must be
+    # selected explicitly (see SELECTED_TEMPORAL_KINEMATIC).
+    mode: ResolverMode = ResolverMode.REVIEW_ONLY
+    # The numeric defaults are the temporal_kinematic parameters selected on
+    # AI2B development identities only (see benchmark.py); the a-priori values
+    # were 2.0 s and 5.0. They have no effect in review_only mode.
     max_gap_seconds: float = 1.0
     static_allowance_heights: float = 1.0
     max_speed_heights_per_second: float = 3.0
@@ -116,6 +126,13 @@ class ResolverConfig:
         value["mode"] = self.mode.value
         value["eligible_semantic_classes"] = list(self.eligible_semantic_classes)
         return value
+
+
+# The experimental configuration the AI2C benchmark selected on development
+# identities only. It reproduces the committed evaluation artifacts. It is not
+# validated: zero held-out true positives and one certain false merge.
+SELECTED_TEMPORAL_KINEMATIC = ResolverConfig(mode=ResolverMode.TEMPORAL_KINEMATIC)
+AUTOMATIC_MODES = frozenset({ResolverMode.TEMPORAL_ONLY, ResolverMode.TEMPORAL_KINEMATIC})
 
 
 @dataclass(frozen=True, slots=True)
@@ -254,6 +271,20 @@ def resolve_identities(
             raise ValueError("cannot-link references an unknown tracklet")
         explicit.add(frozenset((item.left, item.right)))
 
+    # Every confirmed identity must be traceable to the exact corrections log
+    # that asserted it, so the log's checksum is mandatory, verified provenance:
+    # the SHA-256 of its canonical serialization.
+    corrections_inputs = [item for item in evidence_inputs if item.role == "corrections"]
+    if (corrections is None) != (not corrections_inputs) or len(corrections_inputs) > 1:
+        raise ValueError(
+            "corrections require exactly one corrections evidence input (its SHA-256), "
+            "and a corrections evidence input requires corrections"
+        )
+    if corrections is not None and corrections_inputs[0].sha256 != sha256_bytes(corrections_to_json_bytes(corrections)):
+        raise ValueError(
+            "the corrections evidence input SHA-256 does not match the canonical bytes of the corrections applied"
+        )
+
     effective = None
     if corrections is not None:
         if source.tracklets_sha256 is None or corrections.tracklets_sha256 != source.tracklets_sha256:
@@ -333,7 +364,7 @@ def resolve_identities(
     successors: dict[TrackletId, list[_Candidate]] = {}
     predecessors: dict[TrackletId, list[_Candidate]] = {}
     evaluated = 0
-    automatic_ids = eligible if config.mode is not ResolverMode.REVIEW_ONLY else []
+    automatic_ids = eligible if config.mode in AUTOMATIC_MODES else []
     for earlier_id in automatic_ids:
         earlier = by_id[earlier_id]
         index = bisect.bisect_right(start_frames, earlier.end_frame)
@@ -533,11 +564,11 @@ def _build_artifact(
         ),
     }
     used = ["temporal_non_overlap"]
-    if config.mode is not ResolverMode.REVIEW_ONLY:
+    if config.mode in AUTOMATIC_MODES:
         used.append("temporal_gap")
     if config.mode is ResolverMode.TEMPORAL_KINEMATIC:
         used += ["image_space_kinematics", "bbox_scale_continuity"]
-    if config.mode is not ResolverMode.REVIEW_ONLY and config.shot_cut_min_births is not None:
+    if config.mode in AUTOMATIC_MODES and config.shot_cut_min_births is not None:
         used.append("track_birth_burst_cut_barrier")
     if team_supplied:
         used.append("team_conflict_guard")
@@ -565,6 +596,12 @@ def _build_artifact(
         "Unresolved tracklets have UNKNOWN player identity and must not feed player statistics.",
         "Officials, staff and spectators are only excluded by human correction; there is no role classifier.",
     ]
+    if corrections_supplied:
+        limitations.append(
+            "Confirmed identities rest on must-link entries attributed to a pseudonymous reviewer "
+            "handle in the corrections log recorded in evidence_inputs. The handle is not "
+            "authenticated and does not prove independent review."
+        )
     if source.input_kind is InputKind.REVIEW_SAMPLES:
         limitations.append(
             "Input reconstructed from review samples: extents and endpoint boxes are exact, "

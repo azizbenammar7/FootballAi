@@ -119,8 +119,9 @@ AI2C (`footballai_v2.execution.ai2c`) publishes `footballai.player-identities/v1
 from cached tracklets with an offline CLI, accepts
 `footballai.identity-corrections/v1` review logs, and exposes the
 `footballai.player-observation/v1` stream for later pitch calibration and
-statistics. It is not wired into the `identity_resolution` run stage yet, and
-its automatic identities are provisional. See
+statistics. It is not wired into the `identity_resolution` run stage yet. It
+defaults to `review_only`; automatic association is an explicit experimental
+opt-in whose identities are provisional. See
 [`../docs/v2/AI2C_PLAYER_IDENTITY.md`](../docs/v2/AI2C_PLAYER_IDENTITY.md).
 
 ## Configurable local storage

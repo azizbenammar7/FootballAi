@@ -3,12 +3,17 @@
 It reads cached artifacts only: it imports no detector, opens no video, and
 makes no network call. Outputs are written to new paths; existing files are
 never overwritten unless ``--overwrite`` is passed.
+
+``resolve`` defaults to ``--mode review_only``: only human corrections create
+identities. ``temporal_only`` and ``temporal_kinematic`` are experimental and
+must be passed explicitly; their identities are always ``provisional``.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from footballai_v2.execution.ai1.artifacts import sha256_bytes, tracklets_from_parquet_bytes
@@ -16,7 +21,11 @@ from footballai_v2.execution.ai2a.model import PlayerIdentityId, ground_truth_fr
 from footballai_v2.execution.ai2a.review import review_samples_from_json_bytes
 from footballai_v2.execution.ai2c.artifact import EvidenceInput, player_identities_from_json_bytes, player_identities_to_json_bytes
 from footballai_v2.execution.ai2c.benchmark import run_benchmark, run_legacy_scale_diagnostic
-from footballai_v2.execution.ai2c.corrections import CORRECTIONS_SCHEMA, corrections_from_json_bytes
+from footballai_v2.execution.ai2c.corrections import (
+    CORRECTIONS_SCHEMA,
+    corrections_from_json_bytes,
+    corrections_to_json_bytes,
+)
 from footballai_v2.execution.ai2c.evaluation import evaluate_identities
 from footballai_v2.execution.ai2c.evidence import ai2a_evidence_from_evaluation_bytes
 from footballai_v2.execution.ai2c.inputs import (
@@ -27,10 +36,17 @@ from footballai_v2.execution.ai2c.inputs import (
     summaries_from_review_samples,
     summaries_from_tracklets,
 )
-from footballai_v2.execution.ai2c.resolver import ResolverConfig, ResolverMode, resolve_identities
+from footballai_v2.execution.ai2c.resolver import (
+    AUTOMATIC_MODES,
+    SELECTED_TEMPORAL_KINEMATIC,
+    ResolverConfig,
+    ResolverMode,
+    resolve_identities,
+)
 
 
-_DEFAULTS = ResolverConfig()
+# Numeric parameters only; the mode default is review_only (see build_parser).
+_DEFAULTS = SELECTED_TEMPORAL_KINEMATIC
 
 
 def _write(path: Path, content: bytes, overwrite: bool) -> None:
@@ -54,6 +70,14 @@ def _config(args: argparse.Namespace) -> ResolverConfig:
 
 
 def _resolve(args: argparse.Namespace) -> int:
+    config = _config(args)
+    if config.mode in AUTOMATIC_MODES:
+        print(
+            f"warning: --mode {config.mode.value} is experimental automatic association "
+            "(zero held-out true positives, one certain false merge in the AI2C benchmark); "
+            "its identities are provisional review candidates, not verified players",
+            file=sys.stderr,
+        )
     if args.tracklets:
         content = args.tracklets.read_bytes()
         artifact = tracklets_from_parquet_bytes(content)
@@ -86,9 +110,16 @@ def _resolve(args: argparse.Namespace) -> int:
     if args.corrections:
         raw = args.corrections.read_bytes()
         corrections = corrections_from_json_bytes(raw)
+        if corrections_to_json_bytes(corrections) != raw:
+            # The recorded SHA-256 must be verifiable from the log itself, so
+            # only the canonical serialization is accepted.
+            raise SystemExit(
+                f"{args.corrections} is not a canonical footballai.identity-corrections/v1 file "
+                "(sorted keys, 2-space indent, trailing newline); rewrite it with corrections_to_json_bytes"
+            )
         inputs.append(EvidenceInput("corrections", CORRECTIONS_SCHEMA, sha256_bytes(raw)))
     result = resolve_identities(
-        summaries, source, config=_config(args), team_evidence=teams, cannot_links=links,
+        summaries, source, config=config, team_evidence=teams, cannot_links=links,
         corrections=corrections, evidence_inputs=inputs,
     )
     content = player_identities_to_json_bytes(result)
@@ -150,7 +181,12 @@ def build_parser() -> argparse.ArgumentParser:
     resolve.add_argument("--video-sha256")
     resolve.add_argument("--ai2a-evaluation", type=Path, help="AI2A identity-evaluation JSON (team guard, cannot-links)")
     resolve.add_argument("--corrections", type=Path, help="footballai.identity-corrections/v1 JSON")
-    resolve.add_argument("--mode", choices=[item.value for item in ResolverMode], default=ResolverMode.TEMPORAL_KINEMATIC.value)
+    resolve.add_argument(
+        "--mode",
+        choices=[item.value for item in ResolverMode],
+        default=ResolverMode.REVIEW_ONLY.value,
+        help="review_only (default, safe); temporal_only and temporal_kinematic are experimental opt-ins",
+    )
     resolve.add_argument("--max-gap-seconds", type=float, default=_DEFAULTS.max_gap_seconds)
     resolve.add_argument(
         "--max-speed-heights-per-second", type=float, default=_DEFAULTS.max_speed_heights_per_second

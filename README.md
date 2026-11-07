@@ -79,8 +79,9 @@ label-supported metrics. It does **not** resolve persistent identities. See
 AI2C adds a conservative identity-association layer: a versioned
 `footballai.player-identities/v1` artifact, hard constraints against impossible
 merges, first-class `UNKNOWN`/abstentions, an append-only human correction log,
-and a leakage-aware benchmark. Automatic links are `provisional` review
-candidates only: on held-out identities they recovered 0 of 41 same-player
+and a leakage-aware benchmark. Automatic association is off by default
+(`review_only`) and experimental when explicitly enabled; its links are
+`provisional` review candidates only: on held-out identities they recovered 0 of 41 same-player
 pairs, and on a second clip they made one false merge. See
 [`docs/v2/AI2C_PLAYER_IDENTITY.md`](docs/v2/AI2C_PLAYER_IDENTITY.md) and the
 coach-first [football intelligence roadmap](docs/v2/FOOTBALL_INTELLIGENCE_ROADMAP.md).

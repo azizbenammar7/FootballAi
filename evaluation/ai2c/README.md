@@ -8,11 +8,14 @@ for the method, results, and limitations.
 | File | Content |
 |---|---|
 | `identity-resolution-evaluation.json` | `footballai.identity-resolution-evaluation/v1`: protocol, development sweep, baselines, held-out results, AI2A second-clip results, legacy full-match scale diagnostic |
-| `ai1-bounded-18s-validation/player-identities.json` | `footballai.player-identities/v1` for the AI2A clip (default configuration plus AI2A team evidence and cannot-links). A test reproduces it byte for byte |
-| `belgium-japan-wide-90s/player-identities.json` | `footballai.player-identities/v1` for the AI2B clip (default configuration) |
+| `ai1-bounded-18s-validation/player-identities.json` | `footballai.player-identities/v1` for the AI2A clip (experimental `temporal_kinematic`, selected configuration, plus AI2A team evidence and cannot-links). A test reproduces it byte for byte |
+| `belgium-japan-wide-90s/player-identities.json` | `footballai.player-identities/v1` for the AI2B clip (experimental `temporal_kinematic`, selected configuration) |
 
-All automatic identities in these files are `provisional`. They are evaluation
-output, not verified players.
+These files were generated with the experimental `temporal_kinematic` mode,
+which each file records under `resolver.configuration.mode`. The resolver's
+default is now `review_only`, so reproducing them requires
+`--mode temporal_kinematic` explicitly (see below). All automatic identities in
+these files are `provisional`. They are evaluation output, not verified players.
 
 ## Inputs
 
@@ -55,5 +58,20 @@ PYTHONPATH=v2/src .venv-test/bin/python -m footballai_v2.execution.ai2c.cli benc
   --output /tmp/ai2c-benchmark.json
 ```
 
+The two identity artifacts (the experimental mode must be explicit):
+
+```bash
+A=evaluation/ai2a/ai1-bounded-18s-validation
+PYTHONPATH=v2/src .venv-test/bin/python -m footballai_v2.execution.ai2c.cli resolve \
+  --mode temporal_kinematic --review-samples $A/review-samples.json \
+  --ai2a-evaluation $A/identity-evaluation.json --output /tmp/ai2a-identities.json
+PYTHONPATH=v2/src .venv-test/bin/python -m footballai_v2.execution.ai2c.cli resolve \
+  --mode temporal_kinematic --review-samples /tmp/ai2b/review-samples.json \
+  --output /tmp/ai2b-identities.json
+cmp /tmp/ai2a-identities.json evaluation/ai2c/ai1-bounded-18s-validation/player-identities.json
+cmp /tmp/ai2b-identities.json evaluation/ai2c/belgium-japan-wide-90s/player-identities.json
+```
+
 Every metric except `runtime` is deterministic. Runtime and peak traced memory
-depend on the host.
+depend on the host. The benchmark builds every configuration explicitly, so
+the resolver's safe default does not change any committed result.

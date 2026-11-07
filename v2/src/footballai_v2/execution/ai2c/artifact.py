@@ -27,6 +27,7 @@ from footballai_v2.execution.ai2c.inputs import SourceDescriptor
 PLAYER_IDENTITIES_SCHEMA = "footballai.player-identities/v1"
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _RESOLVER_IDENTITY_RE = re.compile(r"^PID_[0-9]{6,}$")
+_HUMAN_EXCLUDE_RE = re.compile(r"^human_exclude:correction_([1-9][0-9]*)$")
 
 
 class AssignmentStatus(str, Enum):
@@ -303,10 +304,72 @@ class PlayerIdentitiesArtifact:
                 raise ValueError("every link must join two tracklets of the same identity")
             if by_tracklet[link.later].start_frame - by_tracklet[link.earlier].end_frame != link.gap_frames:
                 raise ValueError("link gap disagrees with its tracklet extents")
-        link_counts = Counter(members[link.earlier] for link in self.links)
+        # Link sources must match each identity's declared counts (so a link
+        # cannot be relabelled to turn a provisional identity into a confirmed
+        # one), and the links must connect every member: a spanning tree, not
+        # merely the right number of edges.
+        source_counts = Counter((members[link.earlier], link.source) for link in self.links)
+        parent = {identifier: identifier for identifier in members}
+
+        def root(item: TrackletId) -> TrackletId:
+            while parent[item] != item:
+                parent[item] = parent[parent[item]]
+                item = parent[item]
+            return item
+
+        for link in self.links:
+            parent[root(link.earlier)] = root(link.later)
         for identity in self.identities:
-            if link_counts[identity.player_identity_id] != identity.automatic_links + identity.human_links:
-                raise ValueError(f"{identity.player_identity_id.value} link count disagrees with links")
+            identifier = identity.player_identity_id
+            if (
+                source_counts[(identifier, LinkSource.AUTOMATIC)] != identity.automatic_links
+                or source_counts[(identifier, LinkSource.HUMAN)] != identity.human_links
+            ):
+                raise ValueError(f"{identifier.value} link count disagrees with links")
+            if len({root(item) for item in identity.tracklet_ids}) != 1:
+                raise ValueError(f"{identifier.value} links do not connect all of its tracklets")
+        self._check_human_links_are_traceable()
+
+    def _check_human_links_are_traceable(self) -> None:
+        """Every human link cites one applied must-link of a checksummed log."""
+        human = [link for link in self.links if link.source is LinkSource.HUMAN]
+        applied: dict[int, frozenset[str]] = {}
+        excludes: dict[int, frozenset[str]] = {}
+        for item in self.corrections_applied:
+            if not isinstance(item, Mapping):
+                raise ValueError("corrections_applied entries must be objects")
+            target = {"must_link": applied, "exclude": excludes}.get(item.get("action"))
+            if target is None or item.get("outcome") != "applied":
+                continue
+            sequence, members = item.get("sequence"), item.get("tracklet_ids")
+            if not isinstance(sequence, int) or isinstance(sequence, bool):
+                raise ValueError("corrections_applied sequences must be integers")
+            if not isinstance(members, list) or not all(isinstance(value, str) for value in members):
+                raise ValueError("corrections_applied tracklet_ids must be a list of strings")
+            if sequence in applied or sequence in excludes:
+                raise ValueError("corrections_applied repeats a sequence")
+            target[sequence] = frozenset(members)
+        human_excluded = [
+            item for item in self.assignments
+            if item.status is AssignmentStatus.EXCLUDED and item.reason.startswith("human_exclude:")
+        ]
+        if (human or applied or human_excluded) and not any(
+            item.role == "corrections" for item in self.evidence_inputs
+        ):
+            raise ValueError("human decisions require a corrections evidence input (its SHA-256)")
+        for item in human_excluded:
+            match = _HUMAN_EXCLUDE_RE.fullmatch(item.reason)
+            if match is None or item.tracklet_id.value not in excludes.get(int(match.group(1)), ()):
+                raise ValueError(f"{item.tracklet_id.value} exclusion does not cite an applied exclude correction")
+        cited = Counter(link.correction_sequence for link in human)
+        if set(cited) != set(applied) or any(count != 1 for count in cited.values()):
+            raise ValueError("human links and applied must-link corrections must correspond one to one")
+        for link in human:
+            if applied[link.correction_sequence] != frozenset((link.earlier.value, link.later.value)):
+                raise ValueError(
+                    f"human link {link.earlier.value}-{link.later.value} does not match "
+                    f"correction {link.correction_sequence}"
+                )
 
     def identity_by_tracklet(self) -> dict[TrackletId, PlayerIdentityId]:
         return {

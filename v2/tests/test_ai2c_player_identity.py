@@ -68,7 +68,12 @@ from footballai_v2.execution.ai2c.inputs import (
     summaries_from_tracklets,
 )
 from footballai_v2.execution.ai2c.observations import iter_player_observations
-from footballai_v2.execution.ai2c.resolver import ResolverConfig, ResolverMode, resolve_identities
+from footballai_v2.execution.ai2c.resolver import (
+    SELECTED_TEMPORAL_KINEMATIC,
+    ResolverConfig,
+    ResolverMode,
+    resolve_identities,
+)
 
 
 TRACKLETS_SHA = "c" * 64
@@ -118,7 +123,16 @@ def source() -> SourceDescriptor:
 
 
 def resolve(*items: Tracklet, **kwargs):
+    """Resolve with the library defaults (review_only unless a config is passed)."""
+    if kwargs.get("corrections") is not None and "evidence_inputs" not in kwargs:
+        kwargs["evidence_inputs"] = (corrections_input(kwargs["corrections"]),)
     return resolve_identities(summaries_from_tracklets(artifact_of(*items)), source(), **kwargs)
+
+
+def stitch(*items: Tracklet, **kwargs):
+    """Resolve with the explicitly selected experimental temporal_kinematic mode."""
+    kwargs.setdefault("config", SELECTED_TEMPORAL_KINEMATIC)
+    return resolve(*items, **kwargs)
 
 
 def status_of(result, track_id: int) -> AssignmentStatus:
@@ -147,6 +161,12 @@ def entry(sequence, action, *ids, revokes=None, reason="reviewed crops"):
 
 def corrections(*entries) -> IdentityCorrections:
     return IdentityCorrections(CORRECTIONS_SCHEMA, TRACKLETS_SHA, tuple(entries))
+
+
+def corrections_input(log: IdentityCorrections):
+    from footballai_v2.execution.ai2c.artifact import EvidenceInput
+
+    return EvidenceInput("corrections", CORRECTIONS_SCHEMA, sha256_bytes(corrections_to_json_bytes(log)))
 
 
 # --- Inputs -----------------------------------------------------------------
@@ -220,7 +240,7 @@ def test_source_descriptor_requires_tracklet_checksums_except_for_legacy_input()
 
 
 def test_clean_short_gap_successor_becomes_a_provisional_identity_not_a_verified_one():
-    result = resolve(track(1, 0, 4, x=100), track(2, 7, 10, x=110))
+    result = stitch(track(1, 0, 4, x=100), track(2, 7, 10, x=110))
 
     (identity,) = result.identities
     assert identity.player_identity_id == PlayerIdentityId("PID_000001")
@@ -242,7 +262,7 @@ def test_isolated_tracklet_is_unresolved_and_never_promoted_to_an_identity():
 
 
 def test_temporally_overlapping_tracklets_are_never_merged():
-    result = resolve(track(1, 0, 4, x=100), track(2, 4, 8, x=100))
+    result = stitch(track(1, 0, 4, x=100), track(2, 4, 8, x=100))
 
     assert result.identities == ()
 
@@ -250,7 +270,7 @@ def test_temporally_overlapping_tracklets_are_never_merged():
 def test_explicit_cannot_link_blocks_an_otherwise_perfect_link():
     blocked = CannotLink(tracklet_id(1), tracklet_id(2), "simultaneous_spatially_distinct", 0, 0.0)
 
-    result = resolve(track(1, 0, 4), track(2, 7, 10), cannot_links=(blocked,))
+    result = stitch(track(1, 0, 4), track(2, 7, 10), cannot_links=(blocked,))
 
     assert result.identities == ()
 
@@ -260,24 +280,24 @@ def test_confident_team_conflict_blocks_but_weak_team_evidence_does_not():
     confident = {tracklet_id(1): team(TeamLabel.TEAM_A), tracklet_id(2): team(TeamLabel.TEAM_B)}
     weak = {tracklet_id(1): team(TeamLabel.TEAM_A), tracklet_id(2): team(TeamLabel.TEAM_B, 0.5)}
 
-    assert resolve(*tracks, team_evidence=confident).identities == ()
-    assert len(resolve(*tracks, team_evidence=weak).identities) == 1
+    assert stitch(*tracks, team_evidence=confident).identities == ()
+    assert len(stitch(*tracks, team_evidence=weak).identities) == 1
 
 
 def test_gap_beyond_the_window_is_not_linked():
-    assert resolve(track(1, 0, 4), track(2, 15, 18)).identities == ()
+    assert stitch(track(1, 0, 4), track(2, 15, 18)).identities == ()
 
 
 def test_kinematic_gate_rejects_implausible_jumps_that_temporal_only_accepts():
     tracks = (track(1, 0, 4, x=100), track(2, 7, 10, x=400))
 
-    assert resolve(*tracks).identities == ()
+    assert stitch(*tracks).identities == ()
     temporal = resolve(*tracks, config=ResolverConfig(mode=ResolverMode.TEMPORAL_ONLY))
     assert len(temporal.identities) == 1
 
 
 def test_near_equal_successors_cause_an_abstention_not_a_guess():
-    result = resolve(track(1, 0, 4, x=100), track(2, 7, 10, x=110), track(3, 7, 10, x=112))
+    result = stitch(track(1, 0, 4, x=100), track(2, 7, 10, x=110), track(3, 7, 10, x=112))
 
     assert result.identities == ()
     (abstention,) = result.abstentions
@@ -287,7 +307,7 @@ def test_near_equal_successors_cause_an_abstention_not_a_guess():
 
 
 def test_only_mutual_best_pairs_are_linked():
-    result = resolve(track(1, 0, 4, x=170), track(4, 0, 4, x=130), track(2, 7, 10, x=128))
+    result = stitch(track(1, 0, 4, x=170), track(4, 0, 4, x=130), track(2, 7, 10, x=128))
 
     (identity,) = result.identities
     assert identity.tracklet_ids == (tracklet_id(4), tracklet_id(2))
@@ -297,7 +317,7 @@ def test_only_mutual_best_pairs_are_linked():
 def test_transitive_merge_is_rechecked_against_every_group_member():
     teams = {tracklet_id(1): team(TeamLabel.TEAM_A), tracklet_id(3): team(TeamLabel.TEAM_B)}
 
-    result = resolve(track(1, 0, 4), track(2, 7, 10), track(3, 13, 16), team_evidence=teams)
+    result = stitch(track(1, 0, 4), track(2, 7, 10), track(3, 13, 16), team_evidence=teams)
 
     (identity,) = result.identities
     assert identity.tracklet_ids == (tracklet_id(1), tracklet_id(2))
@@ -309,11 +329,12 @@ def test_transitive_merge_is_rechecked_against_every_group_member():
 def test_suspected_shot_cut_blocks_automatic_links_across_it():
     burst = [track(100 + index, 6, 8, x=300 + 40 * index) for index in range(8)]
 
-    result = resolve(track(1, 0, 4), track(2, 7, 10), *burst)
+    result = stitch(track(1, 0, 4), track(2, 7, 10), *burst)
 
     assert result.summary["suspected_shot_cut_frames"] == [6]
     assert status_of(result, 1) is AssignmentStatus.UNRESOLVED
-    disabled = resolve(track(1, 0, 4), track(2, 7, 10), *burst, config=ResolverConfig(shot_cut_min_births=None))
+    no_barrier = ResolverConfig(mode=ResolverMode.TEMPORAL_KINEMATIC, shot_cut_min_births=None)
+    disabled = stitch(track(1, 0, 4), track(2, 7, 10), *burst, config=no_barrier)
     assert status_of(disabled, 1) is AssignmentStatus.PROVISIONAL
 
 
@@ -325,8 +346,12 @@ def test_review_only_mode_makes_no_automatic_association():
 
 def test_resolution_is_deterministic_regardless_of_input_order():
     items = [track(5, 0, 4), track(2, 7, 10), track(9, 13, 16, x=300), track(1, 20, 22, x=50)]
-    forward = resolve_identities(summaries_from_tracklets(artifact_of(*items)), source())
-    backward = resolve_identities(tuple(reversed(summaries_from_tracklets(artifact_of(*items)))), source())
+    config = SELECTED_TEMPORAL_KINEMATIC
+    forward = resolve_identities(summaries_from_tracklets(artifact_of(*items)), source(), config=config)
+    backward = resolve_identities(
+        tuple(reversed(summaries_from_tracklets(artifact_of(*items)))), source(), config=config
+    )
+    assert forward.links  # the experimental mode actually associates something here
 
     assert player_identities_to_json_bytes(forward) == player_identities_to_json_bytes(backward)
 
@@ -340,7 +365,7 @@ def test_resolver_rejects_evidence_for_unknown_tracklets():
 
 
 def test_player_identities_artifact_round_trips_canonically():
-    result = resolve(track(1, 0, 4), track(2, 7, 10), track(3, 30, 32))
+    result = stitch(track(1, 0, 4), track(2, 7, 10), track(3, 30, 32))
     content = player_identities_to_json_bytes(result)
 
     decoded = player_identities_from_json_bytes(content)
@@ -353,7 +378,7 @@ def test_player_identities_artifact_round_trips_canonically():
 
 @pytest.mark.parametrize("tamper", ["claim_identity", "overlap", "gap", "orphan_link"])
 def test_tampered_artifacts_are_rejected(tamper):
-    value = json.loads(player_identities_to_json_bytes(resolve(track(1, 0, 4), track(2, 7, 10), track(3, 30, 32))))
+    value = json.loads(player_identities_to_json_bytes(stitch(track(1, 0, 4), track(2, 7, 10), track(3, 30, 32))))
     if tamper == "claim_identity":
         value["assignments"][2].update(player_identity_id="PID_000001", status="provisional")
     elif tamper == "overlap":
@@ -399,8 +424,8 @@ def test_human_must_link_may_override_weak_team_colour_evidence():
 
 
 def test_cannot_link_and_exclude_corrections_constrain_automatic_association():
-    blocked = resolve(track(1, 0, 4), track(2, 7, 10), corrections=corrections(entry(1, CorrectionAction.CANNOT_LINK, 1, 2)))
-    excluded = resolve(track(1, 0, 4), track(2, 7, 10), corrections=corrections(entry(1, CorrectionAction.EXCLUDE, 2, reason="match official")))
+    blocked = stitch(track(1, 0, 4), track(2, 7, 10), corrections=corrections(entry(1, CorrectionAction.CANNOT_LINK, 1, 2)))
+    excluded = stitch(track(1, 0, 4), track(2, 7, 10), corrections=corrections(entry(1, CorrectionAction.EXCLUDE, 2, reason="match official")))
 
     assert blocked.identities == ()
     assert status_of(excluded, 2) is AssignmentStatus.EXCLUDED
@@ -413,7 +438,7 @@ def test_revoke_withdraws_a_decision_without_rewriting_history():
         entry(2, CorrectionAction.REVOKE, revokes=1, reason="wrong pair selected"),
     )
 
-    result = resolve(track(1, 0, 4), track(2, 7, 10), corrections=log)
+    result = stitch(track(1, 0, 4), track(2, 7, 10), corrections=log)
 
     assert len(result.identities) == 1
     assert [item["outcome"] for item in result.corrections_applied] == ["revoked", "recorded"]
@@ -465,7 +490,7 @@ def truth(*annotations) -> IdentityGroundTruthArtifact:
 
 
 def test_evaluation_counts_true_and_false_merges_with_denominators():
-    result = resolve(track(1, 0, 4), track(2, 7, 10), track(3, 30, 32), track(4, 35, 37))
+    result = stitch(track(1, 0, 4), track(2, 7, 10), track(3, 30, 32), track(4, 35, 37))
     ground = truth(
         label(1, "TEAM_A_01", 0, 4), label(2, "TEAM_A_02", 7, 10),
         label(3, "TEAM_A_03", 30, 32), label(4, "TEAM_A_03", 35, 37),
@@ -493,7 +518,7 @@ def test_precision_is_null_rather_than_zero_without_predicted_pairs():
 
 
 def test_scoped_evaluation_and_non_player_contamination():
-    result = resolve(track(1, 0, 4), track(2, 7, 10), track(3, 30, 32))
+    result = stitch(track(1, 0, 4), track(2, 7, 10), track(3, 30, 32))
     ground = truth(
         label(1, "TEAM_A_01", 0, 4),
         label(2, None, 7, 10, team_label=TeamLabel.UNKNOWN, role="STAFF", status=AnnotationStatus.UNKNOWN),
@@ -523,7 +548,10 @@ def test_evaluation_refuses_ground_truth_from_another_tracklets_artifact():
 def test_observations_default_to_human_confirmed_identities_only():
     tracklets = artifact_of(track(1, 0, 4), track(2, 7, 10), track(3, 40, 42), track(4, 60, 61), track(5, 80, 81))
     log = corrections(entry(1, CorrectionAction.MUST_LINK, 4, 5))
-    result = resolve_identities(summaries_from_tracklets(tracklets), source(), corrections=log)
+    result = resolve_identities(
+        summaries_from_tracklets(tracklets), source(), config=SELECTED_TEMPORAL_KINEMATIC,
+        corrections=log, evidence_inputs=(corrections_input(log),),
+    )
     digest = sha256_bytes(player_identities_to_json_bytes(result))
 
     confirmed = list(iter_player_observations(tracklets, TRACKLETS_SHA, result, digest))
@@ -556,7 +584,10 @@ def test_cli_resolves_cached_tracklets_and_refuses_to_overwrite(tmp_path):
     parquet = tmp_path / "tracklets.parquet"
     parquet.write_bytes(tracklets_to_parquet_bytes(artifact_of(track(1, 0, 4), track(2, 7, 10))))
     output = tmp_path / "identities.json"
-    args = ["resolve", "--tracklets", str(parquet), "--source-id", "bounded-clip", "--output", str(output)]
+    args = [
+        "resolve", "--tracklets", str(parquet), "--source-id", "bounded-clip",
+        "--mode", "temporal_kinematic", "--output", str(output),
+    ]
 
     assert main(args) == 0
     result = player_identities_from_json_bytes(output.read_bytes())
@@ -594,7 +625,7 @@ def test_committed_ai2a_clip_identities_reproduce_byte_for_byte():
     )
 
     result = resolve_identities(
-        summaries_from_review_samples(review), clip_source,
+        summaries_from_review_samples(review), clip_source, config=SELECTED_TEMPORAL_KINEMATIC,
         team_evidence=teams, cannot_links=links, evidence_inputs=inputs,
     )
 
@@ -606,7 +637,7 @@ def test_committed_benchmark_report_is_consistent_with_the_contract():
     report = json.loads((AI2C_DIR / "identity-resolution-evaluation.json").read_bytes())
 
     assert report["schema"] == "footballai.identity-resolution-evaluation/v1"
-    assert ResolverConfig.from_dict(report["selected_configuration"]) == ResolverConfig()
+    assert ResolverConfig.from_dict(report["selected_configuration"]) == SELECTED_TEMPORAL_KINEMATIC
     assert not set(report["protocol"]["development_identities"]) & set(report["protocol"]["evaluation_identities"])
     for result in report["results"].values():
         for scope in ("development", "evaluation", "all_labelled_diagnostic"):
@@ -614,3 +645,258 @@ def test_committed_benchmark_report_is_consistent_with_the_contract():
             assert result[scope]["cross_team_violations"] == 0
     for path in sorted(AI2C_DIR.glob("*/player-identities.json")):
         player_identities_from_json_bytes(path.read_bytes())
+
+
+# --- Safety gate: automatic association is experimental and opt-in -----------------
+#
+# The AI2C benchmark found zero held-out true positives and one certain false
+# merge (STAFF_03 -> TEAM_A_08) on a second clip, so automatic association must
+# never run unless explicitly requested, and must never surface as verified.
+
+EXPERIMENTAL_MODES = (ResolverMode.TEMPORAL_ONLY, ResolverMode.TEMPORAL_KINEMATIC)
+
+
+def test_resolver_config_defaults_to_review_only():
+    assert ResolverConfig().mode is ResolverMode.REVIEW_ONLY
+
+
+def test_resolver_without_an_explicit_mode_creates_no_automatic_identities():
+    # A clean short-gap successor that temporal_kinematic would link.
+    result = resolve_identities(summaries_from_tracklets(artifact_of(track(1, 0, 4), track(2, 7, 10))), source())
+
+    assert result.identities == () and result.links == ()
+    assert {item.status for item in result.assignments} == {AssignmentStatus.UNRESOLVED}
+    assert all(item.player_identity_id is None for item in result.assignments)
+    assert result.resolver["configuration"]["mode"] == "review_only"
+    assert result.summary["automatic_links"] == 0
+    assert result.summary["candidate_pairs_in_gap_window"] == 0
+    assert "temporal_gap" not in result.resolver["evidence_channels_used"]
+
+
+@pytest.mark.parametrize("mode", EXPERIMENTAL_MODES)
+def test_experimental_modes_link_only_when_selected_and_stay_provisional(mode):
+    result = resolve(track(1, 0, 4), track(2, 7, 10), config=ResolverConfig(mode=mode))
+
+    (identity,) = result.identities
+    assert identity.status is AssignmentStatus.PROVISIONAL
+    assert {item.status for item in result.assignments} == {AssignmentStatus.PROVISIONAL}
+    assert result.summary["confirmed_identities"] == 0
+    assert result.resolver["configuration"]["mode"] == mode.value
+
+
+def test_selected_experimental_configuration_is_explicit_and_matches_the_committed_benchmark():
+    from footballai_v2.execution.ai2c.benchmark import BASELINES
+    from footballai_v2.execution.ai2c.resolver import SELECTED_TEMPORAL_KINEMATIC
+
+    report = json.loads((AI2C_DIR / "identity-resolution-evaluation.json").read_bytes())
+
+    assert SELECTED_TEMPORAL_KINEMATIC.mode is ResolverMode.TEMPORAL_KINEMATIC
+    assert SELECTED_TEMPORAL_KINEMATIC.to_dict() == report["selected_configuration"]
+    assert report["results"]["temporal_kinematic_selected"]["configuration"] == report["selected_configuration"]
+    for name, config in BASELINES.items():
+        assert report["results"][name]["configuration"] == config.to_dict()
+
+
+def test_human_must_link_is_confirmed_under_the_safe_default_and_the_rest_stays_unknown():
+    log = corrections(entry(1, CorrectionAction.MUST_LINK, 1, 3))
+    tracks = artifact_of(track(1, 0, 4), track(2, 7, 10), track(3, 40, 44, x=600))
+
+    result = resolve_identities(
+        summaries_from_tracklets(tracks), source(), corrections=log, evidence_inputs=(corrections_input(log),),
+    )
+
+    (identity,) = result.identities
+    assert identity.status is AssignmentStatus.CONFIRMED
+    assert identity.tracklet_ids == (tracklet_id(1), tracklet_id(3))
+    assert status_of(result, 2) is AssignmentStatus.UNRESOLVED
+    assert assignment(result, 2).player_identity_id is None
+
+
+def test_a_human_link_never_launders_an_automatic_link_into_a_confirmed_identity():
+    log = corrections(entry(1, CorrectionAction.MUST_LINK, 2, 3))
+    tracks = artifact_of(track(1, 0, 4), track(2, 7, 10), track(3, 40, 44, x=600))
+
+    result = resolve_identities(
+        summaries_from_tracklets(tracks), source(), config=ResolverConfig(mode=ResolverMode.TEMPORAL_KINEMATIC),
+        corrections=log, evidence_inputs=(corrections_input(log),),
+    )
+
+    (identity,) = result.identities
+    assert (identity.automatic_links, identity.human_links) == (1, 1)
+    assert identity.status is AssignmentStatus.PROVISIONAL
+    assert {status_of(result, item) for item in (1, 2, 3)} == {AssignmentStatus.PROVISIONAL}
+
+
+def test_resolver_requires_provenance_for_the_corrections_it_applies():
+    log = corrections(entry(1, CorrectionAction.MUST_LINK, 1, 3))
+    tracks = summaries_from_tracklets(artifact_of(track(1, 0, 4), track(3, 40, 44, x=600)))
+
+    with pytest.raises(ValueError, match="corrections evidence input"):
+        resolve_identities(tracks, source(), corrections=log)
+    with pytest.raises(ValueError, match="corrections evidence input"):
+        resolve_identities(tracks, source(), evidence_inputs=(corrections_input(log),))
+
+
+def test_confirmed_identities_disclose_that_reviewer_handles_are_unauthenticated():
+    log = corrections(entry(1, CorrectionAction.MUST_LINK, 1, 3))
+    tracks = summaries_from_tracklets(artifact_of(track(1, 0, 4), track(3, 40, 44, x=600)))
+
+    reviewed = resolve_identities(tracks, source(), corrections=log, evidence_inputs=(corrections_input(log),))
+    automatic = resolve_identities(tracks, source())
+
+    assert any("not authenticated" in item for item in reviewed.limitations)
+    assert not any("not authenticated" in item for item in automatic.limitations)
+
+
+def _forge_confirmed(value: dict, *, keep_counts: bool = False) -> dict:
+    """Relabel the first automatic link as a human one, as a tampering reviewer might."""
+    link = value["links"][0]
+    link.update(source="human", correction_sequence=1, cost=None, association_score=None)
+    if not keep_counts:
+        identity = value["identities"][0]
+        identity.update(status="confirmed", automatic_links=0, human_links=1, association_score_min=None)
+        for item in value["assignments"]:
+            if item["player_identity_id"] == identity["player_identity_id"]:
+                item["status"] = "confirmed"
+    return value
+
+
+@pytest.mark.parametrize(("tamper", "reason"), [
+    ("forge_confirmed", "require a corrections evidence input"),
+    ("source_count_mismatch", "link count disagrees"),
+    ("duplicate_link", "do not connect"),
+    ("fake_audit_pair", "does not match correction 1"),
+])
+def test_confirmed_status_cannot_be_forged_without_traceable_correction_evidence(tamper, reason):
+    experimental = ResolverConfig(mode=ResolverMode.TEMPORAL_KINEMATIC)
+    if tamper == "duplicate_link":
+        value = json.loads(player_identities_to_json_bytes(
+            resolve(track(1, 0, 4), track(2, 7, 10), track(3, 13, 16), config=experimental)
+        ))
+        assert len(value["identities"][0]["tracklet_ids"]) == 3
+        value["links"][1] = dict(value["links"][0])
+    else:
+        value = json.loads(player_identities_to_json_bytes(resolve(track(1, 0, 4), track(2, 7, 10), config=experimental)))
+        value = _forge_confirmed(value, keep_counts=tamper == "source_count_mismatch")
+        if tamper == "fake_audit_pair":
+            value["evidence_inputs"].append({"role": "corrections", "schema": CORRECTIONS_SCHEMA, "sha256": "e" * 64})
+            value["corrections_applied"].append({
+                "sequence": 1, "action": "must_link", "outcome": "applied",
+                "tracklet_ids": ["tracklet_000001", "tracklet_000009"], "revokes_sequence": None,
+                "reviewer": "analyst-1", "reviewed_at": "2026-11-06T10:00:00Z",
+            })
+
+    with pytest.raises(ValueError, match=reason):
+        player_identities_from_json_bytes(json.dumps(value).encode())
+
+
+def test_human_exclusions_must_cite_an_applied_exclude_correction():
+    log = corrections(entry(1, CorrectionAction.EXCLUDE, 2, reason="match official"))
+    excluded = json.loads(player_identities_to_json_bytes(resolve(track(1, 0, 4), track(2, 7, 10), corrections=log)))
+    assert player_identities_from_json_bytes(json.dumps(excluded).encode())  # the genuine artifact loads
+
+    forged = json.loads(player_identities_to_json_bytes(resolve(track(1, 0, 4), track(2, 7, 10))))
+    forged["assignments"][0].update(status="excluded", reason="human_exclude:correction_7")
+    with pytest.raises(ValueError, match="corrections evidence input"):
+        player_identities_from_json_bytes(json.dumps(forged).encode())
+
+    excluded["assignments"][0].update(status="excluded", reason="human_exclude:correction_1")
+    with pytest.raises(ValueError, match="does not cite an applied exclude"):
+        player_identities_from_json_bytes(json.dumps(excluded).encode())
+
+
+def test_malformed_audit_entries_raise_value_errors_even_when_built_directly():
+    from dataclasses import replace
+
+    log = corrections(entry(1, CorrectionAction.MUST_LINK, 1, 3))
+    result = resolve(track(1, 0, 4), track(3, 40, 44, x=600), corrections=log)
+    broken = dict(result.corrections_applied[0], sequence=[1])
+
+    with pytest.raises(ValueError, match="sequences must be integers"):
+        replace(result, corrections_applied=(broken,))
+
+
+def test_resolver_verifies_the_corrections_checksum_against_the_applied_log():
+    from footballai_v2.execution.ai2c.artifact import EvidenceInput
+
+    log = corrections(entry(1, CorrectionAction.MUST_LINK, 1, 3))
+    tracks = summaries_from_tracklets(artifact_of(track(1, 0, 4), track(3, 40, 44, x=600)))
+
+    with pytest.raises(ValueError, match="does not match the canonical bytes"):
+        resolve_identities(
+            tracks, source(), corrections=log, evidence_inputs=(EvidenceInput("corrections", CORRECTIONS_SCHEMA, "e" * 64),),
+        )
+
+
+def test_cli_accepts_only_canonical_corrections_and_records_their_file_checksum(tmp_path):
+    from footballai_v2.execution.ai2c.cli import main
+
+    tracklets = tracklets_to_parquet_bytes(artifact_of(track(1, 0, 4), track(3, 40, 44, x=600)))
+    parquet = tmp_path / "tracklets.parquet"
+    parquet.write_bytes(tracklets)
+    log = IdentityCorrections(CORRECTIONS_SCHEMA, sha256_bytes(tracklets), (entry(1, CorrectionAction.MUST_LINK, 1, 3),))
+    canonical = tmp_path / "corrections.json"
+    canonical.write_bytes(corrections_to_json_bytes(log))
+    pretty = tmp_path / "pretty.json"
+    pretty.write_text(json.dumps(json.loads(canonical.read_bytes())))
+    base = ["resolve", "--tracklets", str(parquet), "--source-id", "bounded-clip"]
+
+    with pytest.raises(SystemExit, match="not a canonical"):
+        main([*base, "--corrections", str(pretty), "--output", str(tmp_path / "rejected.json")])
+    assert main([*base, "--corrections", str(canonical), "--output", str(tmp_path / "identities.json")]) == 0
+    result = player_identities_from_json_bytes((tmp_path / "identities.json").read_bytes())
+    assert [item.status for item in result.identities] == [AssignmentStatus.CONFIRMED]
+    (recorded,) = [item for item in result.evidence_inputs if item.role == "corrections"]
+    assert recorded.sha256 == sha256_bytes(canonical.read_bytes())
+
+
+def test_observations_exclude_automatic_identities_by_default():
+    tracklets = artifact_of(track(1, 0, 4), track(2, 7, 10))
+    result = resolve_identities(
+        summaries_from_tracklets(tracklets), source(), config=ResolverConfig(mode=ResolverMode.TEMPORAL_KINEMATIC),
+    )
+    digest = sha256_bytes(player_identities_to_json_bytes(result))
+
+    assert list(iter_player_observations(tracklets, TRACKLETS_SHA, result, digest)) == []
+    opted_in = list(iter_player_observations(tracklets, TRACKLETS_SHA, result, digest, include_provisional=True))
+    assert opted_in and {item.identity_status for item in opted_in} == {AssignmentStatus.PROVISIONAL}
+
+
+def test_observations_verify_the_identities_checksum():
+    tracklets = artifact_of(track(1, 0, 4), track(2, 7, 10))
+    result = resolve_identities(summaries_from_tracklets(tracklets), source())
+
+    with pytest.raises(ValueError, match="checksum"):
+        list(iter_player_observations(tracklets, TRACKLETS_SHA, result, "0" * 64))
+
+
+def test_cli_resolve_without_mode_uses_the_review_only_policy(tmp_path):
+    from footballai_v2.execution.ai2c.cli import build_parser, main
+
+    parquet = tmp_path / "tracklets.parquet"
+    parquet.write_bytes(tracklets_to_parquet_bytes(artifact_of(track(1, 0, 4), track(2, 7, 10))))
+    output = tmp_path / "identities.json"
+
+    assert build_parser().parse_args(["resolve", "--tracklets", "x", "--output", "y"]).mode == "review_only"
+    assert main(["resolve", "--tracklets", str(parquet), "--source-id", "bounded-clip", "--output", str(output)]) == 0
+    result = player_identities_from_json_bytes(output.read_bytes())
+    assert result.resolver["configuration"]["mode"] == "review_only"
+    assert result.identities == () and result.links == ()
+
+
+@pytest.mark.parametrize("mode", EXPERIMENTAL_MODES)
+def test_cli_experimental_modes_require_explicit_selection_and_warn(tmp_path, capsys, mode):
+    from footballai_v2.execution.ai2c.cli import main
+
+    parquet = tmp_path / "tracklets.parquet"
+    parquet.write_bytes(tracklets_to_parquet_bytes(artifact_of(track(1, 0, 4), track(2, 7, 10))))
+    output = tmp_path / "identities.json"
+
+    assert main([
+        "resolve", "--tracklets", str(parquet), "--source-id", "bounded-clip", "--mode", mode.value,
+        "--output", str(output),
+    ]) == 0
+    result = player_identities_from_json_bytes(output.read_bytes())
+    assert result.resolver["configuration"]["mode"] == mode.value
+    assert {item.status for item in result.identities} == {AssignmentStatus.PROVISIONAL}
+    assert "experimental" in capsys.readouterr().err
