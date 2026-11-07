@@ -1,0 +1,401 @@
+{
+  "configuration": {
+    "camera": "bottom-touchline pinhole, 20\u201345 m behind the line, 12\u201328 m high, focal 900\u20132600 px, random pan",
+    "frame_size": [
+      1920,
+      1080
+    ],
+    "invalid_scenarios": [
+      "mirrored_left_right",
+      "wrong_pitch_dimensions"
+    ],
+    "pitch": {
+      "coordinate_system": {
+        "handedness": "image-like (x right, y down): a camera above the pitch preserves orientation",
+        "name": "footballai.pitch-plan/v1",
+        "origin": "corner where the LEFT goal line meets the TOP touchline",
+        "units": "metre",
+        "view": "plan view seen from above; LEFT/RIGHT/TOP/BOTTOM name sides of the plan drawing, not of the image",
+        "x_axis": "along the touchlines, from the LEFT goal line (x=0) to the RIGHT goal line (x=length_m)",
+        "y_axis": "along the goal lines, from the TOP touchline (y=0) to the BOTTOM touchline (y=width_m)"
+      },
+      "dimensions_source": "synthetic benchmark configuration (explicit)",
+      "length_m": 105.0,
+      "markings": {
+        "centre_circle_radius_m": 9.15,
+        "goal_area_depth_m": 5.5,
+        "goal_area_width_m": 18.32,
+        "goal_width_m": 7.32,
+        "penalty_arc_radius_m": 9.15,
+        "penalty_area_depth_m": 16.5,
+        "penalty_area_width_m": 40.32,
+        "penalty_mark_distance_m": 11.0
+      },
+      "width_m": 68.0,
+      "within_law_1_range": true
+    },
+    "unsafe_acceptance_true_p95_m": 2.0,
+    "valid_scenarios": [
+      "clean_1px",
+      "noisy_3px",
+      "one_fit_outlier"
+    ],
+    "validation_split": "every third visible landmark (sorted by ID, offset 1) is a held-out validation point"
+  },
+  "development": {
+    "scenarios": {
+      "clean_1px": {
+        "calibrated": 37,
+        "calibrated_fraction": 0.925,
+        "frames": 40,
+        "held_out_validation_error_m": {
+          "max": 1.4359,
+          "median": 0.4875,
+          "n": 37,
+          "p90": 0.6845,
+          "statistic": "per-frame maximum held-out validation error"
+        },
+        "invalidated": 1,
+        "reasons": {
+          "degenerate_or_collinear_geometry": 1,
+          "insufficient_fit_points": 1,
+          "validation_error_exceeds_threshold": 1
+        },
+        "true_field_error_p95_m": {
+          "max": 0.7455,
+          "median": 0.2146,
+          "n": 37,
+          "p90": 0.4426,
+          "statistic": "per-frame 95th percentile of true error over the visible pitch (2 m grid)"
+        },
+        "uncalibrated": 2,
+        "unsafe_acceptances": 0
+      },
+      "mirrored_left_right": {
+        "calibrated": 0,
+        "calibrated_fraction": 0.0,
+        "frames": 40,
+        "invalidated": 39,
+        "reasons": {
+          "insufficient_fit_points": 1,
+          "reflected_orientation": 39
+        },
+        "rejection_rate": 1.0,
+        "uncalibrated": 1
+      },
+      "noisy_3px": {
+        "calibrated": 20,
+        "calibrated_fraction": 0.5,
+        "frames": 40,
+        "held_out_validation_error_m": {
+          "max": 1.4485,
+          "median": 0.9372,
+          "n": 20,
+          "p90": 1.3132,
+          "statistic": "per-frame maximum held-out validation error"
+        },
+        "invalidated": 19,
+        "reasons": {
+          "degenerate_or_collinear_geometry": 1,
+          "validation_error_exceeds_threshold": 19
+        },
+        "true_field_error_p95_m": {
+          "max": 2.9491,
+          "median": 0.7625,
+          "n": 20,
+          "p90": 1.5586,
+          "statistic": "per-frame 95th percentile of true error over the visible pitch (2 m grid)"
+        },
+        "uncalibrated": 1,
+        "unsafe_acceptances": 1
+      },
+      "one_fit_outlier": {
+        "calibrated": 32,
+        "calibrated_fraction": 0.8,
+        "frames": 40,
+        "held_out_validation_error_m": {
+          "max": 0.9231,
+          "median": 0.4931,
+          "n": 32,
+          "p90": 0.7789,
+          "statistic": "per-frame maximum held-out validation error"
+        },
+        "invalidated": 4,
+        "reasons": {
+          "degenerate_or_collinear_geometry": 3,
+          "insufficient_fit_points": 1,
+          "insufficient_spatial_coverage": 4
+        },
+        "true_field_error_p95_m": {
+          "max": 0.6795,
+          "median": 0.2737,
+          "n": 32,
+          "p90": 0.4933,
+          "statistic": "per-frame 95th percentile of true error over the visible pitch (2 m grid)"
+        },
+        "uncalibrated": 4,
+        "unsafe_acceptances": 0
+      },
+      "wrong_pitch_dimensions": {
+        "calibrated": 19,
+        "calibrated_fraction": 0.475,
+        "frames": 40,
+        "invalidated": 19,
+        "reasons": {
+          "degenerate_or_collinear_geometry": 1,
+          "insufficient_fit_points": 1,
+          "insufficient_spatial_coverage": 3,
+          "validation_error_exceeds_threshold": 16
+        },
+        "rejection_rate": 0.525,
+        "uncalibrated": 2
+      }
+    },
+    "scenes": 200,
+    "seeds": [
+      0,
+      39
+    ]
+  },
+  "evaluation": {
+    "scenarios": {
+      "clean_1px": {
+        "calibrated": 180,
+        "calibrated_fraction": 0.9,
+        "frames": 200,
+        "held_out_validation_error_m": {
+          "max": 1.4605,
+          "median": 0.4477,
+          "n": 180,
+          "p90": 0.9851,
+          "statistic": "per-frame maximum held-out validation error"
+        },
+        "invalidated": 13,
+        "reasons": {
+          "degenerate_or_collinear_geometry": 4,
+          "insufficient_fit_points": 3,
+          "insufficient_spatial_coverage": 3,
+          "validation_error_exceeds_threshold": 10
+        },
+        "true_field_error_p95_m": {
+          "max": 2.1905,
+          "median": 0.2847,
+          "n": 180,
+          "p90": 0.7697,
+          "statistic": "per-frame 95th percentile of true error over the visible pitch (2 m grid)"
+        },
+        "uncalibrated": 7,
+        "unsafe_acceptances": 1
+      },
+      "mirrored_left_right": {
+        "calibrated": 0,
+        "calibrated_fraction": 0.0,
+        "frames": 200,
+        "invalidated": 191,
+        "reasons": {
+          "degenerate_or_collinear_geometry": 1,
+          "insufficient_fit_points": 8,
+          "reflected_orientation": 191
+        },
+        "rejection_rate": 1.0,
+        "uncalibrated": 9
+      },
+      "noisy_3px": {
+        "calibrated": 90,
+        "calibrated_fraction": 0.45,
+        "frames": 200,
+        "held_out_validation_error_m": {
+          "max": 1.4922,
+          "median": 1.0029,
+          "n": 90,
+          "p90": 1.3605,
+          "statistic": "per-frame maximum held-out validation error"
+        },
+        "invalidated": 99,
+        "reasons": {
+          "degenerate_or_collinear_geometry": 6,
+          "insufficient_fit_points": 4,
+          "insufficient_ransac_inliers": 1,
+          "insufficient_spatial_coverage": 3,
+          "validation_error_exceeds_threshold": 96
+        },
+        "true_field_error_p95_m": {
+          "max": 5.9459,
+          "median": 0.7323,
+          "n": 90,
+          "p90": 1.998,
+          "statistic": "per-frame 95th percentile of true error over the visible pitch (2 m grid)"
+        },
+        "uncalibrated": 11,
+        "unsafe_acceptances": 8
+      },
+      "one_fit_outlier": {
+        "calibrated": 163,
+        "calibrated_fraction": 0.815,
+        "frames": 200,
+        "held_out_validation_error_m": {
+          "max": 1.4574,
+          "median": 0.43,
+          "n": 163,
+          "p90": 0.9744,
+          "statistic": "per-frame maximum held-out validation error"
+        },
+        "invalidated": 29,
+        "reasons": {
+          "degenerate_or_collinear_geometry": 4,
+          "insufficient_fit_points": 4,
+          "insufficient_spatial_coverage": 19,
+          "landmarks_beyond_camera_horizon": 2,
+          "validation_error_exceeds_threshold": 8
+        },
+        "true_field_error_p95_m": {
+          "max": 2.5692,
+          "median": 0.2998,
+          "n": 163,
+          "p90": 0.7122,
+          "statistic": "per-frame 95th percentile of true error over the visible pitch (2 m grid)"
+        },
+        "uncalibrated": 8,
+        "unsafe_acceptances": 3
+      },
+      "wrong_pitch_dimensions": {
+        "calibrated": 94,
+        "calibrated_fraction": 0.47,
+        "frames": 200,
+        "invalidated": 101,
+        "reasons": {
+          "degenerate_or_collinear_geometry": 2,
+          "insufficient_fit_points": 3,
+          "insufficient_spatial_coverage": 4,
+          "validation_error_exceeds_threshold": 97
+        },
+        "rejection_rate": 0.53,
+        "uncalibrated": 5
+      }
+    },
+    "scenes": 1000,
+    "seeds": [
+      1000,
+      1199
+    ]
+  },
+  "evidence_kind": "synthetic",
+  "policy": {
+    "accepted_review_statuses": [
+      "accepted"
+    ],
+    "max_metres_per_pixel": 1.0,
+    "max_validation_error_m": 1.5,
+    "max_validation_median_error_m": 0.75,
+    "min_dlt_singular_ratio": 1e-09,
+    "min_fit_inliers": 4,
+    "min_fit_points": 4,
+    "min_image_hull_fraction": 0.05,
+    "min_inlier_ratio": 0.6,
+    "min_metres_per_pixel": 0.002,
+    "min_triangle_ratio": 0.02,
+    "min_validation_points": 2,
+    "propagate_static_shots": true,
+    "ransac_max_refinements": 5,
+    "ransac_max_subsets": 5000,
+    "ransac_seed": 0,
+    "ransac_threshold_m": 1.0,
+    "validation_requires_clear": true,
+    "version": "ai3-calibration-policy/v1"
+  },
+  "real_world_evaluation": {
+    "annotated_real_frames": 0,
+    "reason": "no independently annotated real pitch frames exist in the repository or session",
+    "status": "pending"
+  },
+  "runtime": {
+    "elapsed_seconds": 314.85,
+    "keyframes_calibrated_or_rejected": 1207,
+    "note": "wall-clock and memory vary by machine; excluded from determinism checks",
+    "peak_traced_memory_mb": 2.6
+  },
+  "schema": "footballai.pitch-calibration-benchmark/v1",
+  "statement": "Synthetic pinhole scenes with known ground truth. Validates the mathematics and the quality gates; it does not measure calibration accuracy on real football footage.",
+  "temporal": {
+    "all_state_checks_passed": true,
+    "expected_state_checks": {
+      "A after last keyframe stays uncalibrated": {
+        "as_expected": true,
+        "frames": 9,
+        "observed": {
+          "uncalibrated": 9
+        }
+      },
+      "A keyframe pair 0..40 propagates": {
+        "as_expected": true,
+        "frames": 41,
+        "observed": {
+          "calibrated": 41
+        }
+      },
+      "B pan: only keyframe 50 calibrated": {
+        "as_expected": true,
+        "frames": 49,
+        "observed": {
+          "uncalibrated": 49
+        }
+      },
+      "C false static claim: keyframes disagree": {
+        "as_expected": true,
+        "frames": 39,
+        "observed": {
+          "invalidated": 39
+        }
+      },
+      "D suspected cut between keyframes": {
+        "as_expected": true,
+        "frames": 39,
+        "observed": {
+          "invalidated": 39
+        }
+      },
+      "gap after last shot": {
+        "as_expected": true,
+        "frames": 10,
+        "observed": {
+          "uncalibrated": 10
+        }
+      }
+    },
+    "frame_reasons": {
+      "camera_not_declared_static": 49,
+      "no_shot_segment": 10,
+      "outside_verified_keyframe_interval": 27,
+      "static_shot_keyframes_disagree": 39,
+      "suspected_camera_cut": 39
+    },
+    "frame_states": {
+      "calibrated": 46,
+      "invalidated": 78,
+      "uncalibrated": 86
+    },
+    "frames": 210,
+    "player_observations": 900,
+    "projected_observations_during_pan_without_keyframe": 0,
+    "projected_player_error_m": {
+      "max": 0.2628,
+      "median": 0.064,
+      "n": 264,
+      "p90": 0.1006,
+      "statistic": "true error of projected stationary-player foot points (exact pixels; synthetic)"
+    },
+    "projection_statuses": {
+      "frame_invalidated": 234,
+      "frame_uncalibrated": 402,
+      "projected": 264
+    }
+  },
+  "unmeasured": [
+    "accuracy on real broadcast frames (no annotated real frames)",
+    "human click error and inter-annotator agreement",
+    "lens distortion, pitch non-planarity, line blur and occlusion",
+    "foot-point bias of bounding-box bottoms (feet are not the box bottom centre)",
+    "automatic shot-cut detection quality (birth-burst rule is unevaluated)",
+    "cross-camera or cross-stadium generalisation"
+  ]
+}
