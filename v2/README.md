@@ -124,6 +124,13 @@ defaults to `review_only`; automatic association is an explicit experimental
 opt-in whose identities are provisional. See
 [`../docs/v2/AI2C_PLAYER_IDENTITY.md`](../docs/v2/AI2C_PLAYER_IDENTITY.md).
 
+AI3 (`footballai_v2.execution.ai3`) publishes `footballai.pitch-calibration/v1`
+from manually annotated pitch landmarks (`footballai.pitch-landmark-annotations/v1`)
+with an offline CLI, and `footballai.projected-player-observation/v1`, which adds
+`pitch_xy_m` to AI2C observations only on calibrated frames. It is not wired into
+the `pitch_calibration` run stage yet. See
+[`../docs/v2/AI3_PITCH_CALIBRATION.md`](../docs/v2/AI3_PITCH_CALIBRATION.md).
+
 ## Configurable local storage
 
 `LocalAnalysisRunStore` always receives its root from the caller:

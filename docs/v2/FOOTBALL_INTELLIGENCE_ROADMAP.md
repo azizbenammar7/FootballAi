@@ -20,7 +20,7 @@ not replace, the historical portfolio roadmap in
 | Identity ground truth, cannot-links, metrics (AI2A) | Implemented, 18 s clip |
 | Appearance benchmark (AI2B) | PR #37, unmerged; does not justify a resolver |
 | Identity association, artifact, corrections (AI2C) | This milestone; `review_only` by default, automatic links experimental and provisional only |
-| Pitch calibration / homography | Not implemented. V1 uses a constant 0.086 m/px scale |
+| Pitch calibration / homography (AI3) | Foundation implemented: manual-landmark homography, quality gates, camera-cut policy, AI2C projection ([AI3_PITCH_CALIBRATION.md](AI3_PITCH_CALIBRATION.md)). Synthetic evidence only; real-footage accuracy pending annotation. V1 still uses its own constant 0.086 m/px scale |
 | Ball, events, possession, passes, shots | Not implemented |
 | Per-player statistics | V1 per-*fragment* statistics only |
 | Evidence-grounded copilot, 5 read-only tools | Implemented, offline; real model never run live |
@@ -180,10 +180,13 @@ their own approval.
 
 ## Next milestone
 
-**AI3 — pitch calibration foundation**, as a bounded slice: a
-`footballai.pitch-calibration/v1` contract with first-class `UNCALIBRATED`,
-shot-cut detection, a small labelled keypoint benchmark on frames from the two
-existing licensed local clips (pinned by video checksum, pixels not committed), and `pitch_xy_m` filled in the observation stream only
-for frames that pass the quality gate. It unblocks team-level spatial
-analytics directly and gives AI2 metric-space gating that camera pans cannot
-break.
+**AI3 foundation is in place** (`footballai.pitch-calibration/v1`, first-class
+`uncalibrated`/`invalidated`, manual-landmark RANSAC homography, held-out
+validation, shot/cut policy, `footballai.projected-player-observation/v1`); see
+[`AI3_PITCH_CALIBRATION.md`](AI3_PITCH_CALIBRATION.md). It is validated on
+synthetic cameras only. The next bounded slice is **AI3-R: a real labelled
+keypoint benchmark** on frames from the two existing licensed local clips
+(pinned by video checksum, pixels not committed), annotated with the included
+tooling, with at least two camera sequences and a second annotator on a subset.
+Only after that should team-level spatial analytics (AI8 occupancy maps) consume
+projected observations.
