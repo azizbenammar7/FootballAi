@@ -86,6 +86,15 @@ pairs, and on a second clip they made one false merge. See
 [`docs/v2/AI2C_PLAYER_IDENTITY.md`](docs/v2/AI2C_PLAYER_IDENTITY.md) and the
 coach-first [football intelligence roadmap](docs/v2/FOOTBALL_INTELLIGENCE_ROADMAP.md).
 
+AI3 adds the pitch-calibration foundation: `footballai.pitch-calibration/v1`
+with per-frame `calibrated`/`uncalibrated`/`invalidated` states, a manual
+landmark annotation workflow, a deterministic RANSAC homography with held-out
+validation and orientation, coverage and camera-cut gates, and
+`footballai.projected-player-observation/v1`, which places AI2C observations on
+the pitch only for calibrated frames. It is validated on synthetic cameras only;
+accuracy on real footage is pending annotation. See
+[`docs/v2/AI3_PITCH_CALIBRATION.md`](docs/v2/AI3_PITCH_CALIBRATION.md).
+
 Production Platform status: **P1 containerized service boundaries are
 implemented and locally validated** for the compiled React frontend, FastAPI
 API, and long-lived worker. Start the local stack with `make p1-build && make
