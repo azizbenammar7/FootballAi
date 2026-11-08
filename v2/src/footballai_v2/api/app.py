@@ -606,7 +606,10 @@ def create_app(
             )
         observations_ref = by_id.get(OBSERVATIONS_ARTIFACT_ID)
         if observations_ref is not None and observations_ref.schema_version != PROJECTED_OBSERVATIONS_SCHEMA:
-            observations_ref = None
+            raise HTTPException(
+                status_code=409,
+                detail={"error_code": "artifact_integrity_failed", "message": "Spatial artifacts failed verification."},
+            )
         try:
             # read_artifact_bytes verifies the registered size and SHA-256.
             diagnostic = object_storage.read_artifact_bytes(run.run_id, DIAGNOSTIC_ARTIFACT_ID, max_bytes=64 * 1024 * 1024)
@@ -677,13 +680,13 @@ def create_app(
 
 
 def _read_pitch_annotations(upload: UploadFile | None) -> bytes | None:
-    """Read an optional annotation upload without buffering more than the limit."""
+    """Read an optional annotation upload, never buffering more than one byte past the limit.
+
+    The limit itself is enforced (with its error code) by ``pitch_annotations_parameter``.
+    """
     if upload is None:
         return None
-    content = upload.file.read(MAX_PITCH_ANNOTATIONS_BYTES + 1)
-    if len(content) > MAX_PITCH_ANNOTATIONS_BYTES:
-        raise UploadValidationError("pitch_annotations_too_large", "The pitch annotation file exceeds 1 MiB.")
-    return content
+    return upload.file.read(MAX_PITCH_ANNOTATIONS_BYTES + 1)
 
 
 def _queued_response(run: AnalysisRun) -> QueuedRunResponse:

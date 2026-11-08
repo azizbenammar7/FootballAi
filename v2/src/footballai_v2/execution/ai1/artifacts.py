@@ -341,13 +341,23 @@ def sha256_bytes(content: bytes) -> str:
     return hashlib.sha256(content).hexdigest()
 
 
-def _metadata(schema: str, provenance: Mapping[str, Any]) -> dict[bytes, bytes]:
+def artifact_metadata(schema: str, provenance: Mapping[str, Any]) -> dict[bytes, bytes]:
+    """Parquet schema metadata naming a FootballAI artifact contract and its provenance."""
     value = {"schema": schema, "provenance": provenance}
     return {_METADATA_KEY: json.dumps(value, allow_nan=False, sort_keys=True, separators=(",", ":")).encode()}
 
 
+def _metadata(schema: str, provenance: Mapping[str, Any]) -> dict[bytes, bytes]:
+    return artifact_metadata(schema, provenance)
+
+
 def _read_metadata(table: Any, expected_schema: str) -> dict[str, Any]:
-    raw = (table.schema.metadata or {}).get(_METADATA_KEY)
+    return read_artifact_metadata(table.schema.metadata, expected_schema)
+
+
+def read_artifact_metadata(metadata: Mapping[bytes, bytes] | None, expected_schema: str) -> dict[str, Any]:
+    """Provenance from Parquet schema metadata written by :func:`artifact_metadata`."""
+    raw = (metadata or {}).get(_METADATA_KEY)
     if raw is None:
         raise ValueError("Parquet artifact metadata is missing")
     try:

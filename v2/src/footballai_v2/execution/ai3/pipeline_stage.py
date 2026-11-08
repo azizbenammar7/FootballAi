@@ -43,14 +43,15 @@ from typing import Any, Iterable, Mapping, Sequence
 from footballai_v2.execution.ai1.artifacts import (
     DetectionsArtifact,
     TrackletsArtifact,
+    artifact_metadata,
     detections_from_parquet_bytes,
+    read_artifact_metadata,
     sha256_bytes,
     tracklets_from_parquet_bytes,
 )
 from footballai_v2.execution.ai2c.artifact import (
     AssignmentStatus,
     PlayerIdentitiesArtifact,
-    player_identities_sha256,
     player_identities_to_json_bytes,
 )
 from footballai_v2.execution.ai2c.inputs import source_for_tracklets, summaries_from_tracklets
@@ -89,7 +90,6 @@ PITCH_SPACE_DIAGNOSTIC_SCHEMA = "footballai.pitch-space-diagnostic/v1"
 PARQUET_MEDIA_TYPE = "application/vnd.apache.parquet"
 SUSPECTED_CUT_MIN_BIRTHS = 8
 NO_ANNOTATIONS_REASON = "no_landmark_annotations"
-_METADATA_KEY = b"footballai_artifact"
 _TIMESTAMP_TOLERANCE_S = 1e-6
 
 DIAGNOSTIC_LABEL = (
@@ -282,11 +282,9 @@ def run_identity_stage(ai1: VerifiedAI1, tracklets_bytes: bytes, *, source_id: s
         source_for_tracklets(tracklets_bytes, ai1.tracklets, source_id=source_id, video_sha256=ai1.video_sha256),
         config=_IDENTITY_CONFIG,
     )
+    # player_identities_sha256 is defined as the SHA-256 of these canonical bytes.
     content = player_identities_to_json_bytes(artifact)
-    digest = player_identities_sha256(artifact)
-    if digest != sha256_bytes(content):
-        raise SpatialStageError("identity_artifact_unstable", "The identity artifact did not serialise canonically.")
-    return IdentityStageResult(artifact, content, digest)
+    return IdentityStageResult(artifact, content, sha256_bytes(content))
 
 
 # --- pitch_calibration -----------------------------------------------------------------
@@ -316,11 +314,10 @@ _COLUMNS = (
 )
 
 
-def _observations_to_parquet(rows: Sequence[dict[str, Any]], provenance: Mapping[str, Any]) -> bytes:
+def _observations_to_parquet(columns: Mapping[str, list[Any]], provenance: Mapping[str, Any]) -> bytes:
     import pyarrow as pa
     import pyarrow.parquet as pq
 
-    metadata = {"schema": PROJECTED_OBSERVATIONS_SCHEMA, "provenance": dict(provenance)}
     schema = pa.schema([
         ("frame_index", pa.int64()), ("timestamp_seconds", pa.float64()), ("tracklet_id", pa.string()),
         ("identity_status", pa.string()), ("player_identity_id", pa.string()), ("team", pa.string()),
@@ -329,28 +326,32 @@ def _observations_to_parquet(rows: Sequence[dict[str, Any]], provenance: Mapping
         ("inside_pitch_lines", pa.bool_()), ("extrapolated_beyond_landmarks", pa.bool_()),
         ("calibration_status", pa.string()), ("calibration_method", pa.string()),
         ("calibration_reason", pa.string()), ("calibration_keyframe", pa.int64()),
-    ], metadata={_METADATA_KEY: json.dumps(metadata, allow_nan=False, sort_keys=True, separators=(",", ":")).encode()})
-    table = pa.Table.from_pylist(list(rows), schema=schema)
+    ], metadata=artifact_metadata(PROJECTED_OBSERVATIONS_SCHEMA, provenance))
+    # Columnar build (no per-row objects), then a stable (frame, tracklet) order.
+    table = pa.Table.from_pydict(dict(columns), schema=schema).sort_by(
+        [("frame_index", "ascending"), ("tracklet_id", "ascending")]
+    )
     output = io.BytesIO()
     pq.write_table(table, output, compression="zstd", version="2.6")
     return output.getvalue()
 
 
-def read_projected_observations(content: bytes) -> tuple[dict[str, Any], Any]:
+_VIEW_COLUMNS = (
+    "frame_index", "timestamp_seconds", "tracklet_id", "identity_status", "projection_status", "pitch_x_m",
+    "pitch_y_m", "inside_pitch_lines", "extrapolated_beyond_landmarks", "calibration_keyframe",
+)
+
+
+def read_projected_observations(content: bytes, *, columns: Sequence[str] | None = None) -> tuple[dict[str, Any], Any]:
     """Return ``(provenance, pyarrow.Table)`` of a projected-observations artifact."""
     import pyarrow.parquet as pq
 
-    table = pq.read_table(io.BytesIO(content))
-    raw = (table.schema.metadata or {}).get(_METADATA_KEY)
-    try:
-        value = json.loads(raw) if raw is not None else None
-    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-        raise ValueError("projected observations metadata is invalid") from exc
-    if not isinstance(value, dict) or value.get("schema") != PROJECTED_OBSERVATIONS_SCHEMA:
-        raise ValueError("artifact is not footballai.projected-player-observations/v1")
-    if tuple(table.column_names) != _COLUMNS:
+    schema = pq.read_schema(io.BytesIO(content))
+    if tuple(schema.names) != _COLUMNS:
         raise ValueError("projected observations columns do not match the contract")
-    return value["provenance"], table
+    provenance = read_artifact_metadata(schema.metadata, PROJECTED_OBSERVATIONS_SCHEMA)
+    table = pq.read_table(io.BytesIO(content), columns=list(columns) if columns is not None else None)
+    return provenance, table
 
 
 def _frame_states(
@@ -426,7 +427,7 @@ def run_pitch_calibration_stage(
         calibration_sha = calibration.sha256()
         sampled = {index for index, _ in ai1.frames}
         keyframes_outside = sum(item.frame_index not in sampled for item in calibration.keyframes)
-        rows = []
+        columns: dict[str, list[Any]] = {name: [] for name in _COLUMNS}
         for item in project_player_observations(
             observations, calibration, calibration_sha, pitch_margin_m=DEFAULT_PITCH_MARGIN_M,
             expected_policy=policy, allow_synthetic=origin is AnnotationOrigin.SYNTHETIC,
@@ -438,28 +439,28 @@ def run_pitch_calibration_stage(
                 projected_tracklets.add(record.tracklet_id.value)
                 inside += bool(item.inside_pitch_lines)
                 extrapolated += bool(item.extrapolated_beyond_landmarks)
-            rows.append({
-                "frame_index": record.frame_index,
-                "timestamp_seconds": record.timestamp_seconds,
-                "tracklet_id": record.tracklet_id.value,
-                "identity_status": record.identity_status.value,
-                "player_identity_id": record.player_identity_id.value if record.player_identity_id else None,
-                "team": record.team.value,
-                "foot_pixel_x": record.foot_pixel_xy[0],
-                "foot_pixel_y": record.foot_pixel_xy[1],
-                "tracking_confidence": record.tracking_confidence,
-                "projection_status": status,
-                "pitch_x_m": item.pitch_xy_m[0] if item.pitch_xy_m else None,
-                "pitch_y_m": item.pitch_xy_m[1] if item.pitch_xy_m else None,
-                "inside_pitch_lines": item.inside_pitch_lines,
-                "extrapolated_beyond_landmarks": item.extrapolated_beyond_landmarks,
-                "calibration_status": item.calibration_status.value if item.calibration_status else None,
-                "calibration_method": item.calibration_method.value if item.calibration_method else None,
-                "calibration_reason": item.calibration_reason,
-                "calibration_keyframe": item.calibration_keyframe,
-            })
-        rows.sort(key=lambda row: (row["frame_index"], row["tracklet_id"]))
-        observations_bytes = _observations_to_parquet(rows, {
+            for name, value in (
+                ("frame_index", record.frame_index),
+                ("timestamp_seconds", record.timestamp_seconds),
+                ("tracklet_id", record.tracklet_id.value),
+                ("identity_status", record.identity_status.value),
+                ("player_identity_id", record.player_identity_id.value if record.player_identity_id else None),
+                ("team", record.team.value),
+                ("foot_pixel_x", record.foot_pixel_xy[0]),
+                ("foot_pixel_y", record.foot_pixel_xy[1]),
+                ("tracking_confidence", record.tracking_confidence),
+                ("projection_status", status),
+                ("pitch_x_m", item.pitch_xy_m[0] if item.pitch_xy_m else None),
+                ("pitch_y_m", item.pitch_xy_m[1] if item.pitch_xy_m else None),
+                ("inside_pitch_lines", item.inside_pitch_lines),
+                ("extrapolated_beyond_landmarks", item.extrapolated_beyond_landmarks),
+                ("calibration_status", item.calibration_status.value if item.calibration_status else None),
+                ("calibration_method", item.calibration_method.value if item.calibration_method else None),
+                ("calibration_reason", item.calibration_reason),
+                ("calibration_keyframe", item.calibration_keyframe),
+            ):
+                columns[name].append(value)
+        observations_bytes = _observations_to_parquet(columns, {
             "record_contract": PROJECTED_OBSERVATION_CONTRACT,
             "stage": {"name": STAGE_NAME, "version": STAGE_VERSION},
             "run_id": run_id,
@@ -680,15 +681,25 @@ def pitch_space_view(
             "projected_inside_pitch_lines": 0,
         }
         return view
-    provenance, table = read_projected_observations(observations_bytes)
+    if sha256_bytes(observations_bytes) != diagnostic["evidence"]["projected_observations_sha256"]:
+        raise ValueError("projected observations are not the artifact the diagnostic names")
+    import pyarrow.compute as pc
+
+    provenance, table = read_projected_observations(observations_bytes, columns=_VIEW_COLUMNS)
     if provenance.get("source_calibration_sha256") != diagnostic["evidence"]["calibration_sha256"]:
         raise ValueError("projected observations and diagnostic name different calibrations")
-    columns = table.to_pydict()
-    rows = [
-        index for index, t in enumerate(columns["timestamp_seconds"]) if within(t)
-    ]
-    status_counts = Counter(columns["projection_status"][i] for i in rows)
-    projected_rows = [i for i in rows if columns["projection_status"][i] == ProjectionStatus.PROJECTED.value]
+    stamps = table["timestamp_seconds"]
+    mask = None
+    if start is not None:
+        mask = pc.greater_equal(stamps, start)
+    if end is not None:
+        upper = pc.less_equal(stamps, end)
+        mask = upper if mask is None else pc.and_(mask, upper)
+    selected_table = table.filter(mask) if mask is not None else table
+    status_counts = Counter(selected_table["projection_status"].to_pylist())
+    projected_table = selected_table.filter(pc.equal(selected_table["projection_status"], ProjectionStatus.PROJECTED.value))
+    columns = projected_table.to_pydict()
+    projected_rows = list(range(projected_table.num_rows))
     length, width = float(pitch["length_m"]), float(pitch["width_m"])
     margin = float(provenance.get("pitch_margin_m", DEFAULT_PITCH_MARGIN_M))
     cols = math.ceil((length + 2 * margin) / cell_size_m)
@@ -699,7 +710,7 @@ def pitch_space_view(
         cy = min(rows_n - 1, max(0, int((columns["pitch_y_m"][i] + margin) // cell_size_m)))
         grid[cy][cx] += 1
     view["observations"] = {
-        "total": len(rows),
+        "total": selected_table.num_rows,
         "projected": len(projected_rows),
         "by_projection_status": dict(sorted(status_counts.items())),
         "distinct_tracklets_projected": len({columns["tracklet_id"][i] for i in projected_rows}),

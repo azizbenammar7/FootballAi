@@ -289,3 +289,15 @@ of box bottoms (not corrected).
   rates.
 - **Direct upload is not supported.** The browser direct-to-object upload
   path cannot attach annotations yet.
+- **Annotations live in the run record.** The pinned annotation document (at
+  most 1 MiB, typically tens of KiB) is stored in the run parameters, so it
+  appears in run detail and manifest responses and is rewritten with every
+  stage update. Moving it into object storage as a second input object, with
+  only its checksum kept in the run record, is the cleaner design. It needs
+  new object-storage port methods and retry/clone copying.
+- **Existing V1 failures change their retry flag.** Recording
+  `ExecutionFailure.retryable` also changes how the existing
+  `v1_input_missing`, `v1_requirements_missing` and `v1_model_changed`
+  failures are recorded: they now show `retryable: false`, as their code
+  always declared. No API or UI path gates retries on this flag, and a retry
+  after `make v2-v1-compat-setup` still works.

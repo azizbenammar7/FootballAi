@@ -556,3 +556,28 @@ def test_cli_template_binds_to_the_video_only_for_pipeline_attachment(tmp_path):
     with pytest.raises(SpatialStageError) as error:
         pitch_annotations_parameter(ai1_bound, video_sha256=VIDEO_SHA, data_origin="real")
     assert error.value.code == "pitch_annotations_bound_to_ai1"
+
+
+def test_pitch_space_view_refuses_observations_the_diagnostic_does_not_name():
+    _, _, a = stage(notes())
+    _, _, b = stage(notes((10, 20)))
+    with pytest.raises(ValueError, match="not the artifact the diagnostic names"):
+        pitch_space_view(diagnostic_to_json_bytes(a.diagnostic), b.observations_bytes)
+
+
+def test_pitch_space_endpoint_rejects_an_unexpected_observations_schema(worker, monkeypatch):
+    client, settings, _ = worker
+    created = upload(client, annotations=annotations_to_json_bytes(notes())).json()
+    execute(client, settings)
+    store = client.app.state.run_store
+    run = store.load(created["run_id"])
+    relabelled = tuple(
+        dataclasses.replace(item, schema_version="footballai.other/v1")
+        if item.artifact_id == "projected-player-observations" else item
+        for item in run.artifacts
+    )
+    # Terminal manifests are immutable on disk, so present the relabelled record on read.
+    original_load = store.load
+    monkeypatch.setattr(store, "load", lambda run_id: dataclasses.replace(original_load(run_id), artifacts=relabelled))
+    response = client.get(f"/api/v1/runs/{run.run_id}/pitch-space")
+    assert response.status_code == 409 and response.json()["detail"]["error_code"] == "artifact_integrity_failed"
