@@ -50,7 +50,7 @@ jobs:
             rc=0
             status="$(curl --silent --show-error --location \
               --proto '=https' --proto-redir '=https' \
-              --connect-timeout 15 --max-time 60 \
+              --connect-timeout 15 --max-time 40 \
               --dump-header "$headers" --output "$archive" \
               --write-out '%{http_code}' "$release/$asset")" || rc=$?
             if [ "$rc" -eq 0 ] && [ "$status" = "200" ]; then
@@ -70,10 +70,11 @@ jobs:
               exit 1
             fi
             delay=$((attempt * 5))
-            # Honour a numeric Retry-After (seconds), capped at 60s.
+            # Honour a numeric Retry-After (seconds), capped at 30s. Worst case
+            # 5 x 40s + 4 x 30s stays inside the job's 8-minute timeout.
             retry_after="$(tr -d '\r' 2>/dev/null < "$headers" | sed -n 's/^[Rr]etry-[Aa]fter: *\([0-9]\{1,4\}\)$/\1/p' | tail -n 1 || true)"
             if [ -n "$retry_after" ] && [ $((10#$retry_after)) -gt "$delay" ]; then
-              delay=$(( 10#$retry_after < 60 ? 10#$retry_after : 60 ))
+              delay=$(( 10#$retry_after < 30 ? 10#$retry_after : 30 ))
             fi
             echo "Retrying in ${delay}s."
             sleep "$delay"
@@ -85,7 +86,7 @@ jobs:
             # Reviewer aid only, never used to pass: what the release's own checksum file lists.
             curl --silent --show-error --fail --location --proto '=https' --proto-redir '=https' \
               --max-time 30 "$release/gitleaks_${GITLEAKS_VERSION}_checksums.txt" \
-              | grep -F " $asset" || echo "(official checksums file unavailable)"
+              | awk -v a="$asset" '$2 == a' || echo "(official checksums file unavailable)"
             exit 1
           fi
           echo "SHA-256 verified: $actual  $asset"
