@@ -21,6 +21,9 @@ export default function NewAnalysisPage() {
     if (!file) { setError('Choose a video before starting the analysis.'); return }
     if (!profile?.available) { setError('The selected pipeline profile is unavailable.'); return }
     const values = new FormData(event.currentTarget); values.set('video', file)
+    // An unselected optional file input still submits an empty part; drop it.
+    const annotations = values.get('pitch_annotations')
+    if (!(annotations instanceof File) || annotations.size === 0) values.delete('pitch_annotations')
     setSubmitting(true)
     try {
       const created = await uploadAnalysis(values, setProgress)
@@ -56,6 +59,9 @@ export default function NewAnalysisPage() {
             <label><span>Data origin</span><select name="data_origin" defaultValue="real"><option value="real">Real uploaded footage</option><option value="evaluation">Evaluation fixture</option><option value="synthetic">Synthetic fixture</option></select></label>
             <label><span>Pipeline profile</span><select name="pipeline_profile" value={profileId} onChange={(event) => setProfileId(event.target.value)}>{profiles.data?.profiles.map((item) => <option key={item.profile_id} value={item.profile_id} disabled={!item.available}>{item.display_name}{item.available ? '' : ' — unavailable'}</option>)}</select></label>
             <label className="form-wide"><span>Notes</span><textarea name="notes" maxLength={1000} rows={4} /></label>
+            {profileId === 'v1_compat' && (
+              <label className="form-wide"><span>Pitch landmark annotations (optional)</span><input type="file" name="pitch_annotations" accept="application/json,.json" /><small className="explain-hint">A footballai.pitch-landmark-annotations/v1 file declaring this video&apos;s SHA-256. Without it, every frame stays uncalibrated and no pitch positions are produced.</small></label>
+            )}
           </div>
           {profile && <div className={`profile-card ${profile.available ? '' : 'profile-card--unavailable'}`}><strong>{profile.display_name}</strong><p>{profile.description}</p><small>{profile.available ? `${profile.purpose} · Device: ${String(profile.runtime.device ?? 'not required')} · Model: ${String(profile.runtime.model ?? 'none')}` : profile.readiness_message}</small>{!profile.available && profile.missing_requirements.length > 0 && <span>Missing: {profile.missing_requirements.join(', ')}</span>}{!profile.available && profile.runtime_errors.map((error) => <span key={error}>{error}</span>)}{!profile.available && profile.setup_command && <span>Run: <code>{profile.setup_command}</code></span>}{profile.warnings.map((warning) => <span key={warning}>{warning}</span>)}</div>}
           {profiles.data?.profiles.filter((item) => !item.available).map((item) => <p className="muted" key={item.profile_id}>{item.display_name} unavailable ({item.readiness_status}). Run: {item.setup_command}</p>)}

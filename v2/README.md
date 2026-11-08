@@ -119,7 +119,8 @@ AI2C (`footballai_v2.execution.ai2c`) publishes `footballai.player-identities/v1
 from cached tracklets with an offline CLI, accepts
 `footballai.identity-corrections/v1` review logs, and exposes the
 `footballai.player-observation/v1` stream for later pitch calibration and
-statistics. It is not wired into the `identity_resolution` run stage yet. It
+statistics. The `v1_compat` pipeline (2.2.0) runs it in the `identity_resolution`
+stage in `review_only` mode only (no automatic association). It
 defaults to `review_only`; automatic association is an explicit experimental
 opt-in whose identities are provisional. See
 [`../docs/v2/AI2C_PLAYER_IDENTITY.md`](../docs/v2/AI2C_PLAYER_IDENTITY.md).
@@ -127,9 +128,12 @@ opt-in whose identities are provisional. See
 AI3 (`footballai_v2.execution.ai3`) publishes `footballai.pitch-calibration/v1`
 from manually annotated pitch landmarks (`footballai.pitch-landmark-annotations/v1`)
 with an offline CLI, and `footballai.projected-player-observation/v1`, which adds
-`pitch_xy_m` to AI2C observations only on calibrated frames. It is not wired into
-the `pitch_calibration` run stage yet. See
-[`../docs/v2/AI3_PITCH_CALIBRATION.md`](../docs/v2/AI3_PITCH_CALIBRATION.md).
+`pitch_xy_m` to AI2C observations only on calibrated frames. AI3-B runs it in the
+`pitch_calibration` stage of `v1_compat` runs when landmark annotations bound to
+the uploaded video are attached, and publishes a tracklet-level pitch-space
+diagnostic (`GET /api/v1/runs/{run_id}/pitch-space`). See
+[`../docs/v2/AI3_PITCH_CALIBRATION.md`](../docs/v2/AI3_PITCH_CALIBRATION.md) and
+[`../docs/v2/AI3B_PIPELINE_INTEGRATION.md`](../docs/v2/AI3B_PIPELINE_INTEGRATION.md).
 
 ## Configurable local storage
 

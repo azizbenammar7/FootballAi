@@ -94,6 +94,9 @@ validation and orientation, coverage and camera-cut gates, and
 the pitch only for calibrated frames. It is validated on synthetic cameras only;
 accuracy on real footage is pending annotation. See
 [`docs/v2/AI3_PITCH_CALIBRATION.md`](docs/v2/AI3_PITCH_CALIBRATION.md).
+AI3-B runs it in the asynchronous pipeline's `pitch_calibration` stage and adds a
+tracklet-level pitch-space diagnostic (not a player heatmap); see
+[`docs/v2/AI3B_PIPELINE_INTEGRATION.md`](docs/v2/AI3B_PIPELINE_INTEGRATION.md).
 
 Production Platform status: **P1 containerized service boundaries are
 implemented and locally validated** for the compiled React frontend, FastAPI

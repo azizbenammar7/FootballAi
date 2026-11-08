@@ -3,6 +3,7 @@ import { type FormEvent, useId, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError, askAgent, explainRun, useApi } from '../api'
 import { AgentTraceView } from '../components/AgentTraceView'
+import { PitchSpacePanel } from '../components/PitchSpacePanel'
 import { AnalysisWarning, ErrorState, LoadingState, OriginBadge, Panel, StatusBadge, formatDate, shortId } from '../components/ui'
 import type { AgentAdapterInfo, AgentResponse, AgentTrace, ArtifactListResponse, ExplanationResponse, ModelMode, OutputNature, RunDetail, SupportLevel } from '../types'
 
@@ -266,6 +267,9 @@ export default function RunDetailPage() {
           </Panel>
         </div>
       </div>
+      {artifacts.data?.artifacts.some((item) => item.artifact_id === 'pitch-space-diagnostic' && item.integrity_state === 'verified') && (
+        <PitchSpacePanel key={run.run_id} runId={run.run_id} />
+      )}
       <Panel>
         <div className="panel-head"><div><span className="eyebrow">Registered outputs</span><h2>Artifacts &amp; integrity</h2></div><FileCheck2 /></div>
         {artifacts.loading && <LoadingState label="Verifying artifacts…" />}

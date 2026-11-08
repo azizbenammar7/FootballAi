@@ -17,12 +17,13 @@ from dataclasses import replace
 from typing import Callable
 
 from footballai_v2.contracts.v1 import (
-    AnalysisRun, AnalysisRunStatus, ArtifactCategory, StageStatus, StructuredError, utc_now,
+    AnalysisRun, AnalysisRunStatus, ArtifactCategory, StageName, StageStatus, StructuredError, utc_now,
 )
 from footballai_v2.execution.adapters import DemoPipeline, V1CompatPipeline
 from footballai_v2.execution.contracts import ExecutionJob
 from footballai_v2.execution.errors import CancellationObserved, ExecutionFailure
 from footballai_v2.execution.generated_artifact import GeneratedArtifact
+from footballai_v2.execution.spatial_stages import IDENTITIES_ARTIFACT_ID, SPATIAL_ARTIFACT_IDS, SpatialStages
 from footballai_v2.storage.ports import AnalysisRepository, ObjectStorage
 
 
@@ -61,6 +62,8 @@ class AnalysisExecutor:
         adapter = V1CompatPipeline() if job.pipeline_profile == "v1_compat" else DemoPipeline()
         duration = float(run.parameters.get("video_probe", {}).get("duration_seconds", 0)) if isinstance(run.parameters.get("video_probe"), dict) else 0
         payloads = None
+        spatial = SpatialStages()
+        spatial_stages = {StageName.IDENTITY_RESOLUTION, StageName.PITCH_CALIBRATION}
         started = time.perf_counter()
         try:
             for index, stage in enumerate(run.stages):
@@ -78,21 +81,43 @@ class AnalysisExecutor:
                 run = run.with_stages((*run.stages[:index], running, *run.stages[index + 1:])); self.repository.save(run)
                 if job.pipeline_profile == "v1_compat" and stage.stage_name.value == "detection":
                     payloads = self._build_artifacts(adapter, run, duration)
+                outcome = None
+                if job.pipeline_profile == "v1_compat" and stage.stage_name in spatial_stages:
+                    # AI2C (review-only) and AI3 run over the exact AI1 bytes this
+                    # attempt will publish; a redelivery rebuilds them first.
+                    if payloads is None:
+                        payloads = self._build_artifacts(adapter, run, duration)
+                    stage_started = time.perf_counter()
+                    outcome = (
+                        spatial.identity(run, payloads)
+                        if stage.stage_name is StageName.IDENTITY_RESOLUTION
+                        else spatial.pitch(run, payloads)
+                    )
+                    stage_seconds = time.perf_counter() - stage_started
                 if self.stage_delay_seconds:
                     time.sleep(self.stage_delay_seconds)
                 self._checkpoint(job.run_id)
                 performance = self._stage_result(
                     job, worker_id, stage.stage_name.value, payloads
                 )
+                if outcome is not None:
+                    performance.update(
+                        duration_seconds=round(stage_seconds, 6), frames_processed=outcome.frames_processed,
+                        output_count=outcome.output_count,
+                    )
                 finished = replace(
                     running, status=StageStatus.SUCCEEDED, progress_percent=100,
                     finished_at=utc_now(), performance_metrics=performance,
                     produced_artifact_ids=(),
-                    message=f"{stage.stage_name.value.replace('_', ' ').title()} completed",
+                    message=outcome.message if outcome is not None else f"{stage.stage_name.value.replace('_', ' ').title()} completed",
                 )
                 run = run.with_stages((*run.stages[:index], finished, *run.stages[index + 1:])); self.repository.save(run)
             if payloads is None:
                 payloads = self._build_artifacts(adapter, run, duration)
+            if job.pipeline_profile == "v1_compat" and any(
+                item.stage_name is StageName.PITCH_CALIBRATION and item.required for item in run.stages
+            ):
+                spatial.ensure(run, payloads)
             category_by_id = {"team-summary": ArtifactCategory.SUMMARY, "track-summary": ArtifactCategory.TRACKS, "track-detail": ArtifactCategory.TRACKS, "workload-advisory": ArtifactCategory.WORKLOAD_ADVISORY, "analysis-diagnostics": ArtifactCategory.OTHER}
             for artifact_id, payload in payloads.items():
                 if isinstance(payload, GeneratedArtifact):
@@ -147,13 +172,16 @@ class AnalysisExecutor:
                 return current.status
             code = exc.code if isinstance(exc, ExecutionFailure) else "execution_failed"
             message = exc.safe_message if isinstance(exc, ExecutionFailure) else "Analysis execution failed safely."
+            # Deterministic refusals (for example incompatible pitch annotations)
+            # are recorded as non-retryable instead of inviting a futile retry.
+            retryable = exc.retryable if isinstance(exc, ExecutionFailure) else True
             stages = list(current.stages)
             if active_index >= 0:
                 stage = stages[active_index]
-                error = StructuredError(code, message, True, utc_now())
+                error = StructuredError(code, message, retryable, utc_now())
                 if stage.status is StageStatus.RUNNING:
                     stages[active_index] = replace(stage, status=StageStatus.FAILED, finished_at=utc_now(), error=error, message=message)
-            failure = StructuredError(code, message, True, utc_now(), {"stage": stages[active_index].stage_name.value if active_index >= 0 else "ingestion"})
+            failure = StructuredError(code, message, retryable, utc_now(), {"stage": stages[active_index].stage_name.value if active_index >= 0 else "ingestion"})
             self.repository.save(current.fail(failure, stages=stages))
             logger.error("job_failed job_id=%s run_id=%s logical_analysis_id=%s attempt_number=%s worker_id=%s stage=%s status=failed duration_seconds=%.3f frames_processed=0 processing_fps=0 input_count=1 output_count=0 error_code=%s", job.job_id, job.run_id, job.logical_analysis_id, job.attempt_number, worker_id, stages[active_index].stage_name.value if active_index >= 0 else "ingestion", time.perf_counter() - started, code)
             return AnalysisRunStatus.FAILED
@@ -219,6 +247,10 @@ class AnalysisExecutor:
                 produced = ("detections",)
             elif stage.stage_name.value == "tracking" and "tracklets" in available:
                 produced = ("tracklets",)
+            elif stage.stage_name is StageName.IDENTITY_RESOLUTION and IDENTITIES_ARTIFACT_ID in available:
+                produced = (IDENTITIES_ARTIFACT_ID,)
+            elif stage.stage_name is StageName.PITCH_CALIBRATION:
+                produced = tuple(item for item in SPATIAL_ARTIFACT_IDS if item in available)
             elif stage.stage_name.value == "artifact_publication":
                 produced = artifact_ids
             result.append(replace(stage, produced_artifact_ids=produced))

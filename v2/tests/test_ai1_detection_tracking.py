@@ -403,15 +403,12 @@ def test_diagnostics_do_not_claim_labelled_identity_metrics():
     assert result["ground_truth_metrics"]["status"] == "not_measured"
 
 
-def test_v1_analysis_stage_contract_is_preserved_with_future_stages_skipped():
+def test_v1_analysis_stage_contract_runs_identity_and_pitch_calibration_stages():
+    # v1_compat/2.2.0: identity_resolution (AI2C review-only) and pitch_calibration
+    # (AI3) run over the verified AI1 artifacts; the stage order is unchanged.
     stages = AnalysisCoordinator._queued_stages(1, "v1_compat")
     assert [stage.stage_name for stage in stages] == list(StageName)
-    required = {stage.stage_name: stage.required for stage in stages}
-    assert required[StageName.IDENTITY_RESOLUTION] is False
-    assert required[StageName.PITCH_CALIBRATION] is False
-    assert all(required[name] for name in StageName if name not in {
-        StageName.IDENTITY_RESOLUTION, StageName.PITCH_CALIBRATION,
-    })
+    assert all(stage.required for stage in stages)
 
 
 def test_normal_ci_does_not_install_or_launch_full_inference():
