@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Callable, Sequence
 from urllib.parse import urlparse
 
-from fastapi import FastAPI, File, Form, HTTPException, Request, Response, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Query, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import UUID4
@@ -58,6 +58,15 @@ from footballai_v2.copilot import (
 )
 from footballai_v2.copilot.provider import AgentModel
 from footballai_v2.execution.adapters import profile_catalog
+from footballai_v2.execution.ai3.pipeline_stage import (
+    MAX_PITCH_ANNOTATIONS_BYTES,
+    MAX_VIEW_POINTS,
+    PITCH_SPACE_DIAGNOSTIC_SCHEMA,
+    PROJECTED_OBSERVATIONS_SCHEMA,
+    SpatialStageError,
+    pitch_space_view,
+)
+from footballai_v2.execution.spatial_stages import DIAGNOSTIC_ARTIFACT_ID, OBSERVATIONS_ARTIFACT_ID
 from footballai_v2.execution.coordinator import AnalysisCoordinator, ExecutionSettings, UploadValidationError
 from footballai_v2.execution.progress import active_stage, overall_progress
 from footballai_v2.runtime_health import checks_ready
@@ -370,20 +379,26 @@ def create_app(
         competition: str = Form(default="", max_length=120), match_date: str = Form(default="", max_length=32),
         venue: str = Form(default="", max_length=160), notes: str = Form(default="", max_length=1000),
         data_origin: str = Form(default="real", max_length=32), pipeline_profile: str = Form(default="demo_fast", max_length=64),
+        pitch_annotations: UploadFile | None = File(
+            default=None,
+            description="Optional footballai.pitch-landmark-annotations/v1 JSON (at most 1 MiB) bound to this video's SHA-256.",
+        ),
     ) -> QueuedRunResponse:
         temporary = None
         if not match_name.strip():
             raise HTTPException(status_code=422, detail={"error_code": "invalid_metadata", "message": "Match name cannot be blank."})
         try:
+            annotations = _read_pitch_annotations(pitch_annotations)
             temporary, checksum, size, extension = coordinator.stream_upload(video.file, video.filename or "")
             run = coordinator.create_analysis(
                 temporary, filename=video.filename or "", checksum=checksum, size_bytes=size, extension=extension,
                 content_type=video.content_type or "application/octet-stream",
                 metadata={"match_name": match_name.strip(), "home_team": home_team.strip(), "away_team": away_team.strip(), "competition": competition.strip(), "match_date": match_date.strip(), "venue": venue.strip(), "notes": notes.strip(), "data_origin": data_origin, "pipeline_profile": pipeline_profile},
+                pitch_annotations=annotations,
             )
         except UploadValidationError as exc:
             if temporary is not None: temporary.unlink(missing_ok=True)
-            raise HTTPException(status_code=413 if exc.code == "upload_too_large" else 422, detail={"error_code": exc.code, "message": exc.safe_message}) from exc
+            raise HTTPException(status_code=413 if exc.code in {"upload_too_large", "pitch_annotations_too_large"} else 422, detail={"error_code": exc.code, "message": exc.safe_message}) from exc
         return _queued_response(run)
 
     @app.get("/api/v1/runs", response_model=RunListResponse)
@@ -495,11 +510,26 @@ def create_app(
         except (ManifestConflictError, OSError) as exc:
             raise HTTPException(status_code=409, detail="The source input could not be reused safely.") from exc
 
-    @app.post("/api/v1/runs/{run_id}/clone", response_model=QueuedRunResponse, status_code=202, summary="Create a new logical analysis from uploaded input")
-    def clone(run_id: UUID4) -> QueuedRunResponse:
+    @app.post(
+        "/api/v1/runs/{run_id}/clone", response_model=QueuedRunResponse, status_code=202,
+        summary="Create a new logical analysis from uploaded input",
+        description="Optionally attach pitch landmark annotations bound to the uploaded video's SHA-256; they replace any the source run carried.",
+    )
+    def clone(
+        run_id: UUID4,
+        pitch_annotations: UploadFile | None = File(
+            default=None,
+            description="Optional footballai.pitch-landmark-annotations/v1 JSON (at most 1 MiB) bound to the source video's SHA-256.",
+        ),
+    ) -> QueuedRunResponse:
         load_run(run_id)
         try:
-            return _queued_response(coordinator.clone(str(run_id)))
+            return _queued_response(coordinator.clone(str(run_id), pitch_annotations=_read_pitch_annotations(pitch_annotations)))
+        except UploadValidationError as exc:
+            raise HTTPException(
+                status_code=413 if exc.code == "pitch_annotations_too_large" else 422,
+                detail={"error_code": exc.code, "message": exc.safe_message},
+            ) from exc
         except (ManifestConflictError, RunNotFoundError, OSError) as exc:
             raise HTTPException(status_code=409, detail="This run has no reusable uploaded input.") from exc
 
@@ -548,6 +578,59 @@ def create_app(
         except RunNotFoundError as exc:
             raise HTTPException(status_code=404, detail="Player track not found") from exc
 
+    @app.get(
+        "/api/v1/runs/{run_id}/pitch-space",
+        summary="Tracklet-level pitch-space diagnostic for a time interval",
+        description=(
+            "Reads the run's integrity-verified pitch-space diagnostic and projected tracklet observations. "
+            "Positions exist only on frames calibrated from manual pitch landmarks. This is a tracklet-level "
+            "diagnostic, not a verified individual player heatmap."
+        ),
+    )
+    def pitch_space(
+        run_id: UUID4,
+        start_seconds: float | None = Query(default=None, ge=0),
+        end_seconds: float | None = Query(default=None, ge=0),
+        max_points: int = Query(default=2000, ge=0, le=MAX_VIEW_POINTS),
+    ) -> dict[str, Any]:
+        run = load_run(run_id)
+        by_id = {item.artifact_id: item for item in run.artifacts}
+        diagnostic_ref = by_id.get(DIAGNOSTIC_ARTIFACT_ID)
+        if diagnostic_ref is None or diagnostic_ref.schema_version != PITCH_SPACE_DIAGNOSTIC_SCHEMA:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "error_code": "pitch_space_unavailable",
+                    "message": "This run has no pitch-space diagnostic. Only completed V1-compatible runs from pipeline v1_compat/2.2.0 publish one.",
+                },
+            )
+        observations_ref = by_id.get(OBSERVATIONS_ARTIFACT_ID)
+        if observations_ref is not None and observations_ref.schema_version != PROJECTED_OBSERVATIONS_SCHEMA:
+            observations_ref = None
+        try:
+            # read_artifact_bytes verifies the registered size and SHA-256.
+            diagnostic = object_storage.read_artifact_bytes(run.run_id, DIAGNOSTIC_ARTIFACT_ID, max_bytes=64 * 1024 * 1024)
+            observations = (
+                object_storage.read_artifact_bytes(run.run_id, OBSERVATIONS_ARTIFACT_ID, max_bytes=256 * 1024 * 1024)
+                if observations_ref is not None else None
+            )
+            view = pitch_space_view(
+                diagnostic, observations, start_seconds=start_seconds, end_seconds=end_seconds, max_points=max_points,
+            )
+        except SpatialStageError as exc:
+            raise HTTPException(status_code=422, detail={"error_code": exc.code, "message": exc.message}) from exc
+        except (ManifestConflictError, RunNotFoundError, ValueError) as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"error_code": "artifact_integrity_failed", "message": "Spatial artifacts failed verification."},
+            ) from exc
+        view["run_id"] = run.run_id
+        view["artifacts"] = [
+            {"artifact_id": item.artifact_id, "schema_version": item.schema_version, "sha256": item.sha256, "integrity_state": "verified"}
+            for item in (diagnostic_ref, observations_ref) if item is not None
+        ]
+        return view
+
     def require_completed(run_id: UUID4) -> None:
         if load_run(run_id).status not in {AnalysisRunStatus.SUCCEEDED, AnalysisRunStatus.PARTIAL}:
             raise HTTPException(
@@ -591,6 +674,16 @@ def create_app(
             )
 
     return app
+
+
+def _read_pitch_annotations(upload: UploadFile | None) -> bytes | None:
+    """Read an optional annotation upload without buffering more than the limit."""
+    if upload is None:
+        return None
+    content = upload.file.read(MAX_PITCH_ANNOTATIONS_BYTES + 1)
+    if len(content) > MAX_PITCH_ANNOTATIONS_BYTES:
+        raise UploadValidationError("pitch_annotations_too_large", "The pitch annotation file exceeds 1 MiB.")
+    return content
 
 
 def _queued_response(run: AnalysisRun) -> QueuedRunResponse:

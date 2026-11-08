@@ -17,6 +17,11 @@ from footballai_v2.contracts.v1 import (
 from footballai_v2.execution.adapters import profile_catalog
 from footballai_v2.execution.adapters.v1_compat_runtime import check_v1_compat_readiness
 from footballai_v2.execution.contracts import ExecutionJob, pipeline_version_for
+from footballai_v2.execution.ai3.pipeline_stage import (
+    PITCH_ANNOTATIONS_PARAMETER,
+    SpatialStageError,
+    pitch_annotations_parameter,
+)
 
 
 MEDIA_TYPES = {".mp4": "video/mp4", ".mov": "video/quicktime", ".mkv": "video/x-matroska", ".webm": "video/webm"}
@@ -151,7 +156,20 @@ class AnalysisCoordinator:
             raise UploadValidationError("invalid_duration", "Video duration is outside the configured limit.")
         return {"duration_seconds": round(duration, 3), "container": sorted(formats)[0], "size_bytes": before.st_size}
 
-    def create_analysis(self, temporary: Path, *, filename: str, checksum: str, size_bytes: int, extension: str, content_type: str, metadata: Mapping[str, str]) -> AnalysisRun:
+    @staticmethod
+    def pitch_annotations_parameter(content: bytes, *, profile: str, video_sha256: str, data_origin: str) -> dict:
+        """Validate uploaded landmark annotations for one video; raise UploadValidationError on refusal."""
+        if profile != "v1_compat":
+            raise UploadValidationError(
+                "pitch_annotations_unsupported_profile",
+                "Pitch landmark annotations require the V1-compatible analysis profile.",
+            )
+        try:
+            return pitch_annotations_parameter(content, video_sha256=video_sha256, data_origin=data_origin)
+        except SpatialStageError as exc:
+            raise UploadValidationError(exc.code, exc.message) from exc
+
+    def create_analysis(self, temporary: Path, *, filename: str, checksum: str, size_bytes: int, extension: str, content_type: str, metadata: Mapping[str, str], pitch_annotations: bytes | None = None) -> AnalysisRun:
         if content_type != MEDIA_TYPES[extension]:
             temporary.unlink(missing_ok=True)
             raise UploadValidationError("unsupported_media_type", "The uploaded media type is not supported.")
@@ -170,6 +188,14 @@ class AnalysisCoordinator:
             temporary.unlink(missing_ok=True); raise UploadValidationError("invalid_origin", "Legacy origin is reserved for imported artifacts.")
         warnings = list(profile_info["warnings"])
         parameters = {**dict(metadata), "pipeline_profile": profile, "original_filename": filename, "upload_size_bytes": size_bytes, "video_probe": probe, "quality_warnings": warnings}
+        if pitch_annotations is not None:
+            try:
+                parameters[PITCH_ANNOTATIONS_PARAMETER] = self.pitch_annotations_parameter(
+                    pitch_annotations, profile=profile, video_sha256=checksum, data_origin=origin.value,
+                )
+            except UploadValidationError:
+                temporary.unlink(missing_ok=True)
+                raise
         models: tuple[ModelReference, ...] = ()
         if profile == "v1_compat":
             readiness = check_v1_compat_readiness()
@@ -214,10 +240,21 @@ class AnalysisCoordinator:
             raise
         return retry
 
-    def clone(self, run_id: str) -> AnalysisRun:
+    def clone(self, run_id: str, *, pitch_annotations: bytes | None = None) -> AnalysisRun:
+        """New logical analysis from the same uploaded input.
+
+        ``pitch_annotations`` replaces any annotations the source run carried; they
+        must be bound to the same video checksum.
+        """
         previous = self.repository.load(run_id)
         profile = str(previous.parameters["pipeline_profile"])
-        clone = AnalysisRun.new(data_origin=previous.data_origin, input=previous.input, code=self.code_reference(), pipeline_version=pipeline_version_for(profile), parameters=dict(previous.parameters), models=previous.models, stages=self._queued_stages(1, profile))
+        parameters = dict(previous.parameters)
+        if pitch_annotations is not None:
+            parameters[PITCH_ANNOTATIONS_PARAMETER] = self.pitch_annotations_parameter(
+                pitch_annotations, profile=profile, video_sha256=previous.input.sha256,
+                data_origin=previous.data_origin.value,
+            )
+        clone = AnalysisRun.new(data_origin=previous.data_origin, input=previous.input, code=self.code_reference(), pipeline_version=pipeline_version_for(profile), parameters=parameters, models=previous.models, stages=self._queued_stages(1, profile))
         self.repository.create(clone)
         try:
             self.object_storage.copy_input(previous.run_id, clone.run_id)
@@ -237,8 +274,9 @@ class AnalysisCoordinator:
 
     @staticmethod
     def _queued_stages(attempt: int, profile: str = "demo_fast") -> tuple[StageExecution, ...]:
-        unsupported = {StageName.IDENTITY_RESOLUTION, StageName.PITCH_CALIBRATION} if profile == "v1_compat" else set()
-        return tuple(StageExecution(name.value, name, name not in unsupported, StageStatus.QUEUED, 0, attempt) for name in StageName)
+        # v1_compat now runs identity_resolution (AI2C, review-only) and
+        # pitch_calibration (AI3) over its verified AI1 artifacts.
+        return tuple(StageExecution(name.value, name, True, StageStatus.QUEUED, 0, attempt) for name in StageName)
 
     @staticmethod
     def code_reference() -> CodeReference:

@@ -23,8 +23,9 @@ export async function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> 
   if (!response.ok) {
     let message = `Request failed (${response.status})`
     try {
-      const payload = (await response.json()) as { detail?: string }
-      if (payload.detail) message = payload.detail
+      const payload = (await response.json()) as { detail?: string | { message?: string } }
+      if (typeof payload.detail === 'string') message = payload.detail
+      else if (payload.detail?.message) message = payload.detail.message
     } catch {
       // A bounded public message is sufficient when the server did not return JSON.
     }
@@ -100,6 +101,9 @@ function putDirect(
 async function directUpload(form: FormData, onProgress: (percent: number) => void): Promise<QueuedRunResponse> {
   const file = form.get('video')
   if (!(file instanceof File)) throw new ApiError('Choose a video before starting the analysis.')
+  if (form.get('pitch_annotations') instanceof File) {
+    throw new ApiError('Pitch landmark annotations can only be attached through the multipart upload path in this release.')
+  }
   if (!file.type) throw new ApiError('The selected video does not report a supported media type.')
 
   const authorized = await apiPost<DirectUploadAuthorization>(

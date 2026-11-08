@@ -10,7 +10,10 @@ from typing import Any
 from footballai_v2.contracts.v1 import parse_utc_datetime, utc_now, validate_run_id, validate_uuid_v4
 
 # 2.1.0: AI1 frame_index names the analysed source frame, not the stride's first frame.
-V1_COMPAT_PIPELINE_VERSION = "v1_compat/2.1.0"
+# 2.2.0: identity_resolution (AI2C review-only) and pitch_calibration (AI3) run and
+#        publish player-identities, pitch-calibration, projected-player-observations
+#        and pitch-space-diagnostic artifacts.
+V1_COMPAT_PIPELINE_VERSION = "v1_compat/2.2.0"
 
 
 def pipeline_version_for(profile: str) -> str:

@@ -135,6 +135,12 @@ def _template(args: argparse.Namespace) -> int:
         content = Path(args.tracklets).read_bytes()
         tracklets_sha = sha256_bytes(content)
         timestamps.update(dict(analysed_frames(tracklets_from_parquet_bytes(content))))
+    if args.bind == "video":
+        # For attaching to an analysis run: AI1 bytes differ per attempt, so only
+        # the video checksum (and frame size/timestamps read above) is recorded.
+        if video_sha is None:
+            raise SystemExit("--bind video needs --detections to read the source video SHA-256")
+        detections_sha = tracklets_sha = None
     if width is None or height is None:
         raise SystemExit("frame size is unknown: pass --detections or --frame-width/--frame-height")
     shots = tuple(_parse_shot(item) for item in args.shot)
@@ -306,6 +312,11 @@ def build_parser() -> argparse.ArgumentParser:
     template.add_argument("--frame-height", type=int)
     template.add_argument("--shot", action="append", required=True, help="ID:START:END:static|moving|unknown:CAMERA_SIDE")
     template.add_argument("--keyframe", action="append", required=True, help="INDEX or INDEX:TIMESTAMP")
+    template.add_argument(
+        "--bind", choices=("ai1", "video"), default="ai1",
+        help="ai1: pin the detections/tracklets checksums (offline calibrate); "
+             "video: pin only the video checksum, required to attach annotations to an analysis run",
+    )
     template.add_argument("--output", required=True)
     template.add_argument("--overwrite", action="store_true")
     template.set_defaults(handler=_template)

@@ -282,7 +282,7 @@ def test_real_run_is_supported_with_diagnostics_citation():
 
 def test_every_v1_compat_label_contract_stays_verified_real():
     repository, storage, run = real_run_env()
-    for version in ("v1_compat/2.0.0", "v1_compat/2.1.0"):
+    for version in ("v1_compat/2.0.0", "v1_compat/2.1.0", "v1_compat/2.2.0"):
         relabelled = AnalysisRun.from_dict({**run.to_dict(), "pipeline_version": version})
         response = service_for(FakeRepository(relabelled), storage).explain(run.run_id)
         assert response.output_nature.value == "verified_real"

@@ -232,3 +232,75 @@ export interface PlayerDetail {
   }
   warnings: string[]
 }
+
+export type FrameCalibrationStatus = 'calibrated' | 'uncalibrated' | 'invalidated'
+
+export interface PitchGeometryView {
+  length_m: number
+  width_m: number
+  markings: {
+    penalty_area_depth_m: number
+    penalty_area_width_m: number
+    goal_area_depth_m: number
+    goal_area_width_m: number
+    centre_circle_radius_m: number
+  }
+  dimensions_source: string
+}
+
+export interface PitchSpaceSegment {
+  start_frame: number
+  end_frame: number
+  start_seconds: number
+  end_seconds: number
+  status: FrameCalibrationStatus
+  reason: string | null
+  frames: number
+}
+
+export interface PitchSpacePoint {
+  frame_index: number
+  timestamp_seconds: number
+  tracklet_id: string
+  identity_status: string
+  x_m: number
+  y_m: number
+  inside_pitch_lines: boolean
+  extrapolated_beyond_landmarks: boolean
+  calibration_keyframe: number
+}
+
+export interface PitchSpaceView {
+  run_id: string
+  label: string
+  level: 'tracklet'
+  data_origin: string
+  evidence_status: 'no_annotations' | 'manual_annotations' | 'synthetic_annotations'
+  calibration_state: 'not_attempted' | 'no_calibrated_frames' | 'calibrated_frames_available'
+  calibration_reason: string | null
+  pitch: PitchGeometryView | null
+  interval: {
+    start_seconds: number | null
+    end_seconds: number | null
+    analysed_frames: number
+    frames_by_status: Record<FrameCalibrationStatus, number>
+    frames_by_reason: Record<string, number>
+    calibrated_fraction: number | null
+    segments: PitchSpaceSegment[]
+  }
+  observations: {
+    total: number | null
+    projected: number
+    by_projection_status: Record<string, number>
+    distinct_tracklets_projected: number
+    projected_extrapolated_beyond_landmarks: number
+    projected_inside_pitch_lines: number
+  }
+  occupancy: { unit: string; cell_size_m: number; origin_m: [number, number]; columns: number; rows: number; counts: number[][] } | null
+  points: PitchSpacePoint[]
+  points_truncated: boolean
+  evidence: Record<string, string | null>
+  identity: { resolver_mode: string; assignments_by_status: Record<string, number>; team_assignment: string }
+  limitations: string[]
+  artifacts: { artifact_id: string; schema_version: string; sha256: string; integrity_state: string }[]
+}

@@ -18,6 +18,7 @@ from footballai_v2.execution.adapters.v1_compat_pipeline import V1CompatPipeline
 from footballai_v2.execution.adapters.v1_compat_runtime import V1CompatConfig, V1CompatReadiness
 from footballai_v2.execution.generated_artifact import GeneratedArtifact
 from footballai_v2.contracts.v1 import ArtifactCategory, CodeReference
+from fakes.ai1_spatial import ai1_bytes
 
 
 @pytest.fixture
@@ -108,15 +109,18 @@ def test_ai1_binary_artifacts_integrity_stage_metrics_and_compatibility_aliases(
     monkeypatch.setattr("footballai_v2.execution.coordinator.check_v1_compat_readiness", lambda: ready)
 
     common = {"run_id": "test", "warnings": ["tracklet != player"], "provenance": {}}
+    # Real AI1 parquet bytes bound to the uploaded video: identity_resolution and
+    # pitch_calibration verify them before publishing spatial artifacts.
+    detections_bytes, tracklets_bytes = ai1_bytes(video_sha=hashlib.sha256(b"bounded-video-bytes").hexdigest())
     payloads = {
         "detections": GeneratedArtifact(
             "detections", "Cached detections", ArtifactCategory.OTHER,
-            "artifacts/detections.parquet", b"PAR1detections", "application/vnd.apache.parquet",
+            "artifacts/detections.parquet", detections_bytes, "application/vnd.apache.parquet",
             "footballai.detections/v1",
         ),
         "tracklets": GeneratedArtifact(
             "tracklets", "Temporary tracklets", ArtifactCategory.TRACKS,
-            "artifacts/tracklets.parquet", b"PAR1tracklets", "application/vnd.apache.parquet",
+            "artifacts/tracklets.parquet", tracklets_bytes, "application/vnd.apache.parquet",
             "footballai.tracklets/v1",
         ),
         "team-summary": {**common, "schema": "footballai.team-summary/v1", "players": {}},
@@ -150,8 +154,10 @@ def test_ai1_binary_artifacts_integrity_stage_metrics_and_compatibility_aliases(
     assert stages["tracking"].performance_metrics["duration_seconds"] == .5
     assert stages["detection"].produced_artifact_ids == ("detections",)
     assert stages["tracking"].produced_artifact_ids == ("tracklets",)
-    assert stages["identity_resolution"].status.value == "skipped"
-    assert stages["pitch_calibration"].status.value == "skipped"
+    assert stages["identity_resolution"].status.value == "succeeded"
+    assert stages["pitch_calibration"].status.value == "succeeded"
+    assert stages["identity_resolution"].produced_artifact_ids == ("player-identities",)
+    assert stages["pitch_calibration"].produced_artifact_ids == ("pitch-space-diagnostic",)
     assert {"legacy-player-summary", "dashboard-workload-advisory"} <= set(artifacts)
 
 
@@ -205,7 +211,7 @@ def test_retry_and_clone_record_the_code_that_will_run(workflow, monkeypatch):
 
 
 def test_pipeline_versions_name_each_label_contract():
-    assert pipeline_version_for("v1_compat") == "v1_compat/2.1.0"
+    assert pipeline_version_for("v1_compat") == "v1_compat/2.2.0"
     assert pipeline_version_for("demo_fast") == "demo_fast/1.0.0"
 
 

@@ -427,8 +427,12 @@ Individual heatmaps, displacement, distance and speed also need reviewed
 identities (AI2C `confirmed`) and validated calibration over the relevant
 frames.
 
-The copilot, its five read-only tools, labels and D7 rules are unchanged. AI3
-is not wired into the `pitch_calibration` run stage yet.
+The copilot, its five read-only tools, labels and D7 rules are unchanged.
+
+**Update (AI3-B):** AI3 now runs in the `pitch_calibration` stage of
+`v1_compat/2.2.0` runs, over the run's verified AI1 artifacts and the landmark
+annotations attached to it. See
+[`AI3B_PIPELINE_INTEGRATION.md`](AI3B_PIPELINE_INTEGRATION.md).
 
 ## Next milestone
 
