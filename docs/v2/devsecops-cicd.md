@@ -43,6 +43,14 @@ The temporary P5 branch triggers, deploy-request nonce, smoke-only workflow and
 OIDC diagnostic workflow were retired after build, plan and deploy OIDC had
 each succeeded in the real staging delivery path.
 
+The Gitleaks binary is pinned by version **and** SHA-256 (`GITLEAKS_VERSION`,
+`GITLEAKS_SHA256` in `security.yml`). The install step downloads the official
+release asset over HTTPS with bounded retries, reports the HTTP status of each
+failed attempt, and fails the job (so the scan never runs) if the download,
+checksum or reported version does not match. To upgrade, change both values in
+one reviewed PR, taking the digest from the release's
+`gitleaks_<version>_checksums.txt`; on a mismatch the job prints that entry.
+
 ## Secretless Azure OIDC
 
 There is **no Azure client secret, no `AZURE_CREDENTIALS`, no ACR admin/password,
