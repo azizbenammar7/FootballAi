@@ -25,15 +25,79 @@ jobs:
     timeout-minutes: 8
     env:
       GITLEAKS_VERSION: "8.30.1"
+      # SHA-256 of gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz as listed in the
+      # official release's gitleaks_${GITLEAKS_VERSION}_checksums.txt. Update it
+      # only together with GITLEAKS_VERSION, in a reviewed PR.
+      GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # full history so historical secrets are caught
-      - name: Install Gitleaks (pinned)
+      - name: Install Gitleaks (pinned, SHA-256 verified)
+        # Fails closed: if the official binary cannot be downloaded, does not
+        # match the pinned checksum, or reports another version, the job fails
+        # and the scan step never runs.
         run: |
-          curl -sfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" -o /tmp/gitleaks.tgz
-          tar -xzf /tmp/gitleaks.tgz -C "$RUNNER_TEMP" gitleaks
-          "$RUNNER_TEMP/gitleaks" version
+          set -euo pipefail
+          release="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          asset="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          archive="$RUNNER_TEMP/$asset"
+          headers="$RUNNER_TEMP/gitleaks-download.headers"
+          max_attempts=5
+
+          for attempt in $(seq 1 "$max_attempts"); do
+            rm -f "$archive" "$headers"
+            rc=0
+            status="$(curl --silent --show-error --location \
+              --proto '=https' --proto-redir '=https' \
+              --connect-timeout 15 --max-time 40 \
+              --dump-header "$headers" --output "$archive" \
+              --write-out '%{http_code}' "$release/$asset")" || rc=$?
+            if [ "$rc" -eq 0 ] && [ "$status" = "200" ]; then
+              echo "Downloaded $asset (attempt $attempt/$max_attempts)."
+              break
+            fi
+            echo "::warning::Gitleaks download attempt $attempt/$max_attempts failed: HTTP ${status:-none}, curl exit $rc."
+            # Status line of every hop plus rate-limit/redirect diagnostics.
+            grep -iE '^(HTTP/|location:|retry-after:|x-ratelimit-|x-github-request-id:)' "$headers" 2>/dev/null || true
+            case "$status" in
+              404|410)
+                echo "::error::$release/$asset does not exist (HTTP $status). Check GITLEAKS_VERSION. Secret scan NOT run."
+                exit 1 ;;
+            esac
+            if [ "$attempt" -eq "$max_attempts" ]; then
+              echo "::error::Could not download Gitleaks after $max_attempts attempts. Secret scan NOT run."
+              exit 1
+            fi
+            delay=$((attempt * 5))
+            # Honour a numeric Retry-After (seconds), capped at 30s. Worst case
+            # 5 x 40s + 4 x 30s stays inside the job's 8-minute timeout.
+            retry_after="$(tr -d '\r' 2>/dev/null < "$headers" | sed -n 's/^[Rr]etry-[Aa]fter: *\([0-9]\{1,4\}\)$/\1/p' | tail -n 1 || true)"
+            if [ -n "$retry_after" ] && [ $((10#$retry_after)) -gt "$delay" ]; then
+              delay=$(( 10#$retry_after < 30 ? 10#$retry_after : 30 ))
+            fi
+            echo "Retrying in ${delay}s."
+            sleep "$delay"
+          done
+
+          actual="$(sha256sum "$archive" | cut -d ' ' -f 1)"
+          if ! [[ "$GITLEAKS_SHA256" =~ ^[0-9a-f]{64}$ ]] || [ "$actual" != "$GITLEAKS_SHA256" ]; then
+            echo "::error::$asset SHA-256 mismatch. Expected '${GITLEAKS_SHA256}', got '${actual}'. Secret scan NOT run."
+            # Reviewer aid only, never used to pass: what the release's own checksum file lists.
+            curl --silent --show-error --fail --location --proto '=https' --proto-redir '=https' \
+              --max-time 30 "$release/gitleaks_${GITLEAKS_VERSION}_checksums.txt" \
+              | awk -v a="$asset" '$2 == a' || echo "(official checksums file unavailable)"
+            exit 1
+          fi
+          echo "SHA-256 verified: $actual  $asset"
+
+          tar -xzf "$archive" -C "$RUNNER_TEMP" gitleaks
+          reported="$("$RUNNER_TEMP/gitleaks" version)"
+          if [ "$reported" != "$GITLEAKS_VERSION" ]; then
+            echo "::error::Gitleaks reports version '$reported', expected $GITLEAKS_VERSION. Secret scan NOT run."
+            exit 1
+          fi
+          echo "Gitleaks $reported installed."
       - name: Scan full git history
         run: "$RUNNER_TEMP/gitleaks git --config .gitleaks.toml --redact --no-banner --exit-code 1 ."
 
